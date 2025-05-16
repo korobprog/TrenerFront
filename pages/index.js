@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import QuestionCard from '../components/QuestionCard';
 import AuthButton from '../components/auth/AuthButton';
+import InterviewButton from '../components/interview/InterviewButton';
 import styles from '../styles/Home.module.css';
 
 export default function Home() {
@@ -110,12 +111,15 @@ export default function Home() {
           </div>
         ) : !isStarted ? (
           <div className={styles.startScreen}>
-            <button
-              className={styles.startButton}
-              onClick={() => setIsStarted(true)}
-            >
-              Начать
-            </button>
+            <div className={styles.buttonGroup}>
+              <button
+                className={styles.startButton}
+                onClick={() => setIsStarted(true)}
+              >
+                Начать
+              </button>
+              <InterviewButton />
+            </div>
           </div>
         ) : isLoading ? (
           <div className={styles.loading}>Загрузка вопросов...</div>

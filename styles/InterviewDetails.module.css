@@ -1,0 +1,295 @@
+.container {
+  min-height: 100vh;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.main {
+  padding: 2rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+}
+
+.title {
+  margin: 0 0 2rem;
+  line-height: 1.15;
+  font-size: 2.5rem;
+  text-align: center;
+}
+
+.error {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: var(--danger-color, #dc3545);
+  color: white;
+  border-radius: var(--border-radius, 8px);
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.loading {
+  margin: 2rem 0;
+  font-size: 1.2rem;
+  color: var(--text-color);
+}
+
+.interviewDetails {
+  width: 100%;
+  max-width: 800px;
+}
+
+.card {
+  background-color: white;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  padding: 2rem;
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.statusBadge {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.statusBadge[data-status='pending'] {
+  background-color: var(--warning-color, #ffc107);
+  color: var(--text-color-dark, #212529);
+}
+
+.statusBadge[data-status='booked'] {
+  background-color: var(--info-color, #17a2b8);
+  color: white;
+}
+
+.statusBadge[data-status='completed'] {
+  background-color: var(--success-color, #28a745);
+  color: white;
+}
+
+.statusBadge[data-status='cancelled'] {
+  background-color: var(--danger-color, #dc3545);
+  color: white;
+}
+
+.detailsSection,
+.feedbackSection,
+.actionSection {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color, #dee2e6);
+}
+
+.detailsSection h2,
+.feedbackSection h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.detailItem {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailLabel {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: var(--text-secondary, #6c757d);
+}
+
+.detailValue {
+  font-size: 1.1rem;
+}
+
+.meetingLinkSection {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--light-color, #f8f9fa);
+  border-radius: var(--border-radius, 8px);
+}
+
+.meetingLinkSection h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.meetingLink {
+  display: inline-block;
+  background-color: var(--primary-color, #007bff);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--border-radius, 8px);
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.meetingLink:hover {
+  background-color: var(--primary-color-dark, #0056b3);
+  transform: translateY(-2px);
+}
+
+.ratingStars {
+  font-size: 1.5rem;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.starFilled {
+  color: var(--warning-color, #ffc107);
+}
+
+.starEmpty {
+  color: var(--border-color, #dee2e6);
+}
+
+.feedbackText {
+  background-color: var(--light-color, #f8f9fa);
+  padding: 1rem;
+  border-radius: var(--border-radius, 8px);
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.acceptButton {
+  background-color: var(--success-color, #28a745);
+  color: white;
+  font-size: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--border-radius, 8px);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.acceptButton:hover {
+  background-color: var(--success-color-dark, #218838);
+  transform: translateY(-2px);
+}
+
+.acceptButton:active {
+  transform: translateY(0);
+}
+
+.acceptedBadge {
+  background-color: var(--success-color, #28a745);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.feedbackButton {
+  background-color: var(--primary-color, #007bff);
+  color: white;
+  font-size: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--border-radius, 8px);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  width: 100%;
+}
+
+.feedbackButton:hover {
+  background-color: var(--primary-color-dark, #0056b3);
+  transform: translateY(-2px);
+}
+
+.feedbackButton:active {
+  transform: translateY(0);
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.backButton {
+  background-color: var(--secondary-color, #6c757d);
+  color: white;
+  font-size: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--border-radius, 8px);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.backButton:hover {
+  background-color: var(--secondary-color-dark, #5a6268);
+  transform: translateY(-2px);
+}
+
+.backButton:active {
+  transform: translateY(0);
+}
+
+.notFound {
+  margin: 3rem 0;
+  text-align: center;
+  color: var(--text-secondary, #6c757d);
+}
+
+.notFound p {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.backLink {
+  color: var(--primary-color, #007bff);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .statusBadge {
+    position: static;
+    display: inline-block;
+    margin-bottom: 1.5rem;
+  }
+
+  .detailItem {
+    flex-direction: column;
+  }
+
+  .detailLabel {
+    width: 100%;
+    margin-bottom: 0.3rem;
+  }
+}

@@ -63,3 +63,16 @@
   width: 24px;
   height: 24px;
 }
+
+.errorMessage {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}

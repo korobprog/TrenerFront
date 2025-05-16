@@ -1,0 +1,237 @@
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import InterviewCard from './InterviewCard';
+import styles from '../../styles/InterviewBoard.module.css';
+
+/**
+ * Компонент доски с карточками доступных собеседований
+ * @param {Object} props - Свойства компонента
+ * @param {Array} props.interviews - Массив собеседований
+ * @param {number} props.userPoints - Количество баллов пользователя
+ * @param {Function} props.onRefresh - Функция для обновления списка собеседований
+ * @returns {JSX.Element} Компонент доски собеседований
+ */
+export default function InterviewBoard({
+  interviews = [],
+  userPoints = 0,
+  onRefresh,
+}) {
+  const router = useRouter();
+  const [filteredInterviews, setFilteredInterviews] = useState([]);
+  const [filter, setFilter] = useState('all'); // all, my, pending, booked, completed
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Логирование для отладки
+  useEffect(() => {
+    console.log(
+      'Получены собеседования:',
+      interviews.map((interview) => ({
+        id: interview.id,
+        scheduledTime: interview.scheduledTime,
+        status: interview.status,
+        interviewerId: interview.interviewerId,
+        isCreatedByCurrentUser: interview.isCreatedByCurrentUser,
+      }))
+    );
+  }, [interviews]);
+
+  // Применяем фильтр при изменении списка собеседований или фильтра
+  useEffect(() => {
+    if (filter === 'all') {
+      setFilteredInterviews(interviews);
+    } else if (filter === 'my') {
+      // Фильтруем собеседования, созданные текущим пользователем
+      setFilteredInterviews(
+        interviews.filter(
+          (interview) => interview.isCreatedByCurrentUser === true
+        )
+      );
+    } else {
+      // Фильтруем по статусу
+      setFilteredInterviews(
+        interviews.filter((interview) => interview.status === filter)
+      );
+    }
+  }, [interviews, filter]);
+
+  // Обработчик изменения фильтра
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+  };
+
+  // Обработчик записи на собеседование
+  const handleBookInterview = async (interviewId) => {
+    if (userPoints < 1) {
+      alert('Для записи на собеседование необходимо минимум 1 балл');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(`/api/mock-interviews/${interviewId}/book`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || 'Не удалось записаться на собеседование'
+        );
+      }
+
+      // Перенаправляем на страницу с деталями собеседования
+      router.push(`/mock-interviews/${interviewId}`);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Функция для группировки собеседований по дате
+  const groupInterviewsByDate = (interviews) => {
+    const grouped = {};
+
+    interviews.forEach((interview) => {
+      const date = new Date(interview.scheduledTime).toLocaleDateString(
+        'ru-RU',
+        {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }
+      );
+
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+
+      grouped[date].push(interview);
+    });
+
+    return grouped;
+  };
+
+  // Группируем отфильтрованные собеседования по дате
+  const groupedInterviews = groupInterviewsByDate(filteredInterviews);
+
+  return (
+    <div className={styles.boardContainer}>
+      <div className={styles.boardHeader}>
+        <h2 className={styles.boardTitle}>Доступные собеседования</h2>
+
+        <div className={styles.filterContainer}>
+          <button
+            className={`${styles.filterButton} ${
+              filter === 'all' ? styles.active : ''
+            }`}
+            onClick={() => handleFilterChange('all')}
+          >
+            Все
+          </button>
+          <button
+            className={`${styles.filterButton} ${
+              filter === 'my' ? styles.active : ''
+            }`}
+            onClick={() => handleFilterChange('my')}
+          >
+            Мои собеседования
+          </button>
+          <button
+            className={`${styles.filterButton} ${
+              filter === 'pending' ? styles.active : ''
+            }`}
+            onClick={() => handleFilterChange('pending')}
+          >
+            Ожидают записи
+          </button>
+          <button
+            className={`${styles.filterButton} ${
+              filter === 'booked' ? styles.active : ''
+            }`}
+            onClick={() => handleFilterChange('booked')}
+          >
+            Забронированы
+          </button>
+          <button
+            className={`${styles.filterButton} ${
+              filter === 'completed' ? styles.active : ''
+            }`}
+            onClick={() => handleFilterChange('completed')}
+          >
+            Завершены
+          </button>
+        </div>
+
+        <button
+          className={styles.refreshButton}
+          onClick={onRefresh}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Обновление...' : 'Обновить'}
+        </button>
+      </div>
+
+      {Object.keys(groupedInterviews).length > 0 ? (
+        <div className={styles.boardContent}>
+          {Object.entries(groupedInterviews).map(([date, dateInterviews]) => (
+            <div key={date} className={styles.dateGroup}>
+              <h3 className={styles.dateHeader}>{date}</h3>
+              <div className={styles.interviewsGrid}>
+                {dateInterviews.map((interview) => (
+                  <InterviewCard
+                    key={interview.id}
+                    interview={interview}
+                    userPoints={userPoints}
+                    onBookInterview={handleBookInterview}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.emptyState}>
+          <p className={styles.emptyMessage}>
+            {filter === 'all'
+              ? 'Нет доступных собеседований'
+              : filter === 'my'
+              ? 'У вас нет созданных собеседований'
+              : `Нет собеседований со статусом "${
+                  filter === 'pending'
+                    ? 'Ожидают записи'
+                    : filter === 'booked'
+                    ? 'Забронированы'
+                    : 'Завершены'
+                }"`}
+          </p>
+          <p className={styles.emptyHint}>
+            Создайте собеседование или дождитесь, пока другие пользователи
+            создадут собеседования
+          </p>
+          <button
+            className={styles.createButton}
+            onClick={() => router.push('/mock-interviews/new')}
+          >
+            Создать собеседование
+          </button>
+        </div>
+      )}
+
+      <div className={styles.pointsInfo}>
+        <p>
+          Ваши баллы: <span className={styles.pointsValue}>{userPoints}</span>
+        </p>
+        <p className={styles.pointsHint}>
+          Для записи на собеседование в роли отвечающего необходимо минимум 1
+          балл. За регистрацию дается 1 балл. Баллы также начисляются за
+          проведение собеседований в роли интервьюера.
+        </p>
+      </div>
+    </div>
+  );
+}

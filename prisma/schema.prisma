@@ -19,14 +19,17 @@ model Question {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String?        @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  userProgress  UserProgress[]
+  id                   String             @id @default(cuid())
+  name                 String?
+  email                String?            @unique
+  emailVerified        DateTime?
+  image                String?
+  accounts             Account[]
+  sessions             Session[]
+  userProgress         UserProgress[]
+  userPoints           UserPoints?
+  interviewerSessions  MockInterview[]    @relation("InterviewerRelation")
+  intervieweeSessions  MockInterview[]    @relation("IntervieweeRelation")
 }
 
 model Account {
@@ -79,4 +82,41 @@ model UserProgress {
   searchCount  Int      @default(0)
 
   @@unique([questionId, userId])
+}
+
+// Модель для хранения баллов пользователя
+model UserPoints {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Модель для мок-собеседований
+model MockInterview {
+  id                 String             @id @default(cuid())
+  interviewer        User               @relation("InterviewerRelation", fields: [interviewerId], references: [id])
+  interviewerId      String
+  interviewee        User?              @relation("IntervieweeRelation", fields: [intervieweeId], references: [id])
+  intervieweeId      String?
+  scheduledTime      DateTime
+  meetingLink        String
+  status             String             @default("pending") // pending, booked, completed, cancelled
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  interviewFeedback  InterviewFeedback?
+}
+
+// Модель для отзывов о собеседовании
+model InterviewFeedback {
+  id             String        @id @default(cuid())
+  mockInterview  MockInterview @relation(fields: [mockInterviewId], references: [id])
+  mockInterviewId String        @unique
+  technicalScore Int           // от 1 до 5
+  feedback       String
+  isAccepted     Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }

@@ -1,8 +1,26 @@
 import { getProviders, signIn } from 'next-auth/react';
 import styles from '../../styles/SignIn.module.css';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 export default function SignIn({ providers }) {
+  const router = useRouter();
+  const { error } = router.query;
+
+  // Добавляем логирование для отладки
+  console.log('SignIn: Страница входа загружена');
+  console.log('SignIn: Доступные провайдеры:', providers);
+  console.log('SignIn: Ошибка из query:', error);
+
+  // Функция для отображения сообщения об ошибке
+  const getErrorMessage = (error) => {
+    switch (error) {
+      case 'OAuthAccountNotLinked':
+        return 'Этот аккаунт не связан с существующим аккаунтом. Пожалуйста, войдите с помощью другого метода или создайте новый аккаунт.';
+      default:
+        return 'Произошла ошибка при входе. Пожалуйста, попробуйте снова.';
+    }
+  };
   return (
     <div className={styles.container}>
       <Head>
@@ -12,6 +30,10 @@ export default function SignIn({ providers }) {
 
       <main className={styles.main}>
         <h1 className={styles.title}>Вход в систему</h1>
+
+        {error && (
+          <div className={styles.errorMessage}>{getErrorMessage(error)}</div>
+        )}
 
         <div className={styles.providersContainer}>
           {Object.values(providers).map((provider) => (
@@ -38,7 +60,16 @@ export default function SignIn({ providers }) {
 }
 
 export async function getServerSideProps(context) {
+  console.log('SignIn getServerSideProps: Получение провайдеров');
   const providers = await getProviders();
+  console.log('SignIn getServerSideProps: Полученные провайдеры:', providers);
+
+  // Проверяем заголовки запроса
+  console.log(
+    'SignIn getServerSideProps: Заголовки запроса:',
+    context.req.headers
+  );
+
   return {
     props: { providers },
   };

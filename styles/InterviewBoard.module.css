@@ -1,0 +1,175 @@
+.boardContainer {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.boardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.boardTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-color, #0070f3);
+}
+
+.filterContainer {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filterButton {
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filterButton:hover {
+  background-color: #e9ecef;
+}
+
+.filterButton.active {
+  background-color: var(--primary-color, #0070f3);
+  color: white;
+  border-color: var(--primary-color, #0070f3);
+}
+
+.refreshButton {
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 0.9rem;
+  background-color: transparent;
+  border: 1px solid var(--primary-color, #0070f3);
+  color: var(--primary-color, #0070f3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshButton:hover:not(:disabled) {
+  background-color: rgba(0, 112, 243, 0.1);
+}
+
+.refreshButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dateGroup {
+  margin-bottom: 1rem;
+}
+
+.dateHeader {
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.interviewsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.emptyState {
+  background-color: white;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.emptyMessage {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.emptyHint {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.createButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 1rem;
+  background-color: var(--primary-color, #0070f3);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.createButton:hover {
+  background-color: var(--primary-color-dark, #0058c7);
+}
+
+.pointsInfo {
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius, 8px);
+  padding: 1rem 1.5rem;
+  margin-top: 2rem;
+  border-left: 4px solid var(--info-color, #17a2b8);
+}
+
+.pointsValue {
+  font-weight: 600;
+  color: var(--primary-color, #0070f3);
+}
+
+.pointsHint {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .boardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filterContainer {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .interviewsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .filterButton,
+  .refreshButton {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .emptyState {
+    padding: 1.5rem;
+  }
+}
