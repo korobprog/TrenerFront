@@ -1,15 +1,26 @@
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
+  // Проверяем аутентификацию
+  const session = await getServerSession(req, res, authOptions);
+
+  if (!session) {
+    return res.status(401).json({ message: 'Необходима аутентификация' });
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Метод не разрешен' });
   }
 
+  const userId = session.user.id;
+
   try {
     // Получаем вопросы, которые пользователь не знает или хочет повторить
-    // Также включаем вопросы, которые еще не были просмотрены
+    // Также включаем вопросы, которые еще не были просмотрены этим пользователем
     const questions = await prisma.question.findMany({
       where: {
         OR: [
@@ -17,6 +28,7 @@ export default async function handler(req, res) {
             userProgress: {
               some: {
                 status: 'unknown',
+                userId: userId,
               },
             },
           },
@@ -24,15 +36,26 @@ export default async function handler(req, res) {
             userProgress: {
               some: {
                 status: 'repeat',
+                userId: userId,
               },
             },
           },
           {
+            // Вопросы, которые пользователь еще не просматривал
             userProgress: {
-              none: {},
+              none: {
+                userId: userId,
+              },
             },
           },
         ],
+      },
+      include: {
+        userProgress: {
+          where: {
+            userId: userId,
+          },
+        },
       },
       orderBy: {
         // Сначала показываем вопросы, которые пользователь не знает
