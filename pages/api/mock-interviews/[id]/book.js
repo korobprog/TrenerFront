@@ -1,6 +1,8 @@
 import { unstable_getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import prisma from '../../../../lib/prisma';
+import { sendInterviewBookingNotification } from '../../../../lib/utils/email';
+import { createCalendarEvent } from '../../../../lib/utils/googleCalendar';
 
 export default async function handler(req, res) {
   console.log('API Book: Получен запрос на запись на собеседование');
@@ -132,9 +134,57 @@ export default async function handler(req, res) {
       }),
     ]);
 
+    // Получаем полные данные об интервьюере и интервьюируемом
+    const interviewer = await prisma.user.findUnique({
+      where: { id: result[0].interviewerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    });
+
+    const interviewee = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    });
+
+    console.log('API Book: Отправка уведомления интервьюеру');
+
+    // Отправляем email-уведомление интервьюеру
+    const emailResult = await sendInterviewBookingNotification(
+      interviewer,
+      interviewee,
+      result[0]
+    );
+
+    console.log('API Book: Результат отправки email:', emailResult);
+
+    // Создаем событие в Google Calendar
+    const calendarResult = await createCalendarEvent(
+      interviewer,
+      interviewee,
+      result[0]
+    );
+
+    console.log(
+      'API Book: Результат создания события в календаре:',
+      calendarResult
+    );
+
     return res.status(200).json({
       message: 'Вы успешно записались на собеседование',
       interview: result[0],
+      notifications: {
+        email: emailResult,
+        calendar: calendarResult,
+      },
     });
   } catch (error) {
     console.error('Ошибка при записи на собеседование:', error);
