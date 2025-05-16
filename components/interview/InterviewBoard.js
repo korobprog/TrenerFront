@@ -15,6 +15,7 @@ export default function InterviewBoard({
   interviews = [],
   userPoints = 0,
   onRefresh,
+  isArchive = false,
 }) {
   const router = useRouter();
   const [filteredInterviews, setFilteredInterviews] = useState([]);
@@ -122,7 +123,9 @@ export default function InterviewBoard({
   return (
     <div className={styles.boardContainer}>
       <div className={styles.boardHeader}>
-        <h2 className={styles.boardTitle}>Доступные собеседования</h2>
+        <h2 className={styles.boardTitle}>
+          {isArchive ? 'Архив собеседований' : 'Доступные собеседования'}
+        </h2>
 
         <div className={styles.filterContainer}>
           <button
@@ -141,30 +144,48 @@ export default function InterviewBoard({
           >
             Мои собеседования
           </button>
-          <button
-            className={`${styles.filterButton} ${
-              filter === 'pending' ? styles.active : ''
-            }`}
-            onClick={() => handleFilterChange('pending')}
-          >
-            Ожидают записи
-          </button>
-          <button
-            className={`${styles.filterButton} ${
-              filter === 'booked' ? styles.active : ''
-            }`}
-            onClick={() => handleFilterChange('booked')}
-          >
-            Забронированы
-          </button>
-          <button
-            className={`${styles.filterButton} ${
-              filter === 'completed' ? styles.active : ''
-            }`}
-            onClick={() => handleFilterChange('completed')}
-          >
-            Завершены
-          </button>
+
+          {!isArchive ? (
+            // Фильтры для актуальных собеседований
+            <>
+              <button
+                className={`${styles.filterButton} ${
+                  filter === 'pending' ? styles.active : ''
+                }`}
+                onClick={() => handleFilterChange('pending')}
+              >
+                Ожидают записи
+              </button>
+              <button
+                className={`${styles.filterButton} ${
+                  filter === 'booked' ? styles.active : ''
+                }`}
+                onClick={() => handleFilterChange('booked')}
+              >
+                Забронированы
+              </button>
+            </>
+          ) : (
+            // Фильтры для архивных собеседований
+            <>
+              <button
+                className={`${styles.filterButton} ${
+                  filter === 'completed' ? styles.active : ''
+                }`}
+                onClick={() => handleFilterChange('completed')}
+              >
+                Завершены
+              </button>
+              <button
+                className={`${styles.filterButton} ${
+                  filter === 'cancelled' ? styles.active : ''
+                }`}
+                onClick={() => handleFilterChange('cancelled')}
+              >
+                Отменены
+              </button>
+            </>
+          )}
         </div>
 
         <button
@@ -198,27 +219,41 @@ export default function InterviewBoard({
         <div className={styles.emptyState}>
           <p className={styles.emptyMessage}>
             {filter === 'all'
-              ? 'Нет доступных собеседований'
+              ? isArchive
+                ? 'В архиве нет собеседований'
+                : 'Нет доступных собеседований'
               : filter === 'my'
-              ? 'У вас нет созданных собеседований'
+              ? isArchive
+                ? 'У вас нет архивных собеседований'
+                : 'У вас нет созданных собеседований'
               : `Нет собеседований со статусом "${
                   filter === 'pending'
                     ? 'Ожидают записи'
                     : filter === 'booked'
                     ? 'Забронированы'
-                    : 'Завершены'
+                    : filter === 'completed'
+                    ? 'Завершены'
+                    : 'Отменены'
                 }"`}
           </p>
-          <p className={styles.emptyHint}>
-            Создайте собеседование или дождитесь, пока другие пользователи
-            создадут собеседования
-          </p>
-          <button
-            className={styles.createButton}
-            onClick={() => router.push('/mock-interviews/new')}
-          >
-            Создать собеседование
-          </button>
+          {!isArchive ? (
+            <>
+              <p className={styles.emptyHint}>
+                Создайте собеседование или дождитесь, пока другие пользователи
+                создадут собеседования
+              </p>
+              <button
+                className={styles.createButton}
+                onClick={() => router.push('/mock-interviews/new')}
+              >
+                Создать собеседование
+              </button>
+            </>
+          ) : (
+            <p className={styles.emptyHint}>
+              Завершенные и отмененные собеседования будут отображаться здесь
+            </p>
+          )}
         </div>
       )}
 

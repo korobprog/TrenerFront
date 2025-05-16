@@ -143,6 +143,27 @@
   transform: translateY(0);
 }
 
+.archiveButton {
+  background-color: var(--info-color, #17a2b8);
+  color: white;
+  font-size: 1.2rem;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.archiveButton:hover {
+  background-color: var(--info-color-dark, #138496);
+  transform: translateY(-2px);
+}
+
+.archiveButton:active {
+  transform: translateY(0);
+}
+
 .interviewsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
