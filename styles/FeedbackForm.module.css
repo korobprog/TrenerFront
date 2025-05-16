@@ -1,0 +1,195 @@
+.feedbackFormContainer {
+  background-color: white;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  padding: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.formHeader {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 1rem;
+}
+
+.formHeader h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary-color, #0070f3);
+  font-size: 1.5rem;
+}
+
+.interviewInfo {
+  color: #666;
+  margin: 0;
+}
+
+.errorMessage {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--danger-color, #dc3545);
+  padding: 0.75rem;
+  border-radius: var(--border-radius, 8px);
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--danger-color, #dc3545);
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.ratingContainer {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ratingItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.ratingItem:hover {
+  background-color: #e9ecef;
+}
+
+.ratingItem.active {
+  background-color: var(--primary-color, #0070f3);
+  color: white;
+  border-color: var(--primary-color, #0070f3);
+}
+
+.ratingHint {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.feedbackTextarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius, 8px);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 150px;
+  transition: border-color 0.3s;
+}
+
+.feedbackTextarea:focus {
+  outline: none;
+  border-color: var(--primary-color, #0070f3);
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+}
+
+.feedbackTips {
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius, 8px);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--info-color, #17a2b8);
+}
+
+.feedbackTips h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  color: var(--info-color, #17a2b8);
+}
+
+.feedbackTips ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.feedbackTips li {
+  margin-bottom: 0.5rem;
+}
+
+.feedbackTips li:last-child {
+  margin-bottom: 0;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancelButton,
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+.cancelButton {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  color: #666;
+}
+
+.cancelButton:hover {
+  background-color: #e9ecef;
+}
+
+.submitButton {
+  background-color: var(--primary-color, #0070f3);
+  color: white;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-color-dark, #0058c7);
+}
+
+.submitButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .feedbackFormContainer {
+    padding: 1.5rem;
+  }
+
+  .ratingContainer {
+    justify-content: space-between;
+  }
+
+  .ratingItem {
+    width: 35px;
+    height: 35px;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .cancelButton,
+  .submitButton {
+    width: 100%;
+  }
+}

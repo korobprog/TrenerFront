@@ -2,6 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js"
+  "/auth/signin": "pages/auth/signin.js",
+  "/mock-interviews": "pages/mock-interviews.js",
+  "/mock-interviews/[id]": "pages/mock-interviews/[id].js",
+  "/api/mock-interviews": "pages/api/mock-interviews.js",
+  "/api/mock-interviews/[id]": "pages/api/mock-interviews/[id].js",
+  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
+  "/api/user/points": "pages/api/user/points.js"
 }

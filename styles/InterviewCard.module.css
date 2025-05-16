@@ -1,0 +1,200 @@
+.card {
+  background-color: white;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  border-left: 4px solid transparent;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Стили для разных статусов собеседования */
+.pending {
+  border-left-color: var(--primary-color, #0070f3);
+}
+
+.booked {
+  border-left-color: var(--warning-color, #ffc107);
+}
+
+.completed {
+  border-left-color: var(--success-color, #28a745);
+}
+
+.cancelled {
+  border-left-color: var(--danger-color, #dc3545);
+  opacity: 0.7;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.interviewerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.interviewerName {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.youBadge {
+  background-color: var(--primary-color, #0070f3);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+.statusBadge {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.statusBadge[data-status='pending'] {
+  background-color: rgba(0, 112, 243, 0.1);
+  color: var(--primary-color, #0070f3);
+}
+
+.statusBadge[data-status='booked'] {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--warning-color, #ffc107);
+}
+
+.statusBadge[data-status='completed'] {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--success-color, #28a745);
+}
+
+.statusBadge[data-status='cancelled'] {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--danger-color, #dc3545);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dateTime,
+.interviewee,
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  font-size: 1.1rem;
+}
+
+.feedbackInfo {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #eaeaea;
+}
+
+.feedbackStatus {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.accepted {
+  color: var(--success-color, #28a745);
+}
+
+.pending {
+  color: var(--warning-color, #ffc107);
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.bookButton,
+.feedbackButton,
+.detailsButton {
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius, 8px);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+.bookButton {
+  background-color: var(--primary-color, #0070f3);
+  color: white;
+}
+
+.bookButton:hover:not(:disabled) {
+  background-color: var(--primary-color-dark, #0058c7);
+}
+
+.bookButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.feedbackButton {
+  background-color: var(--warning-color, #ffc107);
+  color: #212529;
+}
+
+.feedbackButton:hover {
+  background-color: var(--warning-color-dark, #e0a800);
+}
+
+.detailsButton {
+  background-color: transparent;
+  border: 1px solid #ddd;
+  color: #666;
+}
+
+.detailsButton:hover {
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 600px) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .statusBadge {
+    align-self: flex-start;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+  }
+
+  .bookButton,
+  .feedbackButton,
+  .detailsButton {
+    width: 100%;
+  }
+}

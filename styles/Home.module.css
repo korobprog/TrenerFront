@@ -34,6 +34,15 @@
   margin: 2rem 0;
 }
 
+.buttonGroup {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .startButton {
   background-color: var(--primary-color);
   color: white;
@@ -41,6 +50,18 @@
   padding: 1rem 2rem;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.startButton:hover {
+  background-color: var(--primary-color-dark, #0056b3);
+  transform: translateY(-2px);
+}
+
+.startButton:active {
+  transform: translateY(0);
 }
 
 .cardContainer {
