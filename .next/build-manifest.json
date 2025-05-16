@@ -12,6 +12,11 @@
   ],
   "rootMainFiles": [],
   "pages": {
+    "/": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/index.js"
+    ],
     "/_app": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
@@ -32,10 +37,10 @@
       "static/chunks/main.js",
       "static/chunks/pages/mock-interviews.js"
     ],
-    "/mock-interviews/[id]": [
+    "/mock-interviews/new": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/mock-interviews/[id].js"
+      "static/chunks/pages/mock-interviews/new.js"
     ]
   },
   "ampFirstPages": []
