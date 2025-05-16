@@ -1,0 +1,30 @@
+Что такое замыкание (closure) в JavaScript?
+Объясните разницу между let, const и var в JavaScript.
+Что такое прототипное наследование в JavaScript?
+Что такое Event Loop в JavaScript?
+Объясните разницу между синхронным и асинхронным кодом.
+Что такое Promise в JavaScript?
+Как работает async/await в JavaScript?
+Что такое hoisting в JavaScript?
+Объясните разницу между == и === в JavaScript.
+Что такое REST API?
+Что такое JWT и как он работает?
+Объясните разницу между localStorage, sessionStorage и cookies.
+Что такое CORS и как его настроить?
+Что такое Virtual DOM в React?
+Объясните жизненный цикл компонента в React.
+Что такое React Hooks и какие хуки вы знаете?
+Объясните разницу между props и state в React.
+Что такое Redux и для чего он используется?
+Что такое контекст (Context API) в React?
+Что такое SSR и CSR?
+Объясните разницу между CSS, SCSS и SASS.
+Что такое Flexbox и Grid в CSS?
+Что такое медиа-запросы (media queries) в CSS?
+Объясните разницу между display: none, visibility: hidden и opacity: 0.
+Что такое БЭМ методология?
+Что такое TypeScript и какие преимущества он дает?
+Объясните разницу между интерфейсами и типами в TypeScript.
+Что такое дженерики (generics) в TypeScript?
+Что такое Webpack и для чего он используется?
+Что такое Babel и для чего он используется?
