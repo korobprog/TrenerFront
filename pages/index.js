@@ -116,7 +116,7 @@ export default function Home() {
                 className={styles.startButton}
                 onClick={() => setIsStarted(true)}
               >
-                Начать
+                Тренироваться по
               </button>
               <InterviewButton />
             </div>
@@ -125,8 +125,16 @@ export default function Home() {
           <div className={styles.loading}>Загрузка вопросов...</div>
         ) : questions.length > 0 ? (
           <div className={styles.cardContainer}>
-            <div className={styles.progress}>
-              Вопрос {currentIndex + 1} из {questions.length}
+            <div className={styles.header}>
+              <button
+                className={styles.backButton}
+                onClick={() => setIsStarted(false)}
+              >
+                Назад на главную
+              </button>
+              <div className={styles.progress}>
+                Вопрос {currentIndex + 1} из {questions.length}
+              </div>
             </div>
             <QuestionCard
               question={questions[currentIndex]}
