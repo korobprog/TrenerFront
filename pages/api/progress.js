@@ -1,21 +1,33 @@
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
+  // Проверяем аутентификацию
+  const session = await getServerSession(req, res, authOptions);
+
+  if (!session) {
+    return res.status(401).json({ message: 'Необходима аутентификация' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Метод не разрешен' });
   }
 
-  const { questionId, status } = req.body;
+  const { questionId, status, isSearch, userId } = req.body;
 
-  if (!questionId || !status) {
+  // Используем userId из сессии, если он не был передан в запросе
+  const userIdToUse = userId || session.user.id;
+
+  if (!questionId || (!status && !isSearch)) {
     return res
       .status(400)
       .json({ message: 'Отсутствуют обязательные параметры' });
   }
 
-  if (!['known', 'unknown', 'repeat'].includes(status)) {
+  if (status && !['known', 'unknown', 'repeat'].includes(status)) {
     return res.status(400).json({ message: 'Недопустимый статус' });
   }
 
@@ -30,21 +42,44 @@ export default async function handler(req, res) {
     }
 
     // Обновляем или создаем запись о прогрессе пользователя
+    const updateData = {};
+
+    if (status) {
+      updateData.status = status;
+      updateData.lastReviewed = new Date();
+      updateData.reviewCount = { increment: 1 };
+
+      // Увеличиваем счетчик для соответствующего статуса
+      if (status === 'known') {
+        updateData.knownCount = { increment: 1 };
+      } else if (status === 'unknown') {
+        updateData.unknownCount = { increment: 1 };
+      } else if (status === 'repeat') {
+        updateData.repeatCount = { increment: 1 };
+      }
+    }
+
+    if (isSearch) {
+      updateData.searchCount = { increment: 1 };
+    }
+
     const progress = await prisma.userProgress.upsert({
       where: {
-        questionId,
-      },
-      update: {
-        status,
-        lastReviewed: new Date(),
-        reviewCount: {
-          increment: 1,
+        questionId_userId: {
+          questionId,
+          userId: userIdToUse,
         },
       },
+      update: updateData,
       create: {
         questionId,
-        status,
-        reviewCount: 1,
+        userId: userIdToUse,
+        status: status || 'unknown',
+        reviewCount: status ? 1 : 0,
+        knownCount: status === 'known' ? 1 : 0,
+        unknownCount: status === 'unknown' ? 1 : 0,
+        repeatCount: status === 'repeat' ? 1 : 0,
+        searchCount: isSearch ? 1 : 0,
       },
     });
 

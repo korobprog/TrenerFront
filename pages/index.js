@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import QuestionCard from '../components/QuestionCard';
+import AuthButton from '../components/auth/AuthButton';
 import styles from '../styles/Home.module.css';
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isStarted, setIsStarted] = useState(false);
@@ -10,10 +13,10 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (isStarted) {
+    if (isStarted && session) {
       fetchQuestions();
     }
-  }, [isStarted]);
+  }, [isStarted, session]);
 
   async function fetchQuestions() {
     try {
@@ -43,11 +46,17 @@ export default function Home() {
   }
 
   async function handleAnswer(questionId, status) {
+    if (!session) return;
+
     try {
       await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId, status }),
+        body: JSON.stringify({
+          questionId,
+          status,
+          userId: session.user.id,
+        }),
       });
 
       if (currentIndex < questions.length - 1) {
@@ -61,6 +70,25 @@ export default function Home() {
     }
   }
 
+  // Обработчик события поиска в Яндексе
+  async function handleSearch(questionId) {
+    if (!session) return;
+
+    try {
+      await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionId,
+          isSearch: true,
+          userId: session.user.id,
+        }),
+      });
+    } catch (err) {
+      console.error('Не удалось сохранить статистику поиска:', err);
+    }
+  }
+
   return (
     <div className={styles.container}>
       <main className={styles.main}>
@@ -68,9 +96,19 @@ export default function Home() {
           Подготовка к собеседованию Frontend разработчика
         </h1>
 
+        <div className={styles.authSection}>
+          <AuthButton />
+        </div>
+
         {error && <div className={styles.error}>{error}</div>}
 
-        {!isStarted ? (
+        {status === 'loading' ? (
+          <div className={styles.loading}>Загрузка...</div>
+        ) : !session ? (
+          <div className={styles.authMessage}>
+            Пожалуйста, войдите в систему, чтобы начать тренировку
+          </div>
+        ) : !isStarted ? (
           <div className={styles.startScreen}>
             <button
               className={styles.startButton}
@@ -89,6 +127,7 @@ export default function Home() {
             <QuestionCard
               question={questions[currentIndex]}
               onAnswer={handleAnswer}
+              onSearch={handleSearch}
             />
           </div>
         ) : null}
