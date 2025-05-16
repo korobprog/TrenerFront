@@ -1,6 +1,7 @@
-import { unstable_getServerSession } from 'next-auth/next';
+import { unstable_getServerSession, getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import prisma from '../../../lib/prisma';
+import { createCalendarEvent } from '../../../lib/utils/googleCalendar';
 
 export default async function handler(req, res) {
   console.log('API: Получен запрос на создание/получение собеседований');
@@ -10,9 +11,15 @@ export default async function handler(req, res) {
   // Проверяем заголовки запроса для отладки
   console.log('API: Заголовки запроса:', req.headers);
 
-  // Используем unstable_getServerSession вместо getSession
+  // Добавляем логи для отладки
+  console.log('API: Пробуем получить сессию через unstable_getServerSession');
   const session = await unstable_getServerSession(req, res, authOptions);
   console.log('API: Сессия пользователя (unstable_getServerSession):', session);
+
+  // Пробуем также получить сессию через getServerSession для сравнения
+  console.log('API: Пробуем получить сессию через getServerSession');
+  const sessionNew = await getServerSession(req, res, authOptions);
+  console.log('API: Сессия пользователя (getServerSession):', sessionNew);
 
   // Проверяем cookie для отладки
   console.log('API: Cookie:', req.headers.cookie);
@@ -176,36 +183,97 @@ export default async function handler(req, res) {
 
   // Обработка POST запроса - создание нового собеседования
   if (req.method === 'POST') {
-    const { scheduledTime, meetingLink } = req.body;
+    const { scheduledTime } = req.body;
 
     // Проверка наличия обязательных полей
-    if (!scheduledTime || !meetingLink) {
+    if (!scheduledTime) {
       return res
         .status(400)
-        .json({ message: 'Необходимо указать время и ссылку на встречу' });
-    }
-
-    // Проверка валидности ссылки на Google Meet
-    if (!meetingLink.includes('meet.google.com')) {
-      return res
-        .status(400)
-        .json({ message: 'Ссылка должна быть на Google Meet' });
+        .json({ message: 'Необходимо указать время собеседования' });
     }
 
     try {
-      // Создаем новое собеседование
+      // Получаем данные текущего пользователя (интервьюера)
+      const interviewer = {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+      };
+
+      // Создаем временный объект для интервьюируемого (будет заполнен при бронировании)
+      const interviewee = {
+        id: null,
+        name: 'TBD',
+        email: 'tbd@example.com',
+      };
+
+      // Создаем временный объект для собеседования
+      const interviewData = {
+        id: `temp-${Date.now()}`, // Временный ID для создания события
+        scheduledTime: new Date(scheduledTime),
+      };
+
+      // Создаем событие в Google Calendar с автоматическим созданием ссылки на Google Meet
+      console.log('API: Создание события в Google Calendar');
+      console.log('API: Данные интервьюера:', interviewer);
+      console.log('API: Данные интервьюируемого:', interviewee);
+      console.log('API: Данные собеседования:', interviewData);
+
+      const calendarResult = await createCalendarEvent(
+        interviewer,
+        interviewee,
+        interviewData
+      );
+
+      console.log('API: Результат создания события:', calendarResult);
+      console.log(
+        'API: Получена ссылка на Google Meet:',
+        calendarResult.meetingLink
+      );
+
+      // Проверяем успешность создания события и наличие ссылки на Google Meet
+      if (!calendarResult.success) {
+        throw new Error('Не удалось создать событие в Google Calendar');
+      }
+
+      // Получаем ссылку на Google Meet из результата
+      const meetingLink = calendarResult.meetingLink || '';
+
+      // Если не удалось получить ссылку на Google Meet, возвращаем ошибку
+      if (!meetingLink) {
+        console.warn('API: Не удалось получить ссылку на Google Meet');
+      }
+
+      // Логируем данные перед созданием собеседования
+      console.log('API: Данные для создания собеседования:', {
+        interviewerId: session.user.id,
+        scheduledTime: new Date(scheduledTime),
+        meetingLink: meetingLink,
+        status: 'pending',
+        calendarEventId: calendarResult.eventId || null,
+      });
+
+      // Проверяем схему модели MockInterview
+      console.log('API: Проверка схемы модели MockInterview');
+
+      // Создаем новое собеседование с полученной ссылкой на Google Meet
       const newInterview = await prisma.mockInterview.create({
         data: {
           interviewer: {
             connect: { id: session.user.id },
           },
           scheduledTime: new Date(scheduledTime),
-          meetingLink,
+          meetingLink: meetingLink,
           status: 'pending',
+          // Сохраняем ID события в Google Calendar для возможности обновления в будущем
+          calendarEventId: calendarResult.eventId || null,
         },
       });
 
-      return res.status(201).json(newInterview);
+      return res.status(201).json({
+        ...newInterview,
+        meetingLink: meetingLink,
+      });
     } catch (error) {
       console.error('Ошибка при создании собеседования:', error);
       return res

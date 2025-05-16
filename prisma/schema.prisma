@@ -104,6 +104,7 @@ model MockInterview {
   scheduledTime      DateTime
   meetingLink        String
   status             String             @default("pending") // pending, booked, completed, cancelled
+  calendarEventId    String?            // ID события в Google Calendar для возможности обновления
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   interviewFeedback  InterviewFeedback?

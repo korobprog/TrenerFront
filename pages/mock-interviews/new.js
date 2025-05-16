@@ -23,10 +23,9 @@ export default function CreateInterview() {
 
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [meetingLink, setMeetingLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [step, setStep] = useState(1); // 1: выбор времени, 2: добавление ссылки, 3: подтверждение
+  const [step, setStep] = useState(1); // 1: выбор времени, 2: подтверждение
 
   // Получаем текущую дату в формате YYYY-MM-DD для минимальной даты в календаре
   const today = new Date().toISOString().split('T')[0];
@@ -49,25 +48,10 @@ export default function CreateInterview() {
     setScheduledTime(value);
   };
 
-  // Обработчик изменения ссылки на встречу
-  const handleLinkChange = (e) => {
-    setMeetingLink(e.target.value);
-  };
-
   // Переход к следующему шагу
   const handleNextStep = () => {
     if (step === 1 && (!scheduledDate || !scheduledTime)) {
       setError('Пожалуйста, выберите дату и время собеседования');
-      return;
-    }
-
-    if (step === 2 && !meetingLink) {
-      setError('Пожалуйста, добавьте ссылку на Google Meet');
-      return;
-    }
-
-    if (step === 2 && !isValidMeetingLink(meetingLink)) {
-      setError('Пожалуйста, добавьте корректную ссылку на Google Meet');
       return;
     }
 
@@ -78,12 +62,6 @@ export default function CreateInterview() {
   // Переход к предыдущему шагу
   const handlePrevStep = () => {
     setStep(step - 1);
-  };
-
-  // Проверка валидности ссылки на Google Meet
-  const isValidMeetingLink = (link) => {
-    // Простая проверка на наличие meet.google.com в ссылке
-    return link.includes('meet.google.com');
   };
 
   // Отправка формы
@@ -133,7 +111,6 @@ export default function CreateInterview() {
       const dateTimeString = `${scheduledDate}T${scheduledTime}:00`;
       const scheduledDateTime = new Date(dateTimeString).toISOString();
       console.log('Дата и время собеседования:', scheduledDateTime);
-      console.log('Ссылка на встречу:', meetingLink);
 
       console.log('Отправляем POST-запрос на /api/mock-interviews');
       const response = await fetch('/api/mock-interviews', {
@@ -143,7 +120,6 @@ export default function CreateInterview() {
         },
         body: JSON.stringify({
           scheduledTime: scheduledDateTime,
-          meetingLink,
         }),
       });
 
@@ -192,10 +168,6 @@ export default function CreateInterview() {
             <div className={`${styles.step} ${step >= 2 ? styles.active : ''}`}>
               2
             </div>
-            <div className={styles.stepLine}></div>
-            <div className={`${styles.step} ${step >= 3 ? styles.active : ''}`}>
-              3
-            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -228,59 +200,6 @@ export default function CreateInterview() {
 
             {step === 2 && (
               <div className={styles.formStep}>
-                <h2>Добавьте ссылку на Google Meet</h2>
-                <div className={styles.meetInfo}>
-                  <p>Для создания ссылки на Google Meet:</p>
-                  <ol>
-                    <li>
-                      Перейдите на{' '}
-                      <a
-                        href="https://meet.google.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        meet.google.com
-                      </a>
-                    </li>
-                    <li>
-                      Нажмите "Новая встреча" и выберите "Создать встречу для
-                      дальнейшего использования"
-                    </li>
-                    <li>Скопируйте ссылку на встречу и вставьте её ниже</li>
-                  </ol>
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="meetingLink">Ссылка на Google Meet:</label>
-                  <input
-                    type="url"
-                    id="meetingLink"
-                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                    value={meetingLink}
-                    onChange={handleLinkChange}
-                    required
-                  />
-                </div>
-                <div className={styles.buttonGroup}>
-                  <button
-                    type="button"
-                    className={styles.backButton}
-                    onClick={handlePrevStep}
-                  >
-                    Назад
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.nextButton}
-                    onClick={handleNextStep}
-                  >
-                    Далее
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className={styles.formStep}>
                 <h2>Подтверждение</h2>
                 <div className={styles.confirmationDetails}>
                   <div className={styles.confirmationItem}>
@@ -300,9 +219,11 @@ export default function CreateInterview() {
                     </span>
                   </div>
                   <div className={styles.confirmationItem}>
-                    <span className={styles.confirmationLabel}>Ссылка:</span>
+                    <span className={styles.confirmationLabel}>
+                      Примечание:
+                    </span>
                     <span className={styles.confirmationValue}>
-                      {meetingLink}
+                      Ссылка на Google Meet будет создана автоматически
                     </span>
                   </div>
                 </div>
