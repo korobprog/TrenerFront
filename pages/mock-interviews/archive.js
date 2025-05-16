@@ -6,7 +6,7 @@ import AuthButton from '../../components/auth/AuthButton';
 import InterviewBoard from '../../components/interview/InterviewBoard';
 import styles from '../../styles/MockInterviews.module.css';
 
-export default function MockInterviews() {
+export default function ArchivedInterviews() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [interviews, setInterviews] = useState([]);
@@ -25,11 +25,11 @@ export default function MockInterviews() {
     try {
       setIsLoading(true);
       setError(null);
-      // Используем параметр status=active для получения только актуальных собеседований
-      const response = await fetch('/api/mock-interviews?status=active');
+      // Используем параметр status=archived для получения архивных собеседований
+      const response = await fetch('/api/mock-interviews?status=archived');
 
       if (!response.ok) {
-        throw new Error('Не удалось загрузить собеседования');
+        throw new Error('Не удалось загрузить архивные собеседования');
       }
 
       const data = await response.json();
@@ -43,56 +43,23 @@ export default function MockInterviews() {
 
   async function fetchUserPoints() {
     try {
-      console.log('Запрос баллов пользователя...');
-      console.log(
-        'Информация о сессии:',
-        session
-          ? JSON.stringify(
-              {
-                id: session.user.id,
-                name: session.user.name,
-                email: session.user.email,
-              },
-              null,
-              2
-            )
-          : 'Сессия отсутствует'
-      );
-
       const response = await fetch('/api/user/points');
-      console.log('Статус ответа:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error('Не удалось загрузить баллы пользователя');
       }
 
       const data = await response.json();
-      console.log('Полный ответ API:', JSON.stringify(data, null, 2));
-      console.log('Получены баллы пользователя:', data.points);
       setUserPoints(data.points);
     } catch (err) {
       console.error('Ошибка при загрузке баллов:', err);
-      console.error('Детали ошибки:', err.stack);
     }
-  }
-
-  function handleCreateInterview() {
-    router.push('/mock-interviews/new');
-  }
-
-  function handleBookInterview(interviewId) {
-    if (userPoints < 1) {
-      alert('Для записи на собеседование необходимо минимум 1 балл');
-      return;
-    }
-
-    router.push(`/mock-interviews/${interviewId}/book`);
   }
 
   return (
     <div className={styles.container}>
       <main className={styles.main}>
-        <h1 className={styles.title}>Актуальные собеседования</h1>
+        <h1 className={styles.title}>Архив собеседований</h1>
 
         <div className={styles.authSection}>
           <AuthButton />
@@ -110,15 +77,9 @@ export default function MockInterviews() {
         ) : (
           <>
             <div className={styles.actionButtons}>
-              <button
-                className={styles.createButton}
-                onClick={handleCreateInterview}
-              >
-                Создать собеседование
-              </button>
-              <Link href="/mock-interviews/archive">
-                <button className={styles.archiveButton || styles.backButton}>
-                  Архив собеседований
+              <Link href="/mock-interviews">
+                <button className={styles.backButton}>
+                  Актуальные собеседования
                 </button>
               </Link>
               <button
@@ -136,6 +97,7 @@ export default function MockInterviews() {
                 interviews={interviews}
                 userPoints={userPoints}
                 onRefresh={fetchInterviews}
+                isArchive={true}
               />
             )}
           </>

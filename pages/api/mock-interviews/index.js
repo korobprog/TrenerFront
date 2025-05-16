@@ -35,11 +35,35 @@ export default async function handler(req, res) {
       console.log('API: Получение списка собеседований');
       console.log('API: ID текущего пользователя:', session.user.id);
 
+      // Получаем параметр status из запроса
+      const { status } = req.query;
+      console.log('API: Параметр status:', status);
+
+      // Определяем статусы для фильтрации
+      let statusFilter = {};
+
+      if (status === 'active') {
+        // Для активных собеседований показываем только со статусами pending и booked
+        statusFilter = {
+          status: {
+            in: ['pending', 'booked'],
+          },
+        };
+      } else if (status === 'archived') {
+        // Для архивных собеседований показываем только со статусами completed и cancelled
+        statusFilter = {
+          status: {
+            in: ['completed', 'cancelled'],
+          },
+        };
+      }
+
       // Проверим, есть ли собеседования, на которые записался текущий пользователь
       const bookedInterviews = await prisma.mockInterview.findMany({
         where: {
           intervieweeId: session.user.id,
           status: 'booked',
+          ...statusFilter,
         },
         include: {
           interviewer: {
@@ -67,6 +91,7 @@ export default async function handler(req, res) {
       const userCreatedInterviews = await prisma.mockInterview.findMany({
         where: {
           interviewerId: session.user.id,
+          ...statusFilter,
         },
         include: {
           interviewer: {
@@ -94,11 +119,14 @@ export default async function handler(req, res) {
         session.user.id
       );
 
-      // Получаем все собеседования со статусом "pending" (ожидающие)
-      // и информацией об интервьюере
+      // Получаем собеседования других пользователей с учетом фильтра статуса
       const otherInterviews = await prisma.mockInterview.findMany({
         where: {
-          status: 'pending',
+          // Если фильтр не указан или активные собеседования, то показываем только pending
+          // Иначе используем общий фильтр статуса
+          ...(status === 'active' || !status
+            ? { status: 'pending' }
+            : statusFilter),
           // Получаем собеседования, созданные другими пользователями
           interviewerId: {
             not: session.user.id,

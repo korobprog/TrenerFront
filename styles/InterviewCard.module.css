@@ -25,11 +25,14 @@
 
 .completed {
   border-left-color: var(--success-color, #28a745);
+  opacity: 0.8;
+  background-color: #f8f9fa;
 }
 
 .cancelled {
   border-left-color: var(--danger-color, #dc3545);
   opacity: 0.7;
+  background-color: #f8f9fa;
 }
 
 .cardHeader {
