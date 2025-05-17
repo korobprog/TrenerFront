@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { useNotification } from '../../../contexts/NotificationContext';
 import FeedbackForm from '../../../components/interview/FeedbackForm';
 import styles from '../../../styles/FeedbackForm.module.css';
 
@@ -8,10 +9,10 @@ export default function LeaveFeedback() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { id } = router.query;
+  const { showSuccess, showError } = useNotification();
 
   const [interview, setInterview] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (session && id) {
@@ -22,7 +23,6 @@ export default function LeaveFeedback() {
   async function fetchInterviewDetails() {
     try {
       setIsLoading(true);
-      setError(null);
       const response = await fetch(`/api/mock-interviews/${id}`);
 
       if (!response.ok) {
@@ -31,6 +31,7 @@ export default function LeaveFeedback() {
 
       const data = await response.json();
       setInterview(data);
+      showSuccess('Информация о собеседовании успешно загружена');
 
       // Проверяем, является ли пользователь интервьюером
       if (data.interviewerId !== session.user.id) {
@@ -48,7 +49,8 @@ export default function LeaveFeedback() {
         throw new Error('Отзыв для этого собеседования уже существует');
       }
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
+      router.push('/mock-interviews');
     } finally {
       setIsLoading(false);
     }
@@ -67,13 +69,11 @@ export default function LeaveFeedback() {
       <main className={styles.main}>
         <h1 className={styles.title}>Оставить отзыв о собеседовании</h1>
 
-        {error && <div className={styles.error}>{error}</div>}
-
         {isLoading ? (
           <div className={styles.loading}>
             Загрузка информации о собеседовании...
           </div>
-        ) : interview && !error ? (
+        ) : interview ? (
           <FeedbackForm
             interview={interview}
             onSubmitSuccess={() => router.push(`/mock-interviews/${id}`)}

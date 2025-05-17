@@ -30,6 +30,9 @@ model User {
   userPoints           UserPoints?
   interviewerSessions  MockInterview[]    @relation("InterviewerRelation")
   intervieweeSessions  MockInterview[]    @relation("IntervieweeRelation")
+  violations           UserViolation[]
+  pointsTransactions   PointsTransaction[]
+  conductedInterviewsCount Int            @default(0)
 }
 
 model Account {
@@ -103,7 +106,7 @@ model MockInterview {
   intervieweeId      String?
   scheduledTime      DateTime
   meetingLink        String
-  status             String             @default("pending") // pending, booked, completed, cancelled
+  status             String             @default("pending") // pending, booked, completed, cancelled, no_show
   calendarEventId    String?            // ID события в Google Calendar для возможности обновления
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -112,12 +115,35 @@ model MockInterview {
 
 // Модель для отзывов о собеседовании
 model InterviewFeedback {
-  id             String        @id @default(cuid())
-  mockInterview  MockInterview @relation(fields: [mockInterviewId], references: [id])
-  mockInterviewId String        @unique
-  technicalScore Int           // от 1 до 5
-  feedback       String
-  isAccepted     Boolean       @default(false)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  mockInterview    MockInterview @relation(fields: [mockInterviewId], references: [id])
+  mockInterviewId  String        @unique
+  technicalScore   Int           // от 1 до 5
+  feedback         String
+  interviewerRating Int?         // от 1 до 5, оценка интервьюера отвечающим
+  isAccepted       Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+// Модель для отслеживания нарушений пользователей
+model UserViolation {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  type        String   // "no_show", "cancellation", etc.
+  description String?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime // Когда истекает срок действия нарушения
+}
+
+// Модель для истории транзакций с баллами
+model PointsTransaction {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  amount      Int      // Может быть положительным (начисление) или отрицательным (списание)
+  type        String   // "booking", "feedback", "cancellation", "no_show", "bonus", etc.
+  description String?
+  createdAt   DateTime @default(now())
 }

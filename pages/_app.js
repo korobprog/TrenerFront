@@ -1,5 +1,7 @@
 import '../styles/globals.css';
 import { SessionProvider } from 'next-auth/react';
+import { NotificationProvider } from '../contexts/NotificationContext';
+import Header from '../components/Header';
 
 // Добавляем логирование для отладки
 console.log('_app.js: Инициализация приложения');
@@ -11,7 +13,12 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
 
   return (
     <SessionProvider session={session}>
-      <Component {...pageProps} />
+      <NotificationProvider>
+        <Header />
+        <main className="main-content">
+          <Component {...pageProps} />
+        </main>
+      </NotificationProvider>
     </SessionProvider>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useNotification } from '../../contexts/NotificationContext';
 import InterviewCard from './InterviewCard';
 import styles from '../../styles/InterviewBoard.module.css';
 
@@ -21,6 +22,7 @@ export default function InterviewBoard({
   const [filteredInterviews, setFilteredInterviews] = useState([]);
   const [filter, setFilter] = useState('all'); // all, my, pending, booked, completed
   const [isLoading, setIsLoading] = useState(false);
+  const { showSuccess, showError, showInfo } = useNotification();
 
   // Логирование для отладки
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function InterviewBoard({
   // Обработчик записи на собеседование
   const handleBookInterview = async (interviewId) => {
     if (userPoints < 1) {
-      alert('Для записи на собеседование необходимо минимум 1 балл');
+      showInfo('Для записи на собеседование необходимо минимум 1 балл');
       return;
     }
 
@@ -84,10 +86,11 @@ export default function InterviewBoard({
         );
       }
 
+      showSuccess('Вы успешно записались на собеседование');
       // Перенаправляем на страницу с деталями собеседования
       router.push(`/mock-interviews/${interviewId}`);
     } catch (error) {
-      alert(error.message);
+      showError(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -184,6 +187,14 @@ export default function InterviewBoard({
               >
                 Отменены
               </button>
+              <button
+                className={`${styles.filterButton} ${
+                  filter === 'no_show' ? styles.active : ''
+                }`}
+                onClick={() => handleFilterChange('no_show')}
+              >
+                Неявки
+              </button>
             </>
           )}
         </div>
@@ -233,7 +244,9 @@ export default function InterviewBoard({
                     ? 'Забронированы'
                     : filter === 'completed'
                     ? 'Завершены'
-                    : 'Отменены'
+                    : filter === 'cancelled'
+                    ? 'Отменены'
+                    : 'Неявки'
                 }"`}
           </p>
           {!isArchive ? (
@@ -263,8 +276,10 @@ export default function InterviewBoard({
         </p>
         <p className={styles.pointsHint}>
           Для записи на собеседование в роли отвечающего необходимо минимум 1
-          балл. За регистрацию дается 1 балл. Баллы также начисляются за
-          проведение собеседований в роли интервьюера.
+          балл. За регистрацию дается 1 балл. Баллы начисляются за проведение
+          собеседований в роли интервьюера (1-2 балла в зависимости от оценки).
+          При отмене собеседования или неявке интервьюера отвечающему
+          возвращается 2 балла (1 потраченный + 1 компенсация).
         </p>
       </div>
     </div>

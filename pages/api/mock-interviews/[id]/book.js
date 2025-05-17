@@ -106,6 +106,27 @@ export default async function handler(req, res) {
       });
     }
 
+    // Проверяем наличие активных нарушений
+    const activeViolations = await prisma.userViolation.findMany({
+      where: {
+        userId: session.user.id,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (activeViolations.length > 0) {
+      console.log(
+        'API Book: У пользователя есть активные нарушения:',
+        activeViolations.length
+      );
+      return res.status(403).json({
+        message:
+          'Вы временно не можете записываться на собеседования из-за нарушений',
+      });
+    }
+
     console.log(
       'API Book: У пользователя достаточно баллов:',
       userPoints.points
@@ -130,6 +151,15 @@ export default async function handler(req, res) {
           points: {
             decrement: 1,
           },
+        },
+      }),
+      // Создаем запись в истории транзакций
+      prisma.pointsTransaction.create({
+        data: {
+          userId: session.user.id,
+          amount: -1,
+          type: 'booking',
+          description: 'Запись на собеседование',
         },
       }),
     ]);

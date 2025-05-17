@@ -55,11 +55,9 @@ export default async function handler(req, res) {
       return res.status(200).json(interview);
     } catch (error) {
       console.error('Ошибка при получении информации о собеседовании:', error);
-      return res
-        .status(500)
-        .json({
-          message: 'Ошибка сервера при получении информации о собеседовании',
-        });
+      return res.status(500).json({
+        message: 'Ошибка сервера при получении информации о собеседовании',
+      });
     }
   }
 
@@ -75,12 +73,9 @@ export default async function handler(req, res) {
     }
 
     if (interview.interviewerId !== session.user.id) {
-      return res
-        .status(403)
-        .json({
-          message:
-            'Только интервьюер может обновлять информацию о собеседовании',
-        });
+      return res.status(403).json({
+        message: 'Только интервьюер может обновлять информацию о собеседовании',
+      });
     }
 
     // Получаем данные для обновления
@@ -155,13 +150,23 @@ export default async function handler(req, res) {
           });
 
           if (intervieweePoints) {
-            // Возвращаем 3 балла отвечающему
+            // Возвращаем 1 потраченный балл + 1 балл компенсации
             await prisma.userPoints.update({
               where: { userId: interview.intervieweeId },
               data: {
                 points: {
-                  increment: 3,
+                  increment: 2,
                 },
+              },
+            });
+
+            // Создаем запись в истории транзакций
+            await prisma.pointsTransaction.create({
+              data: {
+                userId: interview.intervieweeId,
+                amount: 2,
+                type: 'cancellation',
+                description: 'Компенсация за отмену собеседования',
               },
             });
           }

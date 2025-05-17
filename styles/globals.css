@@ -62,3 +62,27 @@ button:active {
   justify-content: center;
   align-items: center;
 }
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: calc(100vh - 70px); /* Вычитаем высоту шапки */
+}
+
+/* Стили для контейнера уведомлений */
+.notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+}
