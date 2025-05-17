@@ -3,16 +3,13 @@ import { SessionProvider } from 'next-auth/react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import Header from '../components/Header';
 
-// Добавляем логирование для отладки
-console.log('_app.js: Инициализация приложения');
-
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
-  // Логируем состояние сессии при инициализации
-  console.log('_app.js: Получена сессия:', session ? 'да' : 'нет');
-  console.log('_app.js: Данные сессии:', session);
-
   return (
-    <SessionProvider session={session}>
+    <SessionProvider
+      session={session}
+      refetchInterval={0} // Отключаем автоматическое обновление сессии
+      refetchOnWindowFocus={false} // Отключаем обновление при фокусе окна
+    >
       <NotificationProvider>
         <Header />
         <main className="main-content">

@@ -170,6 +170,30 @@
   transform: translateY(0);
 }
 
+.adminButton {
+  background-color: var(--dark-color, #343a40);
+  color: white;
+  font-size: 1.2rem;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+}
+
+.adminButton:hover {
+  background-color: var(--dark-color-light, #495057);
+  transform: translateY(-2px);
+}
+
+.adminButton:active {
+  transform: translateY(0);
+}
+
 .interviewsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

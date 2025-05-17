@@ -1,0 +1,113 @@
+.paginationContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: var(--card-background-light);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  font-size: 0.9rem;
+}
+
+.paginationInfo {
+  color: var(--text-secondary);
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.paginationButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background-color: var(--card-background);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.paginationButton:hover:not(.disabled):not(.active) {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.paginationButton.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.paginationButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paginationButton.ellipsis {
+  background-color: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.pageSizeSelector {
+  display: flex;
+  align-items: center;
+}
+
+.pageSizeSelect {
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background-color: var(--card-background);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.pageSizeSelect:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.pageSizeSelect:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Адаптивный дизайн */
+@media (max-width: 768px) {
+  .paginationContainer {
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+  }
+
+  .paginationInfo {
+    order: 3;
+    font-size: 0.8rem;
+  }
+
+  .paginationControls {
+    order: 1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pageSizeSelector {
+    order: 2;
+  }
+
+  .paginationButton {
+    min-width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+}

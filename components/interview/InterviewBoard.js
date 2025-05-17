@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import { useNotification } from '../../contexts/NotificationContext';
 import InterviewCard from './InterviewCard';
 import styles from '../../styles/InterviewBoard.module.css';
@@ -19,24 +20,16 @@ export default function InterviewBoard({
   isArchive = false,
 }) {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [filteredInterviews, setFilteredInterviews] = useState([]);
   const [filter, setFilter] = useState('all'); // all, my, pending, booked, completed
   const [isLoading, setIsLoading] = useState(false);
   const { showSuccess, showError, showInfo } = useNotification();
 
-  // Логирование для отладки
-  useEffect(() => {
-    console.log(
-      'Получены собеседования:',
-      interviews.map((interview) => ({
-        id: interview.id,
-        scheduledTime: interview.scheduledTime,
-        status: interview.status,
-        interviewerId: interview.interviewerId,
-        isCreatedByCurrentUser: interview.isCreatedByCurrentUser,
-      }))
-    );
-  }, [interviews]);
+  // Проверяем, является ли пользователь администратором (только если сессия загружена)
+  const isAdmin = status === 'authenticated' && session?.user?.role === 'admin';
+
+  // Удалено избыточное логирование
 
   // Применяем фильтр при изменении списка собеседований или фильтра
   useEffect(() => {
@@ -64,6 +57,12 @@ export default function InterviewBoard({
 
   // Обработчик записи на собеседование
   const handleBookInterview = async (interviewId) => {
+    // Проверяем, загружена ли сессия
+    if (status !== 'authenticated') {
+      showError('Необходимо авторизоваться для записи на собеседование');
+      return;
+    }
+
     if (userPoints < 1) {
       showInfo('Для записи на собеседование необходимо минимум 1 балл');
       return;
@@ -123,6 +122,17 @@ export default function InterviewBoard({
   // Группируем отфильтрованные собеседования по дате
   const groupedInterviews = groupInterviewsByDate(filteredInterviews);
 
+  // Добавляем обработку состояния загрузки сессии
+  if (status === 'loading') {
+    return (
+      <div className={styles.boardContainer}>
+        <div className={styles.loadingState}>
+          <p>Загрузка данных сессии...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.boardContainer}>
       <div className={styles.boardHeader}>
@@ -139,14 +149,16 @@ export default function InterviewBoard({
           >
             Все
           </button>
-          <button
-            className={`${styles.filterButton} ${
-              filter === 'my' ? styles.active : ''
-            }`}
-            onClick={() => handleFilterChange('my')}
-          >
-            Мои собеседования
-          </button>
+          {status === 'authenticated' && (
+            <button
+              className={`${styles.filterButton} ${
+                filter === 'my' ? styles.active : ''
+              }`}
+              onClick={() => handleFilterChange('my')}
+            >
+              Мои собеседования
+            </button>
+          )}
 
           {!isArchive ? (
             // Фильтры для актуальных собеседований
@@ -199,13 +211,23 @@ export default function InterviewBoard({
           )}
         </div>
 
-        <button
-          className={styles.refreshButton}
-          onClick={onRefresh}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Обновление...' : 'Обновить'}
-        </button>
+        <div className={styles.actionButtons}>
+          {status === 'authenticated' && isAdmin && (
+            <button
+              className={styles.refreshButton}
+              onClick={() => router.push('/admin')}
+            >
+              Панель администратора
+            </button>
+          )}
+          <button
+            className={styles.refreshButton}
+            onClick={onRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Обновление...' : 'Обновить'}
+          </button>
+        </div>
       </div>
 
       {Object.keys(groupedInterviews).length > 0 ? (
@@ -255,12 +277,18 @@ export default function InterviewBoard({
                 Создайте собеседование или дождитесь, пока другие пользователи
                 создадут собеседования
               </p>
-              <button
-                className={styles.createButton}
-                onClick={() => router.push('/mock-interviews/new')}
-              >
-                Создать собеседование
-              </button>
+              {status === 'authenticated' ? (
+                <button
+                  className={styles.createButton}
+                  onClick={() => router.push('/mock-interviews/new')}
+                >
+                  Создать собеседование
+                </button>
+              ) : (
+                <p className={styles.emptyHint}>
+                  Авторизуйтесь, чтобы создать собеседование
+                </p>
+              )}
             </>
           ) : (
             <p className={styles.emptyHint}>

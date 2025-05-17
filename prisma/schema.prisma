@@ -24,6 +24,8 @@ model User {
   email                String?            @unique
   emailVerified        DateTime?
   image                String?
+  role                 String             @default("user") // Новое поле: "user" или "admin"
+  isBlocked            Boolean            @default(false)  // Новое поле для блокировки пользователей
   accounts             Account[]
   sessions             Session[]
   userProgress         UserProgress[]
@@ -33,6 +35,10 @@ model User {
   violations           UserViolation[]
   pointsTransactions   PointsTransaction[]
   conductedInterviewsCount Int            @default(0)
+  lastLoginAt          DateTime?          // Новое поле для отслеживания последнего входа
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  adminActions         AdminActionLog[]   // Связь с логами административных действий
 }
 
 model Account {
@@ -124,6 +130,33 @@ model InterviewFeedback {
   isAccepted       Boolean       @default(false)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+}
+
+// Модель для логирования административных действий
+model AdminActionLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  admin       User     @relation(fields: [adminId], references: [id])
+  action      String   // Тип действия: "block_user", "edit_interview", "delete_interview", и т.д.
+  entityType  String   // Тип сущности: "user", "interview", "feedback", и т.д.
+  entityId    String   // ID сущности, над которой выполнено действие
+  details     Json?    // Дополнительные детали действия
+  createdAt   DateTime @default(now())
+}
+
+// Модель для хранения системной статистики
+model SystemStatistics {
+  id                    String   @id @default(cuid())
+  date                  DateTime @unique
+  totalUsers            Int      @default(0)
+  newUsers              Int      @default(0)
+  totalInterviews       Int      @default(0)
+  completedInterviews   Int      @default(0)
+  cancelledInterviews   Int      @default(0)
+  noShowInterviews      Int      @default(0)
+  averageTechnicalScore Float    @default(0)
+  totalPointsIssued     Int      @default(0)
+  totalPointsSpent      Int      @default(0)
 }
 
 // Модель для отслеживания нарушений пользователей

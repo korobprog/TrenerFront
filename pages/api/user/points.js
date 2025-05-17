@@ -1,10 +1,26 @@
 import { getSession } from 'next-auth/react';
-import prisma from '../../../lib/prisma';
+import prisma, { withPrisma } from '../../../lib/prisma';
 
 export default async function handler(req, res) {
+  // Добавляем детальные логи для отладки запроса
+  console.log('API user/points: Детали запроса', {
+    method: req.method,
+    query: JSON.stringify(req.query),
+    cookies: req.headers.cookie,
+  });
+
   const session = await getSession({ req });
 
+  // Добавляем детальные логи для отладки сессии
+  console.log('API user/points: Детали сессии', {
+    id: session?.user?.id,
+    email: session?.user?.email,
+    role: session?.user?.role,
+    timestamp: session?.timestamp,
+  });
+
   if (!session) {
+    console.log('API user/points: Сессия отсутствует, возвращаем 401');
     return res.status(401).json({ message: 'Необходима авторизация' });
   }
 
@@ -21,8 +37,10 @@ export default async function handler(req, res) {
     );
 
     // Проверяем, есть ли у пользователя запись о баллах
-    let userPoints = await prisma.userPoints.findUnique({
-      where: { userId: session.user.id },
+    let userPoints = await withPrisma(async (prisma) => {
+      return await prisma.userPoints.findUnique({
+        where: { userId: session.user.id },
+      });
     });
 
     console.log(
@@ -41,11 +59,13 @@ export default async function handler(req, res) {
     if (!userPoints) {
       console.log('Создаем новую запись с 1 баллом');
       try {
-        userPoints = await prisma.userPoints.create({
-          data: {
-            userId: session.user.id,
-            points: 1,
-          },
+        userPoints = await withPrisma(async (prisma) => {
+          return await prisma.userPoints.create({
+            data: {
+              userId: session.user.id,
+              points: 1,
+            },
+          });
         });
         console.log(
           'Запись успешно создана:',
@@ -60,11 +80,13 @@ export default async function handler(req, res) {
     else if (userPoints.points === 0) {
       console.log('Обновляем баллы с 0 до 1');
       try {
-        userPoints = await prisma.userPoints.update({
-          where: { userId: session.user.id },
-          data: {
-            points: 1,
-          },
+        userPoints = await withPrisma(async (prisma) => {
+          return await prisma.userPoints.update({
+            where: { userId: session.user.id },
+            data: {
+              points: 1,
+            },
+          });
         });
         console.log(
           'Запись успешно обновлена:',

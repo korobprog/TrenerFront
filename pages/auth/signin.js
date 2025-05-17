@@ -7,10 +7,7 @@ export default function SignIn({ providers }) {
   const router = useRouter();
   const { error } = router.query;
 
-  // Добавляем логирование для отладки
-  console.log('SignIn: Страница входа загружена');
-  console.log('SignIn: Доступные провайдеры:', providers);
-  console.log('SignIn: Ошибка из query:', error);
+  // Удалено избыточное логирование
 
   // Функция для отображения сообщения об ошибке
   const getErrorMessage = (error) => {
@@ -60,15 +57,8 @@ export default function SignIn({ providers }) {
 }
 
 export async function getServerSideProps(context) {
-  console.log('SignIn getServerSideProps: Получение провайдеров');
+  // Удалено избыточное логирование
   const providers = await getProviders();
-  console.log('SignIn getServerSideProps: Полученные провайдеры:', providers);
-
-  // Проверяем заголовки запроса
-  console.log(
-    'SignIn getServerSideProps: Заголовки запроса:',
-    context.req.headers
-  );
 
   return {
     props: { providers },

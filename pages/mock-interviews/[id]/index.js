@@ -31,7 +31,6 @@ export default function InterviewDetails() {
 
       const data = await response.json();
       setInterview(data);
-      showSuccess('Информация о собеседовании успешно загружена');
     } catch (err) {
       showError(err.message);
     } finally {

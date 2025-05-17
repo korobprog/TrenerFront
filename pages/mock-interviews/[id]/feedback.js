@@ -31,7 +31,6 @@ export default function LeaveFeedback() {
 
       const data = await response.json();
       setInterview(data);
-      showSuccess('Информация о собеседовании успешно загружена');
 
       // Проверяем, является ли пользователь интервьюером
       if (data.interviewerId !== session.user.id) {

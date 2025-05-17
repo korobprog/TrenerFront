@@ -45,6 +45,11 @@
   border-color: var(--primary-color, #0070f3);
 }
 
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .refreshButton {
   padding: 0.5rem 1rem;
   border-radius: var(--border-radius, 8px);
@@ -144,6 +149,24 @@
   color: #666;
 }
 
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem 0;
+  min-height: 200px;
+}
+
+.loadingState p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .boardHeader {
     flex-direction: column;
@@ -155,6 +178,12 @@
     overflow-x: auto;
     padding-bottom: 0.5rem;
     margin-bottom: 0.5rem;
+  }
+
+  .actionButtons {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
   }
 
   .interviewsGrid {
