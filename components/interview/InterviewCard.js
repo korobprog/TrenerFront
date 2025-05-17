@@ -18,7 +18,7 @@ export default function InterviewCard({
   onBookInterview,
 }) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [showNoShowModal, setShowNoShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showSuccess, showError } = useNotification();
@@ -33,11 +33,13 @@ export default function InterviewCard({
     });
   };
 
-  // Проверка, является ли текущий пользователь интервьюером
-  const isInterviewer = session?.user?.id === interview.interviewerId;
+  // Проверка, является ли текущий пользователь интервьюером (только если сессия загружена)
+  const isInterviewer =
+    status === 'authenticated' && session?.user?.id === interview.interviewerId;
 
-  // Проверка, является ли текущий пользователь отвечающим
-  const isInterviewee = session?.user?.id === interview.intervieweeId;
+  // Проверка, является ли текущий пользователь отвечающим (только если сессия загружена)
+  const isInterviewee =
+    status === 'authenticated' && session?.user?.id === interview.intervieweeId;
 
   // Проверка, прошло ли запланированное время собеседования
   const isInterviewTimePassed = new Date() > new Date(interview.scheduledTime);
@@ -90,6 +92,19 @@ export default function InterviewCard({
       setShowNoShowModal(false);
     }
   };
+
+  // Добавляем обработку состояния загрузки сессии
+  if (status === 'loading') {
+    return (
+      <div
+        className={`${styles.card} ${styles[interview.status]} ${
+          styles.loading
+        }`}
+      >
+        <div className={styles.loadingState}>Загрузка...</div>
+      </div>
+    );
+  }
 
   return (
     <div

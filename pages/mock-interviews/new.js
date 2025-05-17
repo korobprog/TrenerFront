@@ -26,7 +26,9 @@ export default function CreateInterview() {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState(1); // 1: выбор времени, 2: подтверждение
+  const [step, setStep] = useState(1); // 1: выбор времени, 2: подтверждение, 3: ручной ввод ссылки
+  const [manualMeetingLink, setManualMeetingLink] = useState('');
+  const [autoLinkError, setAutoLinkError] = useState('');
 
   // Получаем текущую дату в формате YYYY-MM-DD для минимальной даты в календаре
   const today = new Date().toISOString().split('T')[0];
@@ -62,6 +64,19 @@ export default function CreateInterview() {
   // Переход к предыдущему шагу
   const handlePrevStep = () => {
     setStep(step - 1);
+  };
+
+  // Валидация ссылки на Google Meet
+  const validateMeetingLink = (link) => {
+    if (!link) return false;
+
+    // Простая проверка на наличие meet.google.com в ссылке
+    return link.includes('meet.google.com');
+  };
+
+  // Обработчик изменения ручной ссылки
+  const handleManualLinkChange = (e) => {
+    setManualMeetingLink(e.target.value);
   };
 
   // Отправка формы
@@ -103,6 +118,14 @@ export default function CreateInterview() {
       return;
     }
 
+    // Если мы на шаге ручного ввода ссылки, проверяем её валидность
+    if (step === 3) {
+      if (!validateMeetingLink(manualMeetingLink)) {
+        showError('Пожалуйста, введите корректную ссылку на Google Meet');
+        return;
+      }
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -111,24 +134,45 @@ export default function CreateInterview() {
       const scheduledDateTime = new Date(dateTimeString).toISOString();
       console.log('Дата и время собеседования:', scheduledDateTime);
 
-      console.log('Отправляем POST-запрос на /api/mock-interviews');
+      // Подготавливаем данные для отправки
+      const requestData = {
+        scheduledTime: scheduledDateTime,
+      };
+
+      // Если есть ручная ссылка, добавляем её
+      if (step === 3 && manualMeetingLink) {
+        requestData.manualMeetingLink = manualMeetingLink;
+      }
+
+      console.log(
+        'Отправляем POST-запрос на /api/mock-interviews с данными:',
+        requestData
+      );
       const response = await fetch('/api/mock-interviews', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          scheduledTime: scheduledDateTime,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       console.log('Получен ответ:', response.status);
+      const responseData = await response.json();
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Ошибка при создании собеседования:', errorData);
+        console.error('Ошибка при создании собеседования:', responseData);
+
+        // Если сервер запрашивает ручной ввод ссылки
+        if (responseData.needManualLink) {
+          setAutoLinkError(
+            responseData.message || 'Не удалось автоматически создать ссылку'
+          );
+          setStep(3); // Переходим на шаг ручного ввода ссылки
+          return;
+        }
+
         throw new Error(
-          errorData.message || 'Не удалось создать собеседование'
+          responseData.message || 'Не удалось создать собеседование'
         );
       }
 
@@ -165,6 +209,10 @@ export default function CreateInterview() {
             <div className={styles.stepLine}></div>
             <div className={`${styles.step} ${step >= 2 ? styles.active : ''}`}>
               2
+            </div>
+            <div className={styles.stepLine}></div>
+            <div className={`${styles.step} ${step >= 3 ? styles.active : ''}`}>
+              3
             </div>
           </div>
 
@@ -237,6 +285,73 @@ export default function CreateInterview() {
                     type="submit"
                     className={styles.submitButton}
                     disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Создание...' : 'Создать собеседование'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className={styles.formStep}>
+                <h2>Ручной ввод ссылки</h2>
+                <div className={styles.manualLinkContainer}>
+                  <p className={styles.errorMessage}>
+                    {autoLinkError ||
+                      'Не удалось автоматически создать ссылку на Google Meet. Пожалуйста, введите ссылку вручную.'}
+                  </p>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="manualMeetingLink" className={styles.label}>
+                      Ссылка на Google Meet:
+                    </label>
+                    <input
+                      type="text"
+                      id="manualMeetingLink"
+                      className={styles.input}
+                      value={manualMeetingLink}
+                      onChange={handleManualLinkChange}
+                      placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                      required
+                    />
+                    <p className={styles.hint}>
+                      Ссылка должна содержать "meet.google.com"
+                    </p>
+                  </div>
+
+                  <div className={styles.confirmationDetails}>
+                    <div className={styles.confirmationItem}>
+                      <span className={styles.confirmationLabel}>Дата:</span>
+                      <span className={styles.confirmationValue}>
+                        {new Date(scheduledDate).toLocaleDateString('ru-RU', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <div className={styles.confirmationItem}>
+                      <span className={styles.confirmationLabel}>Время:</span>
+                      <span className={styles.confirmationValue}>
+                        {scheduledTime}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.buttonGroup}>
+                  <button
+                    type="button"
+                    className={styles.backButton}
+                    onClick={handlePrevStep}
+                  >
+                    Назад
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.submitButton}
+                    disabled={
+                      isSubmitting || !validateMeetingLink(manualMeetingLink)
+                    }
                   >
                     {isSubmitting ? 'Создание...' : 'Создать собеседование'}
                   </button>

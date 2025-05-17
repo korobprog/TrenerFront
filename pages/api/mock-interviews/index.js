@@ -1,20 +1,31 @@
-import { unstable_getServerSession, getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import prisma from '../../../lib/prisma';
+import prisma, { withPrisma } from '../../../lib/prisma';
 import { createCalendarEvent } from '../../../lib/utils/googleCalendar';
 
 export default async function handler(req, res) {
-  console.log('API: Получен запрос на создание/получение собеседований');
-  console.log('API: Метод запроса:', req.method);
-  console.log('API: Тело запроса:', req.body);
+  // Добавляем детальные логи для отладки запроса
+  console.log('API mock-interviews: Детали запроса', {
+    method: req.method,
+    query: JSON.stringify(req.query),
+    body: req.body,
+    cookies: req.headers.cookie,
+  });
 
   // Проверяем заголовки запроса для отладки
   console.log('API: Заголовки запроса:', req.headers);
 
   // Добавляем логи для отладки
-  console.log('API: Пробуем получить сессию через unstable_getServerSession');
-  const session = await unstable_getServerSession(req, res, authOptions);
-  console.log('API: Сессия пользователя (unstable_getServerSession):', session);
+  console.log('API: Пробуем получить сессию через getServerSession');
+  const session = await getServerSession(req, res, authOptions);
+
+  // Добавляем детальные логи для отладки сессии
+  console.log('API mock-interviews: Детали сессии', {
+    id: session?.user?.id,
+    email: session?.user?.email,
+    role: session?.user?.role,
+    timestamp: session?.timestamp,
+  });
 
   // Пробуем также получить сессию через getServerSession для сравнения
   console.log('API: Пробуем получить сессию через getServerSession');
@@ -59,22 +70,24 @@ export default async function handler(req, res) {
       }
 
       // Проверим, есть ли собеседования, на которые записался текущий пользователь
-      const bookedInterviews = await prisma.mockInterview.findMany({
-        where: {
-          intervieweeId: session.user.id,
-          status: 'booked',
-          ...statusFilter,
-        },
-        include: {
-          interviewer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
+      const bookedInterviews = await withPrisma(async (prisma) => {
+        return await prisma.mockInterview.findMany({
+          where: {
+            intervieweeId: session.user.id,
+            status: 'booked',
+            ...statusFilter,
+          },
+          include: {
+            interviewer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
             },
           },
-        },
+        });
       });
 
       console.log(
@@ -88,21 +101,23 @@ export default async function handler(req, res) {
       );
 
       // Сначала получим все собеседования, созданные текущим пользователем
-      const userCreatedInterviews = await prisma.mockInterview.findMany({
-        where: {
-          interviewerId: session.user.id,
-          ...statusFilter,
-        },
-        include: {
-          interviewer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
+      const userCreatedInterviews = await withPrisma(async (prisma) => {
+        return await prisma.mockInterview.findMany({
+          where: {
+            interviewerId: session.user.id,
+            ...statusFilter,
+          },
+          include: {
+            interviewer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
             },
           },
-        },
+        });
       });
 
       console.log(
@@ -120,31 +135,33 @@ export default async function handler(req, res) {
       );
 
       // Получаем собеседования других пользователей с учетом фильтра статуса
-      const otherInterviews = await prisma.mockInterview.findMany({
-        where: {
-          // Если фильтр не указан или активные собеседования, то показываем только pending
-          // Иначе используем общий фильтр статуса
-          ...(status === 'active' || !status
-            ? { status: 'pending' }
-            : statusFilter),
-          // Получаем собеседования, созданные другими пользователями
-          interviewerId: {
-            not: session.user.id,
-          },
-        },
-        include: {
-          interviewer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
+      const otherInterviews = await withPrisma(async (prisma) => {
+        return await prisma.mockInterview.findMany({
+          where: {
+            // Если фильтр не указан или активные собеседования, то показываем только pending
+            // Иначе используем общий фильтр статуса
+            ...(status === 'active' || !status
+              ? { status: 'pending' }
+              : statusFilter),
+            // Получаем собеседования, созданные другими пользователями
+            interviewerId: {
+              not: session.user.id,
             },
           },
-        },
-        orderBy: {
-          scheduledTime: 'asc',
-        },
+          include: {
+            interviewer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            scheduledTime: 'asc',
+          },
+        });
       });
 
       console.log(
@@ -211,7 +228,7 @@ export default async function handler(req, res) {
 
   // Обработка POST запроса - создание нового собеседования
   if (req.method === 'POST') {
-    const { scheduledTime } = req.body;
+    const { scheduledTime, manualMeetingLink } = req.body;
 
     // Проверка наличия обязательных полей
     if (!scheduledTime) {
@@ -241,35 +258,61 @@ export default async function handler(req, res) {
         scheduledTime: new Date(scheduledTime),
       };
 
-      // Создаем событие в Google Calendar с автоматическим созданием ссылки на Google Meet
-      console.log('API: Создание события в Google Calendar');
-      console.log('API: Данные интервьюера:', interviewer);
-      console.log('API: Данные интервьюируемого:', interviewee);
-      console.log('API: Данные собеседования:', interviewData);
+      let meetingLink = '';
+      let calendarEventId = null;
 
-      const calendarResult = await createCalendarEvent(
-        interviewer,
-        interviewee,
-        interviewData
-      );
+      // Если предоставлена ручная ссылка, используем её
+      if (manualMeetingLink) {
+        console.log(
+          'API: Использование ручной ссылки на Google Meet:',
+          manualMeetingLink
+        );
+        meetingLink = manualMeetingLink;
+      } else {
+        // Иначе создаем событие в Google Calendar с автоматическим созданием ссылки на Google Meet
+        console.log('API: Создание события в Google Calendar');
+        console.log('API: Данные интервьюера:', interviewer);
+        console.log('API: Данные интервьюируемого:', interviewee);
+        console.log('API: Данные собеседования:', interviewData);
 
-      console.log('API: Результат создания события:', calendarResult);
-      console.log(
-        'API: Получена ссылка на Google Meet:',
-        calendarResult.meetingLink
-      );
+        const calendarResult = await createCalendarEvent(
+          interviewer,
+          interviewee,
+          interviewData
+        );
 
-      // Проверяем успешность создания события и наличие ссылки на Google Meet
-      if (!calendarResult.success) {
-        throw new Error('Не удалось создать событие в Google Calendar');
-      }
+        console.log('API: Результат создания события:', calendarResult);
 
-      // Получаем ссылку на Google Meet из результата
-      const meetingLink = calendarResult.meetingLink || '';
+        // Если создание события не удалось и все попытки исчерпаны
+        if (!calendarResult.success) {
+          // Если это был запрос без ручной ссылки, возвращаем ошибку с флагом для фронтенда
+          if (!manualMeetingLink) {
+            console.error(
+              'API: Не удалось создать событие в Google Calendar:',
+              calendarResult.error
+            );
+            return res.status(400).json({
+              message: 'Не удалось автоматически создать ссылку на Google Meet',
+              error: calendarResult.error,
+              needManualLink: true, // Флаг для фронтенда, что нужен ручной ввод ссылки
+            });
+          }
+        } else {
+          // Получаем ссылку на Google Meet из результата
+          meetingLink = calendarResult.meetingLink || '';
+          calendarEventId = calendarResult.eventId || null;
 
-      // Если не удалось получить ссылку на Google Meet, возвращаем ошибку
-      if (!meetingLink) {
-        console.warn('API: Не удалось получить ссылку на Google Meet');
+          console.log('API: Получена ссылка на Google Meet:', meetingLink);
+
+          // Если не удалось получить ссылку на Google Meet, возвращаем ошибку
+          if (!meetingLink) {
+            console.warn('API: Не удалось получить ссылку на Google Meet');
+            return res.status(400).json({
+              message: 'Не удалось получить ссылку на Google Meet',
+              needManualLink: true, // Флаг для фронтенда, что нужен ручной ввод ссылки
+            });
+          }
+        }
       }
 
       // Логируем данные перед созданием собеседования
@@ -278,29 +321,33 @@ export default async function handler(req, res) {
         scheduledTime: new Date(scheduledTime),
         meetingLink: meetingLink,
         status: 'pending',
-        calendarEventId: calendarResult.eventId || null,
+        calendarEventId: calendarEventId,
+        isManualLink: !!manualMeetingLink,
       });
 
       // Проверяем схему модели MockInterview
       console.log('API: Проверка схемы модели MockInterview');
 
       // Создаем новое собеседование с полученной ссылкой на Google Meet
-      const newInterview = await prisma.mockInterview.create({
-        data: {
-          interviewer: {
-            connect: { id: session.user.id },
+      const newInterview = await withPrisma(async (prisma) => {
+        return await prisma.mockInterview.create({
+          data: {
+            interviewer: {
+              connect: { id: session.user.id },
+            },
+            scheduledTime: new Date(scheduledTime),
+            meetingLink: meetingLink,
+            status: 'pending',
+            // Сохраняем ID события в Google Calendar для возможности обновления в будущем
+            calendarEventId: calendarEventId,
           },
-          scheduledTime: new Date(scheduledTime),
-          meetingLink: meetingLink,
-          status: 'pending',
-          // Сохраняем ID события в Google Calendar для возможности обновления в будущем
-          calendarEventId: calendarResult.eventId || null,
-        },
+        });
       });
 
       return res.status(201).json({
         ...newInterview,
         meetingLink: meetingLink,
+        isManualLink: !!manualMeetingLink,
       });
     } catch (error) {
       console.error('Ошибка при создании собеседования:', error);

@@ -62,6 +62,10 @@ export default function Header() {
         </nav>
 
         <div className={styles.userSection}>
+          {status === 'loading' && (
+            <div className={styles.loadingState}>Загрузка...</div>
+          )}
+
           {status === 'authenticated' && (
             <>
               <Link href="/user/points-history" className={styles.pointsLink}>

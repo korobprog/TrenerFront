@@ -1,4 +1,4 @@
-import { unstable_getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import prisma from '../../../../lib/prisma';
 import { sendInterviewBookingNotification } from '../../../../lib/utils/email';
@@ -10,8 +10,8 @@ export default async function handler(req, res) {
   console.log('API Book: Параметры запроса:', req.query);
   console.log('API Book: Заголовки запроса:', req.headers);
 
-  // Используем unstable_getServerSession вместо getSession для согласованности
-  const session = await unstable_getServerSession(req, res, authOptions);
+  // Используем getServerSession для получения сессии
+  const session = await getServerSession(req, res, authOptions);
   console.log('API Book: Сессия пользователя:', session);
 
   if (!session) {

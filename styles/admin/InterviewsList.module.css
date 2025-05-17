@@ -1,0 +1,310 @@
+/* Стили для страницы со списком собеседований */
+.interviewsPageContainer {
+  width: 100%;
+  padding: 20px;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.createButton {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.createButton:hover {
+  background-color: #45a049;
+}
+
+/* Стили для компонента фильтрации */
+.filterContainer {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filterForm {
+  width: 100%;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.filterItem {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filterLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.filterInput,
+.filterSelect {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.filterActions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.filterButton {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #2196f3;
+  color: white;
+}
+
+.filterButton:hover {
+  background-color: #0b7dda;
+}
+
+.resetButton {
+  background-color: #f44336;
+  color: white;
+}
+
+.resetButton:hover {
+  background-color: #d32f2f;
+}
+
+/* Стили для компонента списка собеседований */
+.interviewsListContainer {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.paginationWrapper {
+  padding: 16px;
+  border-top: 1px solid #eee;
+}
+
+/* Стили для ячеек таблицы */
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-weight: 500;
+  color: #333;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Стили для пустых значений */
+.emptyValue {
+  font-style: italic;
+  color: #999;
+  font-size: 13px;
+}
+
+/* Стили для меток статуса */
+.statusLabel {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusScheduled {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.statusCompleted {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.statusCancelled {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.statusNoShow {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+/* Стили для информации об отзыве */
+.feedbackInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feedbackScore,
+.feedbackRating {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Стили для кнопок действий */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.actionButton {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.viewButton:hover {
+  background-color: #e0e0e0;
+}
+
+.editButton {
+  background-color: #e3f2fd;
+}
+
+.editButton:hover {
+  background-color: #bbdefb;
+}
+
+.deleteButton {
+  background-color: #ffebee;
+}
+
+.deleteButton:hover {
+  background-color: #ffcdd2;
+}
+
+/* Стили для состояния загрузки */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 768px) {
+  .filterRow {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filterItem {
+    width: 100%;
+  }
+
+  .filterActions {
+    width: 100%;
+    margin-top: 12px;
+    justify-content: space-between;
+  }
+
+  .filterButton {
+    flex: 1;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .createButton {
+    width: 100%;
+  }
+}

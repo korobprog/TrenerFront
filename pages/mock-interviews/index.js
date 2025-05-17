@@ -17,6 +17,14 @@ export default function MockInterviews() {
   const { showSuccess, showError, showInfo } = useNotification();
 
   useEffect(() => {
+    // Добавляем логи для отладки состояния сессии
+    console.log('Client: Состояние сессии', {
+      status,
+      id: session?.user?.id,
+      role: session?.user?.role,
+      timestamp: session?.timestamp,
+    });
+
     if (session) {
       fetchInterviews();
       fetchUserPoints();
@@ -27,8 +35,18 @@ export default function MockInterviews() {
     try {
       setIsLoading(true);
       setError(null);
+
+      // Добавляем лог перед отправкой запроса
+      console.log('Client fetchInterviews: Отправка запроса');
+
       // Используем параметр status=active для получения только актуальных собеседований
       const response = await fetch('/api/mock-interviews?status=active');
+
+      // Добавляем лог после получения ответа
+      console.log('Client fetchInterviews: Получен ответ', {
+        status: response.status,
+        statusText: response.statusText,
+      });
 
       if (!response.ok) {
         throw new Error('Не удалось загрузить собеседования');
@@ -47,6 +65,9 @@ export default function MockInterviews() {
 
   async function fetchUserPoints() {
     try {
+      // Добавляем лог перед отправкой запроса
+      console.log('Client fetchUserPoints: Отправка запроса');
+
       console.log('Запрос баллов пользователя...');
       console.log(
         'Информация о сессии:',
@@ -56,6 +77,7 @@ export default function MockInterviews() {
                 id: session.user.id,
                 name: session.user.name,
                 email: session.user.email,
+                role: session.user.role,
               },
               null,
               2
@@ -64,7 +86,12 @@ export default function MockInterviews() {
       );
 
       const response = await fetch('/api/user/points');
-      console.log('Статус ответа:', response.status, response.statusText);
+
+      // Добавляем лог после получения ответа
+      console.log('Client fetchUserPoints: Получен ответ', {
+        status: response.status,
+        statusText: response.statusText,
+      });
 
       if (!response.ok) {
         throw new Error('Не удалось загрузить баллы пользователя');
