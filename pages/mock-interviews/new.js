@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { useNotification } from '../../contexts/NotificationContext';
 import InterviewCalendar from '../../components/interview/InterviewCalendar';
 import styles from '../../styles/CreateInterview.module.css';
 
@@ -14,6 +15,7 @@ export default function CreateInterview() {
     },
   });
   const router = useRouter();
+  const { showSuccess, showError, showInfo } = useNotification();
 
   // Добавляем расширенное логирование для отладки
   console.log('CreateInterview: Компонент инициализирован');
@@ -24,7 +26,6 @@ export default function CreateInterview() {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
   const [step, setStep] = useState(1); // 1: выбор времени, 2: подтверждение
 
   // Получаем текущую дату в формате YYYY-MM-DD для минимальной даты в календаре
@@ -51,11 +52,10 @@ export default function CreateInterview() {
   // Переход к следующему шагу
   const handleNextStep = () => {
     if (step === 1 && (!scheduledDate || !scheduledTime)) {
-      setError('Пожалуйста, выберите дату и время собеседования');
+      showError('Пожалуйста, выберите дату и время собеседования');
       return;
     }
 
-    setError(null);
     setStep(step + 1);
   };
 
@@ -105,7 +105,6 @@ export default function CreateInterview() {
 
     try {
       setIsSubmitting(true);
-      setError(null);
 
       // Формируем дату и время в формате ISO
       const dateTimeString = `${scheduledDate}T${scheduledTime}:00`;
@@ -133,6 +132,7 @@ export default function CreateInterview() {
         );
       }
 
+      showSuccess('Собеседование успешно создано');
       console.log(
         'Собеседование успешно создано, перенаправляем на страницу со списком собеседований'
       );
@@ -140,7 +140,7 @@ export default function CreateInterview() {
       router.push('/mock-interviews');
     } catch (err) {
       console.error('Ошибка при отправке формы:', err);
-      setError(err.message);
+      showError(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -156,8 +156,6 @@ export default function CreateInterview() {
     <div className={styles.container}>
       <main className={styles.main}>
         <h1 className={styles.title}>Создание мок-собеседования</h1>
-
-        {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.card}>
           <div className={styles.stepIndicator}>

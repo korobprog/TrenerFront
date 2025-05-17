@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   // Обработка POST запроса - создание отзыва
   if (req.method === 'POST') {
-    const { technicalScore, feedback } = req.body;
+    const { technicalScore, feedback, interviewerRating } = req.body;
 
     // Проверка наличия обязательных полей
     if (!technicalScore || !feedback) {
@@ -25,6 +25,13 @@ export default async function handler(req, res) {
     // Проверка валидности оценки (от 1 до 5)
     if (technicalScore < 1 || technicalScore > 5) {
       return res.status(400).json({ message: 'Оценка должна быть от 1 до 5' });
+    }
+
+    // Проверка валидности оценки интервьюера, если она указана
+    if (interviewerRating && (interviewerRating < 1 || interviewerRating > 5)) {
+      return res
+        .status(400)
+        .json({ message: 'Оценка интервьюера должна быть от 1 до 5' });
     }
 
     try {
@@ -47,12 +54,10 @@ export default async function handler(req, res) {
       }
 
       if (interview.status !== 'booked') {
-        return res
-          .status(400)
-          .json({
-            message:
-              'Отзыв можно оставить только для забронированного собеседования',
-          });
+        return res.status(400).json({
+          message:
+            'Отзыв можно оставить только для забронированного собеседования',
+        });
       }
 
       if (interview.interviewFeedback) {
@@ -69,6 +74,7 @@ export default async function handler(req, res) {
           },
           technicalScore,
           feedback,
+          interviewerRating,
           isAccepted: false,
         },
       });
@@ -93,6 +99,19 @@ export default async function handler(req, res) {
   // Обработка PUT запроса - принятие отзыва отвечающим
   if (req.method === 'PUT') {
     try {
+      // Получаем оценку интервьюера из тела запроса
+      const { interviewerRating } = req.body;
+
+      // Проверка валидности оценки интервьюера, если она указана
+      if (
+        interviewerRating &&
+        (interviewerRating < 1 || interviewerRating > 5)
+      ) {
+        return res
+          .status(400)
+          .json({ message: 'Оценка интервьюера должна быть от 1 до 5' });
+      }
+
       // Проверяем, существует ли собеседование и является ли текущий пользователь отвечающим
       const interview = await prisma.mockInterview.findUnique({
         where: { id },
@@ -121,11 +140,38 @@ export default async function handler(req, res) {
 
       // Начинаем транзакцию для обновления отзыва и начисления баллов интервьюеру
       const result = await prisma.$transaction(async (prisma) => {
-        // Обновляем статус отзыва на "принят"
+        // Обновляем статус отзыва на "принят" и добавляем оценку интервьюера, если она указана
         const updatedFeedback = await prisma.interviewFeedback.update({
           where: { mockInterviewId: id },
           data: {
             isAccepted: true,
+            ...(interviewerRating && { interviewerRating }),
+          },
+        });
+
+        // Получаем данные интервьюера
+        const interviewer = await prisma.user.findUnique({
+          where: { id: interview.interviewerId },
+        });
+
+        // Определяем количество баллов в зависимости от оценки
+        let pointsToAward = 1; // По умолчанию 1 балл
+
+        if (interviewerRating) {
+          if (interviewerRating >= 4) {
+            pointsToAward = 2; // За высокую оценку 2 балла
+          } else if (interviewerRating <= 2) {
+            pointsToAward = 0; // За низкую оценку 0 баллов
+          }
+        }
+
+        // Обновляем счетчик проведенных собеседований
+        const updatedInterviewer = await prisma.user.update({
+          where: { id: interview.interviewerId },
+          data: {
+            conductedInterviewsCount: {
+              increment: 1,
+            },
           },
         });
 
@@ -134,31 +180,79 @@ export default async function handler(req, res) {
           where: { userId: interview.interviewerId },
         });
 
-        // Если у интервьюера нет записи о баллах, создаем её с 1 баллом
+        // Если у интервьюера нет записи о баллах, создаем её с начисленными баллами
         if (!interviewerPoints) {
           interviewerPoints = await prisma.userPoints.create({
             data: {
               userId: interview.interviewerId,
-              points: 1,
+              points: pointsToAward,
             },
           });
         } else {
-          // Если запись есть, начисляем 1 балл
+          // Если запись есть, начисляем баллы
           interviewerPoints = await prisma.userPoints.update({
             where: { userId: interview.interviewerId },
             data: {
               points: {
-                increment: 1,
+                increment: pointsToAward,
               },
             },
           });
         }
 
-        return { updatedFeedback, interviewerPoints };
+        // Создаем запись в истории транзакций за проведение собеседования
+        await prisma.pointsTransaction.create({
+          data: {
+            userId: interview.interviewerId,
+            amount: pointsToAward,
+            type: 'feedback',
+            description: `Проведение собеседования (оценка: ${
+              interviewerRating || 'не указана'
+            })`,
+          },
+        });
+
+        // Проверяем, нужно ли начислить бонусные баллы за регулярную активность
+        if (updatedInterviewer.conductedInterviewsCount % 5 === 0) {
+          // За каждые 5 проведенных собеседований начисляем 2 бонусных балла
+          await prisma.userPoints.update({
+            where: { userId: interview.interviewerId },
+            data: {
+              points: {
+                increment: 2,
+              },
+            },
+          });
+
+          // Создаем запись в истории транзакций для бонуса
+          await prisma.pointsTransaction.create({
+            data: {
+              userId: interview.interviewerId,
+              amount: 2,
+              type: 'bonus',
+              description: `Бонус за проведение ${updatedInterviewer.conductedInterviewsCount} собеседований`,
+            },
+          });
+        }
+
+        return {
+          updatedFeedback,
+          interviewerPoints,
+          pointsToAward,
+          bonusAwarded: updatedInterviewer.conductedInterviewsCount % 5 === 0,
+        };
       });
 
+      // Формируем сообщение о результате
+      let message = `Отзыв успешно принят, интервьюеру начислено ${
+        result.pointsToAward
+      } ${result.pointsToAward === 1 ? 'балл' : 'балла'}`;
+      if (result.bonusAwarded) {
+        message += ' и 2 бонусных балла за регулярную активность';
+      }
+
       return res.status(200).json({
-        message: 'Отзыв успешно принят, интервьюеру начислен 1 балл',
+        message,
         feedback: result.updatedFeedback,
       });
     } catch (error) {

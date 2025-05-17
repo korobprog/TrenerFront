@@ -2,16 +2,17 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useNotification } from '../../../contexts/NotificationContext';
 import styles from '../../../styles/InterviewDetails.module.css';
 
 export default function InterviewDetails() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { id } = router.query;
+  const { showSuccess, showError } = useNotification();
 
   const [interview, setInterview] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (session && id) {
@@ -22,7 +23,6 @@ export default function InterviewDetails() {
   async function fetchInterviewDetails() {
     try {
       setIsLoading(true);
-      setError(null);
       const response = await fetch(`/api/mock-interviews/${id}`);
 
       if (!response.ok) {
@@ -31,8 +31,9 @@ export default function InterviewDetails() {
 
       const data = await response.json();
       setInterview(data);
+      showSuccess('Информация о собеседовании успешно загружена');
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +67,6 @@ export default function InterviewDetails() {
     <div className={styles.container}>
       <main className={styles.main}>
         <h1 className={styles.title}>Детали собеседования</h1>
-
-        {error && <div className={styles.error}>{error}</div>}
 
         {isLoading ? (
           <div className={styles.loading}>
@@ -178,10 +177,11 @@ export default function InterviewDetails() {
                                 throw new Error('Не удалось принять отзыв');
                               }
 
+                              showSuccess('Отзыв успешно принят');
                               // Обновляем данные о собеседовании
                               fetchInterviewDetails();
                             } catch (err) {
-                              setError(err.message);
+                              showError(err.message);
                             }
                           }}
                         >
@@ -221,10 +221,8 @@ export default function InterviewDetails() {
         ) : (
           <div className={styles.notFound}>
             <p>Собеседование не найдено</p>
-            <Link href="/mock-interviews">
-              <a className={styles.backLink}>
-                Вернуться к списку собеседований
-              </a>
+            <Link href="/mock-interviews" className={styles.backLink}>
+              Вернуться к списку собеседований
             </Link>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { useNotification } from '../../contexts/NotificationContext';
 import styles from '../../styles/FeedbackForm.module.css';
 
 /**
@@ -11,11 +12,11 @@ import styles from '../../styles/FeedbackForm.module.css';
  */
 export default function FeedbackForm({ interview, onSubmitSuccess }) {
   const router = useRouter();
+  const { showSuccess, showError } = useNotification();
 
   const [technicalScore, setTechnicalScore] = useState(3);
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
 
   // Обработчик изменения технической оценки
   const handleScoreChange = (score) => {
@@ -32,13 +33,12 @@ export default function FeedbackForm({ interview, onSubmitSuccess }) {
     e.preventDefault();
 
     if (!feedback.trim()) {
-      setError('Пожалуйста, напишите отзыв');
+      showError('Пожалуйста, напишите отзыв');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setError(null);
 
       const response = await fetch(
         `/api/mock-interviews/${interview.id}/feedback`,
@@ -59,12 +59,14 @@ export default function FeedbackForm({ interview, onSubmitSuccess }) {
         throw new Error(errorData.message || 'Не удалось оставить отзыв');
       }
 
+      showSuccess('Отзыв успешно отправлен');
+
       // Вызываем функцию успешной отправки
       if (onSubmitSuccess) {
         onSubmitSuccess();
       }
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,8 +91,6 @@ export default function FeedbackForm({ interview, onSubmitSuccess }) {
           })}
         </p>
       </div>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGroup}>

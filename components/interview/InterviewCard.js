@@ -1,5 +1,7 @@
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
 import styles from '../../styles/InterviewCard.module.css';
 
 /**
@@ -17,6 +19,9 @@ export default function InterviewCard({
 }) {
   const router = useRouter();
   const { data: session } = useSession();
+  const [showNoShowModal, setShowNoShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showSuccess, showError } = useNotification();
 
   // Форматирование даты и времени
   const formatDateTime = (dateString) => {
@@ -31,6 +36,12 @@ export default function InterviewCard({
   // Проверка, является ли текущий пользователь интервьюером
   const isInterviewer = session?.user?.id === interview.interviewerId;
 
+  // Проверка, является ли текущий пользователь отвечающим
+  const isInterviewee = session?.user?.id === interview.intervieweeId;
+
+  // Проверка, прошло ли запланированное время собеседования
+  const isInterviewTimePassed = new Date() > new Date(interview.scheduledTime);
+
   // Обработчик клика по карточке для перехода к деталям собеседования
   const handleCardClick = () => {
     router.push(`/mock-interviews/${interview.id}`);
@@ -40,6 +51,44 @@ export default function InterviewCard({
   const handleBookClick = (e) => {
     e.stopPropagation(); // Предотвращаем всплытие события, чтобы не срабатывал handleCardClick
     onBookInterview(interview.id);
+  };
+
+  // Обработчик отметки неявки
+  const handleNoShowClick = (e) => {
+    e.stopPropagation(); // Предотвращаем всплытие события
+    setShowNoShowModal(true);
+  };
+
+  // Обработчик отправки формы отметки неявки
+  const handleNoShowSubmit = async (noShowType) => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(
+        `/api/mock-interviews/${interview.id}/no-show`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ noShowType }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Ошибка при отметке неявки');
+      }
+
+      // Обновляем страницу после успешной отметки неявки
+      showSuccess('Неявка успешно отмечена');
+      router.reload();
+    } catch (error) {
+      console.error('Ошибка при отметке неявки:', error);
+      showError(error.message || 'Произошла ошибка при отметке неявки');
+    } finally {
+      setIsSubmitting(false);
+      setShowNoShowModal(false);
+    }
   };
 
   return (
@@ -59,6 +108,7 @@ export default function InterviewCard({
           {interview.status === 'booked' && 'Забронировано'}
           {interview.status === 'completed' && 'Завершено'}
           {interview.status === 'cancelled' && 'Отменено'}
+          {interview.status === 'no_show' && 'Неявка'}
         </div>
       </div>
 
@@ -120,10 +170,48 @@ export default function InterviewCard({
             </button>
           )}
 
+        {/* Кнопка отметки неявки - показывается только для забронированных собеседований после запланированного времени */}
+        {interview.status === 'booked' &&
+          isInterviewTimePassed &&
+          (isInterviewer || isInterviewee) && (
+            <button className={styles.noShowButton} onClick={handleNoShowClick}>
+              Отметить неявку
+            </button>
+          )}
+
         <button className={styles.detailsButton} onClick={handleCardClick}>
           Подробнее
         </button>
       </div>
+
+      {/* Модальное окно для отметки неявки */}
+      {showNoShowModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowNoShowModal(false)}
+        >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3>Кто не явился на собеседование?</h3>
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => handleNoShowSubmit('interviewer')}
+                disabled={isSubmitting || isInterviewer} // Интервьюер не может отметить свою неявку
+                className={isInterviewer ? styles.disabledButton : ''}
+              >
+                Интервьюер не явился
+              </button>
+              <button
+                onClick={() => handleNoShowSubmit('interviewee')}
+                disabled={isSubmitting || isInterviewee} // Отвечающий не может отметить свою неявку
+                className={isInterviewee ? styles.disabledButton : ''}
+              >
+                Отвечающий не явился
+              </button>
+              <button onClick={() => setShowNoShowModal(false)}>Отмена</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

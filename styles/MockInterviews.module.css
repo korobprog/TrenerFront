@@ -132,6 +132,9 @@
   border: none;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
 }
 
 .backButton:hover {
@@ -153,6 +156,9 @@
   border: none;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
 }
 
 .archiveButton:hover {

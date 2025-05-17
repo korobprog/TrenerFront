@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useNotification } from '../../contexts/NotificationContext';
 import AuthButton from '../../components/auth/AuthButton';
 import InterviewBoard from '../../components/interview/InterviewBoard';
 import styles from '../../styles/MockInterviews.module.css';
@@ -13,6 +14,7 @@ export default function MockInterviews() {
   const [userPoints, setUserPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { showSuccess, showError, showInfo } = useNotification();
 
   useEffect(() => {
     if (session) {
@@ -34,8 +36,10 @@ export default function MockInterviews() {
 
       const data = await response.json();
       setInterviews(data);
+      // Убрано уведомление об успешной загрузке, чтобы не показывать его слишком часто
     } catch (err) {
       setError(err.message);
+      showError('Не удалось загрузить собеседования: ' + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -73,6 +77,7 @@ export default function MockInterviews() {
     } catch (err) {
       console.error('Ошибка при загрузке баллов:', err);
       console.error('Детали ошибки:', err.stack);
+      showError('Не удалось загрузить баллы пользователя');
     }
   }
 
@@ -82,7 +87,7 @@ export default function MockInterviews() {
 
   function handleBookInterview(interviewId) {
     if (userPoints < 1) {
-      alert('Для записи на собеседование необходимо минимум 1 балл');
+      showInfo('Для записи на собеседование необходимо минимум 1 балл');
       return;
     }
 
@@ -116,10 +121,11 @@ export default function MockInterviews() {
               >
                 Создать собеседование
               </button>
-              <Link href="/mock-interviews/archive">
-                <button className={styles.archiveButton || styles.backButton}>
-                  Архив собеседований
-                </button>
+              <Link
+                href="/mock-interviews/archive"
+                className={styles.archiveButton || styles.backButton}
+              >
+                Архив собеседований
               </Link>
               <button
                 className={styles.backButton}
