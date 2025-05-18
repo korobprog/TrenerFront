@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import styles from '../../styles/admin/AdminSidebar.module.css';
 
 /**
@@ -8,6 +9,8 @@ import styles from '../../styles/admin/AdminSidebar.module.css';
  */
 export default function AdminSidebar() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === 'superadmin';
 
   // Функция для определения активного пункта меню
   const isActive = (path) => {
@@ -43,6 +46,20 @@ export default function AdminSidebar() {
     },
   ];
 
+  // Пункты меню для супер-администратора
+  const superAdminItems = [
+    {
+      name: 'Администраторы',
+      path: '/admin/superadmin/admins',
+      icon: '👮',
+    },
+  ];
+
+  // Объединяем пункты меню в зависимости от роли пользователя
+  const allMenuItems = isSuperAdmin
+    ? [...menuItems, ...superAdminItems]
+    : menuItems;
+
   return (
     <aside className={styles.adminSidebar}>
       <div className={styles.sidebarHeader}>
@@ -55,7 +72,7 @@ export default function AdminSidebar() {
       </div>
       <nav className={styles.sidebarNav}>
         <ul className={styles.navList}>
-          {menuItems.map((item) => (
+          {allMenuItems.map((item) => (
             <li key={item.path} className={styles.navItem}>
               <Link
                 href={item.path}
@@ -71,6 +88,9 @@ export default function AdminSidebar() {
         </ul>
       </nav>
       <div className={styles.sidebarFooter}>
+        {isSuperAdmin && (
+          <div className={styles.superAdminBadge}>Супер-администратор</div>
+        )}
         <div className={styles.versionInfo}>v1.0.0</div>
       </div>
     </aside>

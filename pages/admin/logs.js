@@ -19,7 +19,7 @@ export default function AdminLogsPage() {
   useEffect(() => {
     if (status === 'authenticated') {
       // Проверяем роль пользователя
-      if (session.user.role !== 'admin') {
+      if (session.user.role !== 'admin' && session.user.role !== 'superadmin') {
         showError('У вас нет прав для доступа к этой странице');
         router.push('/');
       }

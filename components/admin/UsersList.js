@@ -13,6 +13,7 @@ import styles from '../../styles/admin/UsersList.module.css';
  * @param {Function} props.onPageChange - Функция, вызываемая при изменении страницы
  * @param {Function} props.onPageSizeChange - Функция, вызываемая при изменении размера страницы
  * @param {Function} props.onSortChange - Функция, вызываемая при изменении сортировки
+ * @param {Function} props.onRefresh - Функция для обновления списка пользователей
  * @returns {JSX.Element} Компонент списка пользователей
  */
 export default function UsersList({
@@ -22,6 +23,7 @@ export default function UsersList({
   onPageChange,
   onPageSizeChange,
   onSortChange,
+  onRefresh,
 }) {
   const router = useRouter();
 
@@ -185,8 +187,13 @@ export default function UsersList({
         throw new Error('Ошибка при обновлении статуса пользователя');
       }
 
-      // Обновляем страницу для отображения изменений
-      router.reload();
+      // Обновляем данные для отображения изменений
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        // Если функция обновления не передана, используем SPA-навигацию без перезагрузки
+        router.push(router.asPath, undefined, { shallow: true });
+      }
     } catch (error) {
       console.error('Ошибка при блокировке/разблокировке пользователя:', error);
       alert('Произошла ошибка при обновлении статуса пользователя');

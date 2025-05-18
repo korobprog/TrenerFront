@@ -260,16 +260,35 @@ export default async function handler(req, res) {
 
       let meetingLink = '';
       let calendarEventId = null;
+      // Флаг, указывающий, нужно ли создавать событие в Google Calendar
+      let needCreateCalendarEvent = false;
 
-      // Если предоставлена ручная ссылка, используем её
+      // Если предоставлена ручная ссылка, проверяем, не является ли она заглушкой
       if (manualMeetingLink) {
         console.log(
           'API: Использование ручной ссылки на Google Meet:',
           manualMeetingLink
         );
-        meetingLink = manualMeetingLink;
+
+        // Проверяем, не является ли ссылка заглушкой test-mock-link
+        if (manualMeetingLink.includes('test-mock-link')) {
+          console.log(
+            'API: Обнаружена заглушка test-mock-link, создаем реальную ссылку'
+          );
+          // Будем создавать реальную ссылку через Google Calendar API
+          needCreateCalendarEvent = true;
+        } else {
+          // Если это не заглушка, используем предоставленную ссылку
+          meetingLink = manualMeetingLink;
+        }
       } else {
-        // Иначе создаем событие в Google Calendar с автоматическим созданием ссылки на Google Meet
+        // Если ручная ссылка не предоставлена, создаем событие в Google Calendar
+        needCreateCalendarEvent = true;
+      }
+
+      // Если нужно создать событие в Google Calendar
+      if (needCreateCalendarEvent) {
+        // Создаем событие в Google Calendar с автоматическим созданием ссылки на Google Meet
         console.log('API: Создание события в Google Calendar');
         console.log('API: Данные интервьюера:', interviewer);
         console.log('API: Данные интервьюируемого:', interviewee);

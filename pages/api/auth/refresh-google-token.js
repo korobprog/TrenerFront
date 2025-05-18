@@ -15,12 +15,28 @@ export default async function handler(req, res) {
     // Обновляем токен
     const tokens = await refreshTokenIfNeeded();
 
+    // Проверяем корректность значения expiry_date
+    let expiryDateISO;
+    let expiresInSeconds;
+
+    try {
+      // Пытаемся создать объект Date и получить ISO строку
+      expiryDateISO = new Date(parseInt(tokens.expiry_date)).toISOString();
+      expiresInSeconds = Math.floor((tokens.expiry_date - Date.now()) / 1000);
+    } catch (error) {
+      // В случае ошибки используем текущее время + 1 час
+      const defaultExpiryTime = Date.now() + 3600 * 1000;
+      expiryDateISO = new Date(defaultExpiryTime).toISOString();
+      expiresInSeconds = 3600;
+      console.log('Использовано значение по умолчанию для expiry_date');
+    }
+
     // Возвращаем успешный ответ
     return res.status(200).json({
       success: true,
       message: 'Токены успешно обновлены',
-      expiry_date: new Date(tokens.expiry_date).toISOString(),
-      expires_in_seconds: Math.floor((tokens.expiry_date - Date.now()) / 1000),
+      expiry_date: expiryDateISO,
+      expires_in_seconds: expiresInSeconds,
     });
   } catch (error) {
     console.error('Ошибка при обновлении токенов:', error);
