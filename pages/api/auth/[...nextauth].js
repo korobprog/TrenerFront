@@ -5,6 +5,22 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '../../../lib/prisma';
 import bcrypt from 'bcrypt';
 
+// Добавляем логи для отладки
+console.log('NextAuth: Инициализация с параметрами:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
+console.log('Все переменные окружения:');
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+console.log('NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET);
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
+console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET);
+console.log('GMAIL_USER_ID:', process.env.GMAIL_USER_ID);
+console.log(
+  'Текущий URL запроса:',
+  typeof window !== 'undefined' ? window.location.href : 'Серверный рендеринг'
+);
+
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -91,6 +107,20 @@ export const authOptions = {
       return session;
     },
     async signIn({ user, account, profile, email, credentials }) {
+      // Для входа через Google логируем информацию о токенах
+      if (account?.provider === 'google') {
+        console.log('NextAuth signIn: Получены токены Google:');
+        console.log(
+          '- refresh_token:',
+          account.refresh_token ? 'Присутствует' : 'Отсутствует'
+        );
+        console.log(
+          '- access_token:',
+          account.access_token ? 'Присутствует' : 'Отсутствует'
+        );
+        console.log('- expires_at:', account.expires_at);
+      }
+
       // Для входа через credentials проверяем роль
       if (account?.provider === 'credentials') {
         return user.role === 'superadmin';
@@ -103,7 +133,7 @@ export const authOptions = {
   },
   pages: {
     signIn: '/auth/signin', // Кастомная страница входа
-    // error: '/auth/error', // Опционально: страница ошибки
+    error: '/auth/error', // Страница ошибки
     // signOut: '/auth/signout', // Опционально: страница выхода
   },
   session: {

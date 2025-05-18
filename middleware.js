@@ -84,7 +84,12 @@ function isTokenExpiringSoon() {
 async function refreshTokens() {
   try {
     // Используем абсолютный URL для запроса к API
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    console.log('Middleware: process.env.NODE_ENV:', process.env.NODE_ENV);
+    const baseUrl =
+      process.env.NODE_ENV === 'production'
+        ? process.env.NEXTAUTH_URL
+        : 'http://localhost:3000';
+    console.log('Middleware: baseUrl:', baseUrl);
     console.log(
       'Middleware: Отправка запроса на обновление токенов:',
       `${baseUrl}/api/auth/refresh-google-token`
@@ -118,6 +123,19 @@ async function refreshTokens() {
  * @param {Request} request - HTTP запрос
  */
 export async function middleware(request) {
+  // Добавляем логи для отладки URL
+  console.log('Middleware: Обработка запроса URL:', request.url);
+
+  try {
+    const { pathname } = new URL(request.url);
+    console.log('Middleware: Извлеченный pathname:', pathname);
+  } catch (error) {
+    console.error('Middleware: Ошибка при парсинге URL:', error.message);
+    console.error('Middleware: Проблемный URL:', request.url);
+    console.error('Middleware: Стек ошибки:', error.stack);
+    return NextResponse.next();
+  }
+
   const { pathname } = new URL(request.url);
 
   // Пропускаем проверки для исключенных путей

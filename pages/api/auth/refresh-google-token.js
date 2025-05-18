@@ -10,6 +10,16 @@ import prisma from '../../../lib/prisma';
  */
 export default async function handler(req, res) {
   console.log('API refresh-google-token: Начало обработки запроса');
+  console.log('API refresh-google-token: URL запроса:', req.url);
+  console.log('API refresh-google-token: Метод запроса:', req.method);
+  console.log(
+    'API refresh-google-token: NEXTAUTH_URL:',
+    process.env.NEXTAUTH_URL
+  );
+  console.log(
+    'API refresh-google-token: GOOGLE_REDIRECT_URI:',
+    process.env.GOOGLE_REDIRECT_URI
+  );
 
   // Разрешаем только POST запросы
   if (req.method !== 'POST') {
