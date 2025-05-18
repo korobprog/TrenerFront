@@ -85,6 +85,11 @@ async function refreshTokens() {
   try {
     // Используем абсолютный URL для запроса к API
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    console.log(
+      'Middleware: Отправка запроса на обновление токенов:',
+      `${baseUrl}/api/auth/refresh-google-token`
+    );
+
     const response = await fetch(`${baseUrl}/api/auth/refresh-google-token`, {
       method: 'POST',
       headers: {
@@ -92,15 +97,18 @@ async function refreshTokens() {
       },
     });
 
+    console.log('Middleware: Статус ответа:', response.status);
     const data = await response.json();
+    console.log('Middleware: Ответ API:', data);
 
     if (!data.success) {
       throw new Error(data.error || 'Ошибка при обновлении токенов');
     }
 
+    console.log('Middleware: Токены успешно обновлены');
     // Успешное обновление токенов
   } catch (error) {
-    console.error('Middleware: Ошибка при обновлении токенов');
+    console.error('Middleware: Ошибка при обновлении токенов:', error.message);
     throw error;
   }
 }
@@ -125,8 +133,9 @@ export async function middleware(request) {
         await refreshTokens();
       }
     } catch (error) {
-      // Логируем только критические ошибки без лишних деталей
-      console.error('Middleware: Ошибка обновления токенов');
+      // Логируем детали ошибки для диагностики
+      console.error('Middleware: Ошибка обновления токенов:', error.message);
+      console.error('Middleware: Стек ошибки:', error.stack);
     }
   }
 

@@ -29,8 +29,8 @@ export default async function handler(req, res) {
   try {
     console.log('API create-meet: Создание Google Meet-ссылки');
 
-    // Получаем OAuth2 клиент с актуальными токенами
-    const oauth2Client = await getAuthenticatedOAuth2Client();
+    // Получаем OAuth2 клиент с актуальными токенами из базы данных
+    const oauth2Client = await getAuthenticatedOAuth2Client(session.user.id);
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
     // Создаем временные данные для события
