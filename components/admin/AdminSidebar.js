@@ -1,5 +1,9 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+<<<<<<< HEAD
+import { useSession } from 'next-auth/react';
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 import styles from '../../styles/admin/AdminSidebar.module.css';
 
 /**
@@ -8,6 +12,11 @@ import styles from '../../styles/admin/AdminSidebar.module.css';
  */
 export default function AdminSidebar() {
   const router = useRouter();
+<<<<<<< HEAD
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === 'superadmin';
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
   // Функция для определения активного пункта меню
   const isActive = (path) => {
@@ -43,6 +52,23 @@ export default function AdminSidebar() {
     },
   ];
 
+<<<<<<< HEAD
+  // Пункты меню для супер-администратора
+  const superAdminItems = [
+    {
+      name: 'Администраторы',
+      path: '/admin/superadmin/admins',
+      icon: '👮',
+    },
+  ];
+
+  // Объединяем пункты меню в зависимости от роли пользователя
+  const allMenuItems = isSuperAdmin
+    ? [...menuItems, ...superAdminItems]
+    : menuItems;
+
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
   return (
     <aside className={styles.adminSidebar}>
       <div className={styles.sidebarHeader}>
@@ -55,7 +81,11 @@ export default function AdminSidebar() {
       </div>
       <nav className={styles.sidebarNav}>
         <ul className={styles.navList}>
+<<<<<<< HEAD
+          {allMenuItems.map((item) => (
+=======
           {menuItems.map((item) => (
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
             <li key={item.path} className={styles.navItem}>
               <Link
                 href={item.path}
@@ -71,6 +101,12 @@ export default function AdminSidebar() {
         </ul>
       </nav>
       <div className={styles.sidebarFooter}>
+<<<<<<< HEAD
+        {isSuperAdmin && (
+          <div className={styles.superAdminBadge}>Супер-администратор</div>
+        )}
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
         <div className={styles.versionInfo}>v1.0.0</div>
       </div>
     </aside>

@@ -231,10 +231,26 @@ async function handler(req, res) {
         recentLogs: formattedLogs,
       });
     } catch (error) {
+<<<<<<< HEAD
+      // Логируем детали ошибки для диагностики
+      console.error('Ошибка при получении статистики:', error);
+      console.error('Детали ошибки при получении статистики:', {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      // Возвращаем более информативное сообщение об ошибке
+      return res.status(500).json({
+        message: 'Ошибка сервера при получении статистики',
+        error: error.message,
+        code: 'STATISTICS_FETCH_ERROR',
+      });
+=======
       console.error('Ошибка при получении статистики:', error);
       return res
         .status(500)
         .json({ message: 'Ошибка сервера при получении статистики' });
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     }
   }
 

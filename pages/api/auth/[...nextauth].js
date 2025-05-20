@@ -1,7 +1,14 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+<<<<<<< HEAD
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '../../../lib/prisma';
+import bcrypt from 'bcrypt';
+=======
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import prisma from '../../../lib/prisma';
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
@@ -10,6 +17,61 @@ export const authOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true, // Разрешаем связывание аккаунтов по email
+<<<<<<< HEAD
+      authorization: {
+        params: {
+          scope:
+            'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
+    }),
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        username: { label: 'Логин', type: 'text' },
+        password: { label: 'Пароль', type: 'password' },
+      },
+      async authorize(credentials) {
+        // Ищем пользователя с ролью superadmin
+        const superAdmin = await prisma.user.findFirst({
+          where: { role: 'superadmin' },
+        });
+
+        if (!superAdmin) {
+          return null; // Супер-администратор не найден
+        }
+
+        // Проверяем логин (username должен соответствовать email или быть 'admin')
+        const isValidUsername =
+          credentials.username === 'admin' ||
+          credentials.username === superAdmin.email;
+
+        if (!isValidUsername) {
+          return null;
+        }
+
+        // Проверяем пароль
+        const isValidPassword = superAdmin.password
+          ? await bcrypt.compare(credentials.password, superAdmin.password)
+          : credentials.password === 'krishna1284radha'; // Запасной вариант для обратной совместимости
+
+        if (!isValidPassword) {
+          return null;
+        }
+
+        // Возвращаем данные пользователя
+        return {
+          id: superAdmin.id,
+          email: superAdmin.email,
+          name: superAdmin.name,
+          role: superAdmin.role,
+        };
+      },
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     }),
   ],
   callbacks: {
@@ -37,7 +99,16 @@ export const authOptions = {
       return session;
     },
     async signIn({ user, account, profile, email, credentials }) {
+<<<<<<< HEAD
+      // Для входа через credentials проверяем роль
+      if (account?.provider === 'credentials') {
+        return user.role === 'superadmin';
+      }
+
+      // Для входа через Google всегда разрешаем вход
+=======
       // Всегда разрешаем вход, даже если аккаунт не связан
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
       // Это позволит создать новый аккаунт, если старый был удален
       return true;
     },

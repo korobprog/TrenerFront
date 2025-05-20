@@ -13,6 +13,10 @@ import styles from '../../styles/admin/InterviewsList.module.css';
  * @param {Function} props.onPageChange - Функция, вызываемая при изменении страницы
  * @param {Function} props.onPageSizeChange - Функция, вызываемая при изменении размера страницы
  * @param {Function} props.onSortChange - Функция, вызываемая при изменении сортировки
+<<<<<<< HEAD
+ * @param {Function} props.onRefresh - Функция для обновления списка собеседований
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
  * @returns {JSX.Element} Компонент списка собеседований
  */
 export default function InterviewsList({
@@ -22,6 +26,10 @@ export default function InterviewsList({
   onPageChange,
   onPageSizeChange,
   onSortChange,
+<<<<<<< HEAD
+  onRefresh,
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 }) {
   const router = useRouter();
 
@@ -217,8 +225,18 @@ export default function InterviewsList({
         throw new Error('Ошибка при удалении собеседования');
       }
 
+<<<<<<< HEAD
+      // Обновляем данные без перезагрузки страницы
+      if (onRefresh) {
+        onRefresh(); // Используем переданную функцию обновления
+      } else {
+        // Если функция обновления не передана, используем SPA-навигацию
+        router.push(router.asPath, undefined, { shallow: true });
+      }
+=======
       // Обновляем страницу для отображения изменений
       router.reload();
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     } catch (error) {
       console.error('Ошибка при удалении собеседования:', error);
       alert('Произошла ошибка при удалении собеседования');

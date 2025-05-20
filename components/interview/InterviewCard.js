@@ -10,12 +10,20 @@ import styles from '../../styles/InterviewCard.module.css';
  * @param {Object} props.interview - Данные о собеседовании
  * @param {number} props.userPoints - Количество баллов пользователя
  * @param {Function} props.onBookInterview - Функция обработки записи на собеседование
+<<<<<<< HEAD
+ * @param {Function} props.onRefresh - Функция для обновления списка собеседований
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
  * @returns {JSX.Element} Компонент карточки собеседования
  */
 export default function InterviewCard({
   interview,
   userPoints,
   onBookInterview,
+<<<<<<< HEAD
+  onRefresh,
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 }) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -83,7 +91,19 @@ export default function InterviewCard({
 
       // Обновляем страницу после успешной отметки неявки
       showSuccess('Неявка успешно отмечена');
+<<<<<<< HEAD
+
+      // Вместо полной перезагрузки страницы используем SPA-навигацию
+      // и обновляем данные через функцию обновления из родительского компонента
+      if (onRefresh) {
+        onRefresh(); // Вызываем функцию обновления данных из родительского компонента
+      } else {
+        // Если функция обновления не передана, перенаправляем на ту же страницу без перезагрузки
+        router.push(router.asPath, undefined, { shallow: true });
+      }
+=======
       router.reload();
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     } catch (error) {
       console.error('Ошибка при отметке неявки:', error);
       showError(error.message || 'Произошла ошибка при отметке неявки');
