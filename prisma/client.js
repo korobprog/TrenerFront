@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 /**
  * Оптимизированная реализация PrismaClient с управлением соединениями
@@ -63,4 +63,4 @@ if (!globalForPrisma.prismaErrorHandlersAdded) {
   globalForPrisma.prismaErrorHandlersAdded = true;
 }
 
-module.exports = prisma;
+export default prisma;

@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma/client';
 
 export default async function handler(req, res) {
   // Проверяем аутентификацию

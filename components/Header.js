@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -12,6 +12,8 @@ export default function Header() {
   const { data: session, status } = useSession();
   const [userPoints, setUserPoints] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const router = useRouter();
 
   // Загружаем баллы пользователя при монтировании компонента
@@ -20,6 +22,20 @@ export default function Header() {
       fetchUserPoints();
     }
   }, [status]);
+
+  // Обработчик клика вне меню для его закрытия
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuRef]);
 
   // Функция для загрузки баллов пользователя
   const fetchUserPoints = async () => {
@@ -79,21 +95,40 @@ export default function Header() {
                 </div>
               </Link>
 
-              <div className={styles.userInfo}>
-                {session.user.image ? (
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name || 'Пользователь'}
-                    className={styles.userAvatar}
-                  />
-                ) : (
-                  <div className={styles.userAvatarPlaceholder}>
-                    {session.user.name ? session.user.name[0] : 'U'}
+              <div className={styles.userInfo} ref={menuRef}>
+                <div
+                  className={styles.userAvatarContainer}
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  {session.user.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || 'Пользователь'}
+                      className={styles.userAvatar}
+                    />
+                  ) : (
+                    <div className={styles.userAvatarPlaceholder}>
+                      {session.user.name ? session.user.name[0] : 'U'}
+                    </div>
+                  )}
+                  <span className={styles.userName}>
+                    {session.user.name || 'Пользователь'}
+                  </span>
+                </div>
+
+                {isMenuOpen && (
+                  <div className={styles.userMenu}>
+                    <Link href="/user/api-settings" className={styles.menuItem}>
+                      Настройки API
+                    </Link>
+                    <Link
+                      href="/user/points-history"
+                      className={styles.menuItem}
+                    >
+                      История баллов
+                    </Link>
                   </div>
                 )}
-                <span className={styles.userName}>
-                  {session.user.name || 'Пользователь'}
-                </span>
               </div>
             </>
           )}

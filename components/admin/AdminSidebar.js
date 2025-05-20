@@ -44,6 +44,11 @@ export default function AdminSidebar() {
       path: '/admin/logs',
       icon: '📝',
     },
+    {
+      name: 'Настройки ассистента',
+      path: '/admin/interview-assistant-settings',
+      icon: '⚙️',
+    },
   ];
 
   // Пункты меню для супер-администратора
