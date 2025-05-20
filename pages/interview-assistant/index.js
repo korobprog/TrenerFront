@@ -52,14 +52,32 @@ export default function InterviewAssistant() {
     if (status === 'unauthenticated') {
       router.push('/auth/signin?callbackUrl=/interview-assistant');
     } else if (status === 'authenticated') {
+      console.log('[DEBUG] Пользователь аутентифицирован, проверяем компанию');
+      console.log('[DEBUG] Данные сессии:', {
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        status: status,
+      });
+
       // Проверяем, указана ли компания для текущего пользователя
       const checkCompanyUsage = async () => {
+        console.log('[DEBUG] Начало проверки компании для пользователя');
         try {
+          console.log(
+            '[DEBUG] Отправка запроса к /api/interview-assistant/usage'
+          );
           // Получаем информацию о компании и дате собеседования для текущего пользователя
           const response = await fetch('/api/interview-assistant/usage');
 
+          console.log('[DEBUG] Ответ от /api/interview-assistant/usage:', {
+            status: response.status,
+            ok: response.ok,
+            statusText: response.statusText,
+          });
+
           if (response.ok) {
             const data = await response.json();
+            console.log('[DEBUG] Данные о компании получены:', data);
 
             // Сохраняем информацию о компании и API
             setCompanyInfo({
@@ -71,15 +89,30 @@ export default function InterviewAssistant() {
 
             // Если компания не указана, перенаправляем на страницу выбора компании
             if (!data.company) {
+              console.log(
+                '[DEBUG] Компания не указана, перенаправляем на /interview-assistant/company'
+              );
               router.push('/interview-assistant/company');
+            } else {
+              console.log('[DEBUG] Компания указана:', data.company);
             }
           } else {
+            console.log(
+              '[DEBUG] Запрос не успешен, перенаправляем на /interview-assistant/company'
+            );
             // Если запрос не успешен, также перенаправляем на страницу выбора компании
             router.push('/interview-assistant/company');
           }
         } catch (error) {
-          console.error('Ошибка при проверке компании:', error);
+          console.error('[DEBUG] Ошибка при проверке компании:', error);
+          console.error('[DEBUG] Детали ошибки:', {
+            message: error.message,
+            stack: error.stack,
+          });
           // В случае ошибки также перенаправляем на страницу выбора компании
+          console.log(
+            '[DEBUG] Перенаправляем на /interview-assistant/company из-за ошибки'
+          );
           router.push('/interview-assistant/company');
         }
       };

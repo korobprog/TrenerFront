@@ -186,17 +186,28 @@ export default function CompanyForm() {
     e.preventDefault();
 
     if (!validateForm()) {
+      console.log('[DEBUG] Форма не прошла валидацию');
       return;
     }
 
     if (!session) {
+      console.log('[DEBUG] Сессия отсутствует, пользователь не авторизован');
       alert('Необходимо войти в систему для использования сервиса');
       return;
     }
 
     setIsLoading(true);
+    console.log('[DEBUG] Отправка данных о компании:', {
+      company: company.trim(),
+      interviewDate: interviewDate || null,
+      userId: session?.user?.id,
+      sessionStatus: status,
+    });
 
     try {
+      console.log(
+        '[DEBUG] Начало отправки POST-запроса на /api/interview-assistant/companies'
+      );
       // Отправляем данные на сервер
       const response = await fetch('/api/interview-assistant/companies', {
         method: 'POST',
@@ -209,18 +220,34 @@ export default function CompanyForm() {
         }),
       });
 
+      console.log('[DEBUG] Ответ от сервера:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
+
       if (!response.ok) {
+        console.log('[DEBUG] Ответ от сервера не OK');
         throw new Error('Ошибка при сохранении данных');
       }
 
+      const responseData = await response.json();
+      console.log('[DEBUG] Данные ответа:', responseData);
+
       // Перенаправляем на основную страницу сервиса
+      console.log('[DEBUG] Перенаправление на /interview-assistant');
       router.push('/interview-assistant');
     } catch (error) {
-      console.error('Ошибка при сохранении данных:', error);
+      console.error('[DEBUG] Ошибка при сохранении данных:', error);
+      console.error('[DEBUG] Детали ошибки:', {
+        message: error.message,
+        stack: error.stack,
+      });
       alert(
         'Произошла ошибка при сохранении данных. Пожалуйста, попробуйте еще раз.'
       );
     } finally {
+      console.log('[DEBUG] Завершение обработки отправки формы');
       setIsLoading(false);
     }
   };

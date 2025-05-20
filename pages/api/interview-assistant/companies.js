@@ -57,14 +57,23 @@ export default async function handler(req, res) {
     // Обработка POST запроса для сохранения компании
     else if (req.method === 'POST') {
       const { company, interviewDate } = req.body;
+      console.log('[DEBUG] POST запрос на сохранение компании:', {
+        userId,
+        company,
+        interviewDate,
+        sessionUserId: session?.user?.id,
+        requestMethod: req.method,
+      });
 
       if (!company || company.trim() === '') {
+        console.log('[DEBUG] Ошибка: название компании не указано');
         return res
           .status(400)
           .json({ message: 'Название компании обязательно' });
       }
 
       const companyName = company.trim();
+      console.log('[DEBUG] Название компании после обработки:', companyName);
 
       // Проверяем, существует ли уже такая компания
       const existingCompany = await prisma.interviewAssistantCompany.findUnique(
@@ -156,53 +165,137 @@ export default async function handler(req, res) {
       }
 
       // Сохраняем информацию о компании в статистике использования
-      await prisma.interviewAssistantUsage.upsert({
-        where: {
-          id: `${userId}-${new Date().toISOString().split('T')[0]}`, // Уникальный ID для текущего дня
-        },
-        update: {
-          company: companyName,
-        },
-        create: {
-          id: `${userId}-${new Date().toISOString().split('T')[0]}`,
-          userId: userId,
-          date: new Date(),
-          questionsCount: 0,
-          tokensUsed: 0,
-          apiCost: 0,
-          company: companyName,
-        },
-      });
+      const currentDate = new Date();
+      const dateString = currentDate.toISOString().split('T')[0];
+      const usageId = `${userId}-${dateString}`;
 
-      // Если указана дата собеседования, сохраняем её в модели InterviewAssistantUsage
-      if (interviewDate) {
-        // Обновляем запись в InterviewAssistantUsage, добавляя дату собеседования
-        await prisma.interviewAssistantUsage.upsert({
-          where: {
-            id: `${userId}-${new Date().toISOString().split('T')[0]}`, // Уникальный ID для текущего дня
-          },
-          update: {
-            company: companyName,
-            interviewDate: new Date(interviewDate), // Сохраняем дату собеседования
-          },
+      console.log(
+        '[DEBUG] Сохранение информации о компании в InterviewAssistantUsage:',
+        {
+          userId,
+          companyName,
+          date: dateString,
+          id: usageId,
+          currentDateTime: currentDate.toISOString(),
+        }
+      );
+
+      try {
+        console.log(
+          '[DEBUG] Перед вызовом prisma.interviewAssistantUsage.upsert'
+        );
+        console.log('[DEBUG] Параметры запроса:', {
+          where: { id: usageId },
+          update: { company: companyName },
           create: {
-            id: `${userId}-${new Date().toISOString().split('T')[0]}`,
+            id: usageId,
             userId: userId,
-            date: new Date(),
+            date: currentDate,
             questionsCount: 0,
             tokensUsed: 0,
             apiCost: 0,
             company: companyName,
-            interviewDate: new Date(interviewDate), // Сохраняем дату собеседования
           },
         });
+
+        const usageResult = await prisma.interviewAssistantUsage.upsert({
+          where: {
+            id: usageId, // Уникальный ID для текущего дня
+          },
+          update: {
+            company: companyName,
+          },
+          create: {
+            id: usageId,
+            userId: userId,
+            date: currentDate,
+            questionsCount: 0,
+            tokensUsed: 0,
+            apiCost: 0,
+            company: companyName,
+          },
+        });
+
+        console.log('[DEBUG] Результат сохранения в InterviewAssistantUsage:', {
+          success: !!usageResult,
+          id: usageResult?.id,
+          company: usageResult?.company,
+          date: usageResult?.date?.toISOString(),
+        });
+      } catch (usageError) {
+        console.error(
+          '[DEBUG] Ошибка при сохранении в InterviewAssistantUsage:',
+          usageError
+        );
+        console.error('[DEBUG] Детали ошибки:', {
+          message: usageError.message,
+          code: usageError.code,
+          meta: usageError.meta,
+          stack: usageError.stack,
+        });
+        // Продолжаем выполнение даже при ошибке сохранения
       }
 
+      // Если указана дата собеседования, сохраняем её в модели InterviewAssistantUsage
+      if (interviewDate) {
+        console.log('[DEBUG] Сохранение даты собеседования:', interviewDate);
+        try {
+          // Обновляем запись в InterviewAssistantUsage, добавляя дату собеседования
+          const interviewDateObj = new Date(interviewDate);
+          console.log('[DEBUG] Объект даты собеседования:', {
+            original: interviewDate,
+            parsed: interviewDateObj.toISOString(),
+            valid: !isNaN(interviewDateObj.getTime()),
+          });
+
+          const interviewDateResult =
+            await prisma.interviewAssistantUsage.upsert({
+              where: {
+                id: usageId, // Уникальный ID для текущего дня
+              },
+              update: {
+                company: companyName,
+                interviewDate: interviewDateObj, // Сохраняем дату собеседования
+              },
+              create: {
+                id: usageId,
+                userId: userId,
+                date: currentDate,
+                questionsCount: 0,
+                tokensUsed: 0,
+                apiCost: 0,
+                company: companyName,
+                interviewDate: interviewDateObj, // Сохраняем дату собеседования
+              },
+            });
+
+          console.log('[DEBUG] Результат сохранения даты собеседования:', {
+            success: !!interviewDateResult,
+            id: interviewDateResult?.id,
+            company: interviewDateResult?.company,
+            interviewDate: interviewDateResult?.interviewDate?.toISOString(),
+          });
+        } catch (dateError) {
+          console.error(
+            '[DEBUG] Ошибка при сохранении даты собеседования:',
+            dateError
+          );
+          console.error('[DEBUG] Детали ошибки даты:', {
+            message: dateError.message,
+            stack: dateError.stack,
+          });
+          // Продолжаем выполнение даже при ошибке сохранения даты
+        }
+      }
+
+      console.log('[DEBUG] Отправка успешного ответа клиенту');
       return res.status(200).json({
         success: true,
         message: 'Компания успешно сохранена',
         company: companyName,
         interviewDate: interviewDate || null,
+        userId: userId,
+        usageId: usageId,
       });
     }
 
@@ -211,9 +304,25 @@ export default async function handler(req, res) {
       return res.status(405).json({ message: 'Метод не разрешен' });
     }
   } catch (error) {
-    console.error('Ошибка при обработке запроса:', error);
-    return res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+    console.error('[DEBUG] Ошибка при обработке запроса:', error);
+    console.error('[DEBUG] Детали ошибки:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+    });
+    return res.status(500).json({
+      message: 'Внутренняя ошибка сервера',
+      error: error.message,
+    });
   } finally {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+      console.log('[DEBUG] Соединение с базой данных закрыто');
+    } catch (disconnectError) {
+      console.error(
+        '[DEBUG] Ошибка при закрытии соединения с базой данных:',
+        disconnectError
+      );
+    }
   }
 }

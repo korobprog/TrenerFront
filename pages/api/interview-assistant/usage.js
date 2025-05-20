@@ -40,6 +40,14 @@ export default async function handler(req, res) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    console.log('[DEBUG] Текущая дата для поиска:', {
+      date: today.toISOString(),
+      year: today.getFullYear(),
+      month: today.getMonth() + 1,
+      day: today.getDate(),
+      timestamp: today.getTime(),
+    });
+
     // Проверяем наличие пользовательских API настроек
     console.log(
       `API /interview-assistant/usage: Поиск настроек API для пользователя: ${userId}`
@@ -85,27 +93,88 @@ export default async function handler(req, res) {
     );
 
     console.log(
-      `API /interview-assistant/usage: Поиск информации об использовании для пользователя: ${userId}`
+      `[DEBUG] API /interview-assistant/usage: Поиск информации об использовании для пользователя: ${userId}`
     );
     let usage;
     try {
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+      console.log('[DEBUG] Параметры запроса к interviewAssistantUsage:', {
+        userId: userId,
+        dateFrom: today.toISOString(),
+        dateTo: tomorrow.toISOString(),
+        usageId: `${userId}-${today.toISOString().split('T')[0]}`,
+      });
+
       usage = await prisma.interviewAssistantUsage.findFirst({
         where: {
           userId: userId,
           date: {
             gte: today,
-            lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+            lt: tomorrow,
           },
         },
         select: {
           company: true,
           interviewDate: true,
+          id: true,
+          date: true,
         },
       });
+
       console.log(
-        'API /interview-assistant/usage: Информация об использовании:',
+        '[DEBUG] API /interview-assistant/usage: Результат запроса:',
         usage
+          ? {
+              found: true,
+              id: usage.id,
+              company: usage.company,
+              interviewDate: usage.interviewDate?.toISOString(),
+              date: usage.date?.toISOString(),
+            }
+          : {
+              found: false,
+              message: 'Запись не найдена',
+            }
       );
+
+      // Альтернативный поиск по ID
+      const usageId = `${userId}-${today.toISOString().split('T')[0]}`;
+      console.log('[DEBUG] Попытка поиска по точному ID:', usageId);
+
+      const usageById = await prisma.interviewAssistantUsage.findUnique({
+        where: {
+          id: usageId,
+        },
+        select: {
+          company: true,
+          interviewDate: true,
+          id: true,
+          date: true,
+        },
+      });
+
+      console.log(
+        '[DEBUG] Результат поиска по ID:',
+        usageById
+          ? {
+              found: true,
+              id: usageById.id,
+              company: usageById.company,
+              interviewDate: usageById.interviewDate?.toISOString(),
+              date: usageById.date?.toISOString(),
+            }
+          : {
+              found: false,
+              message: 'Запись по ID не найдена',
+            }
+      );
+
+      // Если запись не найдена по дате, но найдена по ID, используем её
+      if (!usage && usageById) {
+        console.log('[DEBUG] Используем запись, найденную по ID');
+        usage = usageById;
+      }
     } catch (usageError) {
       console.error(
         'API /interview-assistant/usage: Ошибка при получении информации об использовании:',
@@ -148,14 +217,26 @@ export default async function handler(req, res) {
     // Если информация найдена, возвращаем её
     if (usage) {
       console.log(
-        `Найдена информация о компании: ${
+        `[DEBUG] Найдена информация о компании: ${
           usage.company || 'не указана'
         }, дата собеседования: ${
-          usage.interviewDate || 'не указана'
+          usage.interviewDate ? usage.interviewDate.toISOString() : 'не указана'
         }, API: ${apiType}`
       );
+
+      // Проверка на null или пустую строку
+      const companyValue =
+        usage.company && usage.company.trim() !== '' ? usage.company : null;
+
+      console.log('[DEBUG] Возвращаем клиенту информацию о компании:', {
+        company: companyValue,
+        interviewDate: usage.interviewDate,
+        useCustomApi: userApiSettings?.useCustomApi || false,
+        apiType: apiType,
+      });
+
       return res.status(200).json({
-        company: usage.company,
+        company: companyValue,
         interviewDate: usage.interviewDate,
         useCustomApi: userApiSettings?.useCustomApi || false,
         apiType: apiType,
@@ -163,7 +244,35 @@ export default async function handler(req, res) {
     }
 
     // Если информация не найдена, возвращаем пустой объект
-    console.log('Информация о компании не найдена');
+    console.log('[DEBUG] Информация о компании не найдена');
+
+    // Дополнительный поиск всех записей пользователя для диагностики
+    const allUserUsage = await prisma.interviewAssistantUsage.findMany({
+      where: {
+        userId: userId,
+      },
+      select: {
+        id: true,
+        company: true,
+        date: true,
+        interviewDate: true,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+      take: 5,
+    });
+
+    console.log(
+      '[DEBUG] Последние 5 записей пользователя:',
+      allUserUsage.map((u) => ({
+        id: u.id,
+        company: u.company,
+        date: u.date?.toISOString(),
+        interviewDate: u.interviewDate?.toISOString(),
+      }))
+    );
+
     return res.status(200).json({
       company: null,
       interviewDate: null,
