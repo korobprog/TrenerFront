@@ -2,10 +2,14 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import prisma from '../../../../lib/prisma';
 import { sendInterviewBookingNotification } from '../../../../lib/utils/email';
+<<<<<<< HEAD
 import {
   createCalendarEvent,
   updateCalendarEvent,
 } from '../../../../lib/utils/googleCalendar';
+=======
+import { createCalendarEvent } from '../../../../lib/utils/googleCalendar';
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
 export default async function handler(req, res) {
   console.log('API Book: Получен запрос на запись на собеседование');
@@ -135,12 +139,18 @@ export default async function handler(req, res) {
       userPoints.points
     );
 
+<<<<<<< HEAD
     // Проверяем, есть ли в запросе ссылка на Google Meet и ID события календаря
     const { meetingLink, calendarEventId } = req.body;
 
     // Начинаем транзакцию для обновления собеседования и списания баллов
     const result = await prisma.$transaction([
       // Обновляем статус собеседования, добавляем отвечающего и, если предоставлены, ссылку на Google Meet и ID события календаря
+=======
+    // Начинаем транзакцию для обновления собеседования и списания баллов
+    const result = await prisma.$transaction([
+      // Обновляем статус собеседования и добавляем отвечающего
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
       prisma.mockInterview.update({
         where: { id },
         data: {
@@ -148,12 +158,15 @@ export default async function handler(req, res) {
           interviewee: {
             connect: { id: session.user.id },
           },
+<<<<<<< HEAD
           ...(meetingLink && calendarEventId
             ? {
                 meetingLink: meetingLink,
                 calendarEventId: calendarEventId,
               }
             : {}),
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
         },
       }),
       // Списываем 1 балл у пользователя
@@ -208,6 +221,7 @@ export default async function handler(req, res) {
 
     console.log('API Book: Результат отправки email:', emailResult);
 
+<<<<<<< HEAD
     let calendarResult;
 
     if (meetingLink && calendarEventId) {
@@ -261,6 +275,17 @@ export default async function handler(req, res) {
 
     console.log(
       'API Book: Результат работы с событием в календаре:',
+=======
+    // Создаем событие в Google Calendar
+    const calendarResult = await createCalendarEvent(
+      interviewer,
+      interviewee,
+      result[0]
+    );
+
+    console.log(
+      'API Book: Результат создания события в календаре:',
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
       calendarResult
     );
 

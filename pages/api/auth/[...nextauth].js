@@ -1,9 +1,14 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+<<<<<<< HEAD
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '../../../lib/prisma';
 import bcrypt from 'bcrypt';
+=======
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import prisma from '../../../lib/prisma';
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
@@ -12,6 +17,7 @@ export const authOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true, // Разрешаем связывание аккаунтов по email
+<<<<<<< HEAD
       authorization: {
         params: {
           scope:
@@ -64,6 +70,8 @@ export const authOptions = {
           role: superAdmin.role,
         };
       },
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     }),
   ],
   callbacks: {
@@ -91,12 +99,16 @@ export const authOptions = {
       return session;
     },
     async signIn({ user, account, profile, email, credentials }) {
+<<<<<<< HEAD
       // Для входа через credentials проверяем роль
       if (account?.provider === 'credentials') {
         return user.role === 'superadmin';
       }
 
       // Для входа через Google всегда разрешаем вход
+=======
+      // Всегда разрешаем вход, даже если аккаунт не связан
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
       // Это позволит создать новый аккаунт, если старый был удален
       return true;
     },

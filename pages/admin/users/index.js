@@ -146,7 +146,10 @@ export default function UsersPage() {
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             onSortChange={handleSortChange}
+<<<<<<< HEAD
             onRefresh={fetchUsers}
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
           />
         )}
       </div>

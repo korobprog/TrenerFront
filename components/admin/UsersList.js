@@ -13,7 +13,10 @@ import styles from '../../styles/admin/UsersList.module.css';
  * @param {Function} props.onPageChange - Функция, вызываемая при изменении страницы
  * @param {Function} props.onPageSizeChange - Функция, вызываемая при изменении размера страницы
  * @param {Function} props.onSortChange - Функция, вызываемая при изменении сортировки
+<<<<<<< HEAD
  * @param {Function} props.onRefresh - Функция для обновления списка пользователей
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
  * @returns {JSX.Element} Компонент списка пользователей
  */
 export default function UsersList({
@@ -23,7 +26,10 @@ export default function UsersList({
   onPageChange,
   onPageSizeChange,
   onSortChange,
+<<<<<<< HEAD
   onRefresh,
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 }) {
   const router = useRouter();
 
@@ -187,6 +193,7 @@ export default function UsersList({
         throw new Error('Ошибка при обновлении статуса пользователя');
       }
 
+<<<<<<< HEAD
       // Обновляем данные для отображения изменений
       if (onRefresh) {
         onRefresh();
@@ -194,6 +201,10 @@ export default function UsersList({
         // Если функция обновления не передана, используем SPA-навигацию без перезагрузки
         router.push(router.asPath, undefined, { shallow: true });
       }
+=======
+      // Обновляем страницу для отображения изменений
+      router.reload();
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     } catch (error) {
       console.error('Ошибка при блокировке/разблокировке пользователя:', error);
       alert('Произошла ошибка при обновлении статуса пользователя');

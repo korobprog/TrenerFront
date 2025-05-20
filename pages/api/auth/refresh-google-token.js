@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './[...nextauth]';
 import { refreshTokenIfNeeded } from '../../../lib/utils/tokenRefresher';
 import prisma from '../../../lib/prisma';
+=======
+import { refreshTokenIfNeeded } from '../../../lib/utils/tokenRefresher';
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
 /**
  * API-маршрут для обновления Google токенов
@@ -9,15 +13,21 @@ import prisma from '../../../lib/prisma';
  * @param {Object} res - HTTP ответ
  */
 export default async function handler(req, res) {
+<<<<<<< HEAD
   console.log('API refresh-google-token: Начало обработки запроса');
 
   // Разрешаем только POST запросы
   if (req.method !== 'POST') {
     console.log('API refresh-google-token: Метод не разрешен:', req.method);
+=======
+  // Разрешаем только POST запросы
+  if (req.method !== 'POST') {
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
+<<<<<<< HEAD
     // Получаем сессию пользователя
     console.log('API refresh-google-token: Получение сессии пользователя');
     const session = await getServerSession(req, res, authOptions);
@@ -85,11 +95,16 @@ export default async function handler(req, res) {
       expiresInSeconds = 3600;
       console.log('Использовано значение по умолчанию для expiry_date');
     }
+=======
+    // Обновляем токен
+    const tokens = await refreshTokenIfNeeded();
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
     // Возвращаем успешный ответ
     return res.status(200).json({
       success: true,
       message: 'Токены успешно обновлены',
+<<<<<<< HEAD
       expiry_date: expiryDateISO,
       expires_in_seconds: expiresInSeconds,
     });
@@ -113,6 +128,16 @@ export default async function handler(req, res) {
       success: false,
       error: error.message,
       errorDetails: errorDetails,
+=======
+      expiry_date: new Date(tokens.expiry_date).toISOString(),
+      expires_in_seconds: Math.floor((tokens.expiry_date - Date.now()) / 1000),
+    });
+  } catch (error) {
+    console.error('Ошибка при обновлении токенов:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     });
   }
 }

@@ -94,10 +94,13 @@ export default function AdminSignIn() {
             <Link href="/" className={styles.link}>
               Вернуться на главную
             </Link>
+<<<<<<< HEAD
             <span className={styles.linkSeparator}>•</span>
             <Link href="/admin/superadmin-signin" className={styles.link}>
               Вход для супер-администратора
             </Link>
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
           </div>
         </div>
       </div>

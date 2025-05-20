@@ -66,9 +66,17 @@ async function handler(req, res) {
       return res.status(200).json(interview);
     } catch (error) {
       console.error('Ошибка при получении информации о собеседовании:', error);
+<<<<<<< HEAD
       return res.status(500).json({
         message: 'Ошибка сервера при получении информации о собеседовании',
       });
+=======
+      return res
+        .status(500)
+        .json({
+          message: 'Ошибка сервера при получении информации о собеседовании',
+        });
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     }
   }
 
@@ -106,6 +114,7 @@ async function handler(req, res) {
       if (scheduledTime !== undefined)
         updateData.scheduledTime = new Date(scheduledTime);
       if (status !== undefined) updateData.status = status;
+<<<<<<< HEAD
 
       // При обновлении собеседования
       if (
@@ -196,6 +205,9 @@ async function handler(req, res) {
           updateData.meetingLink = meetingLink;
         }
       }
+=======
+      if (meetingLink !== undefined) updateData.meetingLink = meetingLink;
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
       // Обновление связей с пользователями
       if (interviewerId !== undefined) {

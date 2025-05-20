@@ -242,7 +242,10 @@ export default function InterviewBoard({
                     interview={interview}
                     userPoints={userPoints}
                     onBookInterview={handleBookInterview}
+<<<<<<< HEAD
                     onRefresh={onRefresh}
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
                   />
                 ))}
               </div>

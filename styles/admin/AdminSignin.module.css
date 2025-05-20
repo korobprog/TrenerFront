@@ -23,6 +23,7 @@
   text-align: center;
 }
 
+<<<<<<< HEAD
 .info {
   background-color: var(--background-color);
   border-radius: var(--border-radius);
@@ -39,6 +40,8 @@
   font-weight: 600;
 }
 
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 .form {
   display: flex;
   flex-direction: column;
@@ -106,9 +109,13 @@
 .links {
   display: flex;
   justify-content: center;
+<<<<<<< HEAD
   align-items: center;
   margin-top: 20px;
   gap: 8px;
+=======
+  margin-top: 20px;
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 }
 
 .link {
@@ -123,12 +130,15 @@
   text-decoration: underline;
 }
 
+<<<<<<< HEAD
 .linkSeparator {
   color: var(--text-secondary);
   font-size: 0.9rem;
   margin: 0 4px;
 }
 
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 /* Адаптивный дизайн */
 @media (max-width: 768px) {
   .formContainer {

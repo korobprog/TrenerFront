@@ -15,16 +15,24 @@
     "db:reset": "npx prisma migrate reset --force",
     "db:import": "node scripts/import-questions.js",
     "db:import-extended": "node scripts/import-extended.js",
+<<<<<<< HEAD
     "db:studio": "npx prisma studio",
     "create-superadmin": "node scripts/create-superadmin.js",
     "update-superadmin": "node scripts/update-superadmin.js"
+=======
+    "db:studio": "npx prisma studio"
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^5.0.0",
+<<<<<<< HEAD
     "bcrypt": "^6.0.0",
     "chart.js": "^4.4.9",
     "dotenv": "^16.3.1",
+=======
+    "chart.js": "^4.4.9",
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     "googleapis": "^148.0.0",
     "next": "^13.4.12",
     "next-auth": "^4.24.5",

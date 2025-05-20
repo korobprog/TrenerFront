@@ -7,9 +7,14 @@ const PROTECTED_PATHS = ['/api/mock-interviews', '/api/calendar'];
 // Список путей административной панели, требующих аутентификации
 const ADMIN_PATHS = ['/admin'];
 
+<<<<<<< HEAD
 // Пути для входа администратора и супер-администратора
 const ADMIN_SIGNIN_PATH = '/admin/signin';
 const SUPERADMIN_SIGNIN_PATH = '/admin/superadmin-signin';
+=======
+// Путь для входа администратора
+const ADMIN_SIGNIN_PATH = '/admin/signin';
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
 // Пути, которые следует исключить из проверок (статические ресурсы, API и т.д.)
 const EXCLUDED_PATHS = [
@@ -85,11 +90,14 @@ async function refreshTokens() {
   try {
     // Используем абсолютный URL для запроса к API
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+<<<<<<< HEAD
     console.log(
       'Middleware: Отправка запроса на обновление токенов:',
       `${baseUrl}/api/auth/refresh-google-token`
     );
 
+=======
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     const response = await fetch(`${baseUrl}/api/auth/refresh-google-token`, {
       method: 'POST',
       headers: {
@@ -97,18 +105,28 @@ async function refreshTokens() {
       },
     });
 
+<<<<<<< HEAD
     console.log('Middleware: Статус ответа:', response.status);
     const data = await response.json();
     console.log('Middleware: Ответ API:', data);
+=======
+    const data = await response.json();
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
 
     if (!data.success) {
       throw new Error(data.error || 'Ошибка при обновлении токенов');
     }
 
+<<<<<<< HEAD
     console.log('Middleware: Токены успешно обновлены');
     // Успешное обновление токенов
   } catch (error) {
     console.error('Middleware: Ошибка при обновлении токенов:', error.message);
+=======
+    // Успешное обновление токенов
+  } catch (error) {
+    console.error('Middleware: Ошибка при обновлении токенов');
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     throw error;
   }
 }
@@ -133,13 +151,19 @@ export async function middleware(request) {
         await refreshTokens();
       }
     } catch (error) {
+<<<<<<< HEAD
       // Логируем детали ошибки для диагностики
       console.error('Middleware: Ошибка обновления токенов:', error.message);
       console.error('Middleware: Стек ошибки:', error.stack);
+=======
+      // Логируем только критические ошибки без лишних деталей
+      console.error('Middleware: Ошибка обновления токенов');
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     }
   }
 
   // Защита административных страниц
+<<<<<<< HEAD
   if (
     isAdminPath(pathname) &&
     pathname !== ADMIN_SIGNIN_PATH &&
@@ -156,6 +180,12 @@ export async function middleware(request) {
       userId: token?.userId,
     });
 
+=======
+  if (isAdminPath(pathname) && pathname !== ADMIN_SIGNIN_PATH) {
+    // Получаем токен сессии
+    const token = await getToken({ req: request });
+
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
     // Если пользователь не авторизован, перенаправляем на страницу входа
     if (!token) {
       const url = new URL(ADMIN_SIGNIN_PATH, request.url);
@@ -164,11 +194,15 @@ export async function middleware(request) {
     }
 
     // Проверяем роль пользователя
+<<<<<<< HEAD
     if (token.role !== 'admin' && token.role !== 'superadmin') {
       console.log(
         'Middleware: Доступ запрещен. Роль пользователя:',
         token.role
       );
+=======
+    if (token.role !== 'admin') {
+>>>>>>> 077838ba75b141eded3ed5dc28fbb94584f109f4
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
