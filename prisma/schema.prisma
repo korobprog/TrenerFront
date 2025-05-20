@@ -24,8 +24,7 @@ model User {
   email                String?            @unique
   emailVerified        DateTime?
   image                String?
-  role                 String             @default("user") // Значения: "user", "admin" или "superadmin"
-  password             String?            // Поле для хранения пароля (используется только для superadmin)
+  role                 String             @default("user") // Новое поле: "user" или "admin"
   isBlocked            Boolean            @default(false)  // Новое поле для блокировки пользователей
   accounts             Account[]
   sessions             Session[]

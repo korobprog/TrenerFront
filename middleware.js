@@ -7,9 +7,8 @@ const PROTECTED_PATHS = ['/api/mock-interviews', '/api/calendar'];
 // Список путей административной панели, требующих аутентификации
 const ADMIN_PATHS = ['/admin'];
 
-// Пути для входа администратора и супер-администратора
+// Путь для входа администратора
 const ADMIN_SIGNIN_PATH = '/admin/signin';
-const SUPERADMIN_SIGNIN_PATH = '/admin/superadmin-signin';
 
 // Пути, которые следует исключить из проверок (статические ресурсы, API и т.д.)
 const EXCLUDED_PATHS = [
@@ -131,21 +130,9 @@ export async function middleware(request) {
   }
 
   // Защита административных страниц
-  if (
-    isAdminPath(pathname) &&
-    pathname !== ADMIN_SIGNIN_PATH &&
-    pathname !== SUPERADMIN_SIGNIN_PATH
-  ) {
+  if (isAdminPath(pathname) && pathname !== ADMIN_SIGNIN_PATH) {
     // Получаем токен сессии
     const token = await getToken({ req: request });
-
-    // Временное логирование для диагностики
-    console.log('Middleware: Токен пользователя:', {
-      email: token?.email,
-      name: token?.name,
-      role: token?.role,
-      userId: token?.userId,
-    });
 
     // Если пользователь не авторизован, перенаправляем на страницу входа
     if (!token) {
@@ -155,11 +142,7 @@ export async function middleware(request) {
     }
 
     // Проверяем роль пользователя
-    if (token.role !== 'admin' && token.role !== 'superadmin') {
-      console.log(
-        'Middleware: Доступ запрещен. Роль пользователя:',
-        token.role
-      );
+    if (token.role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }

@@ -242,7 +242,6 @@ export default function InterviewBoard({
                     interview={interview}
                     userPoints={userPoints}
                     onBookInterview={handleBookInterview}
-                    onRefresh={onRefresh}
                   />
                 ))}
               </div>

@@ -2,10 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import prisma from '../../../../lib/prisma';
 import { sendInterviewBookingNotification } from '../../../../lib/utils/email';
-import {
-  createCalendarEvent,
-  updateCalendarEvent,
-} from '../../../../lib/utils/googleCalendar';
+import { createCalendarEvent } from '../../../../lib/utils/googleCalendar';
 
 export default async function handler(req, res) {
   console.log('API Book: Получен запрос на запись на собеседование');
@@ -135,12 +132,9 @@ export default async function handler(req, res) {
       userPoints.points
     );
 
-    // Проверяем, есть ли в запросе ссылка на Google Meet и ID события календаря
-    const { meetingLink, calendarEventId } = req.body;
-
     // Начинаем транзакцию для обновления собеседования и списания баллов
     const result = await prisma.$transaction([
-      // Обновляем статус собеседования, добавляем отвечающего и, если предоставлены, ссылку на Google Meet и ID события календаря
+      // Обновляем статус собеседования и добавляем отвечающего
       prisma.mockInterview.update({
         where: { id },
         data: {
@@ -148,12 +142,6 @@ export default async function handler(req, res) {
           interviewee: {
             connect: { id: session.user.id },
           },
-          ...(meetingLink && calendarEventId
-            ? {
-                meetingLink: meetingLink,
-                calendarEventId: calendarEventId,
-              }
-            : {}),
         },
       }),
       // Списываем 1 балл у пользователя
@@ -208,59 +196,15 @@ export default async function handler(req, res) {
 
     console.log('API Book: Результат отправки email:', emailResult);
 
-    let calendarResult;
-
-    if (meetingLink && calendarEventId) {
-      // Если в запросе есть ссылка и ID события, используем их
-      console.log(
-        'API Book: Используем предоставленную ссылку на Google Meet:',
-        meetingLink
-      );
-      console.log(
-        'API Book: Используем предоставленный ID события календаря:',
-        calendarEventId
-      );
-
-      calendarResult = {
-        success: true,
-        eventId: calendarEventId,
-        meetingLink: meetingLink,
-      };
-    } else if (result[0].calendarEventId) {
-      // Если есть ID события, обновляем его
-      console.log(
-        'API Book: Обновляем существующее событие в календаре:',
-        result[0].calendarEventId
-      );
-      calendarResult = await updateCalendarEvent(
-        result[0].calendarEventId,
-        interviewer,
-        interviewee,
-        result[0]
-      );
-    } else {
-      // Иначе создаем новое событие
-      console.log('API Book: Создаем новое событие в календаре');
-      calendarResult = await createCalendarEvent(
-        interviewer,
-        interviewee,
-        result[0]
-      );
-
-      // Сохраняем ID события и ссылку на встречу
-      if (calendarResult.success) {
-        await prisma.mockInterview.update({
-          where: { id },
-          data: {
-            calendarEventId: calendarResult.eventId,
-            meetingLink: calendarResult.meetingLink,
-          },
-        });
-      }
-    }
+    // Создаем событие в Google Calendar
+    const calendarResult = await createCalendarEvent(
+      interviewer,
+      interviewee,
+      result[0]
+    );
 
     console.log(
-      'API Book: Результат работы с событием в календаре:',
+      'API Book: Результат создания события в календаре:',
       calendarResult
     );
 

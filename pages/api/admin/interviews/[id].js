@@ -66,9 +66,11 @@ async function handler(req, res) {
       return res.status(200).json(interview);
     } catch (error) {
       console.error('Ошибка при получении информации о собеседовании:', error);
-      return res.status(500).json({
-        message: 'Ошибка сервера при получении информации о собеседовании',
-      });
+      return res
+        .status(500)
+        .json({
+          message: 'Ошибка сервера при получении информации о собеседовании',
+        });
     }
   }
 
@@ -106,96 +108,7 @@ async function handler(req, res) {
       if (scheduledTime !== undefined)
         updateData.scheduledTime = new Date(scheduledTime);
       if (status !== undefined) updateData.status = status;
-
-      // При обновлении собеседования
-      if (
-        scheduledTime !== undefined ||
-        interviewerId !== undefined ||
-        intervieweeId !== undefined
-      ) {
-        // Если есть ID события в календаре, обновляем его
-        if (existingInterview.calendarEventId) {
-          try {
-            // Импортируем функцию для обновления событий в Google Calendar
-            const {
-              updateCalendarEvent,
-            } = require('../../../../lib/utils/googleCalendar');
-
-            const updatedInterviewer = interviewerId
-              ? await prisma.user.findUnique({ where: { id: interviewerId } })
-              : existingInterview.interviewer;
-
-            const updatedInterviewee = intervieweeId
-              ? await prisma.user.findUnique({ where: { id: intervieweeId } })
-              : existingInterview.interviewee;
-
-            const calendarResult = await updateCalendarEvent(
-              existingInterview.calendarEventId,
-              updatedInterviewer,
-              updatedInterviewee,
-              {
-                ...existingInterview,
-                scheduledTime: scheduledTime || existingInterview.scheduledTime,
-              }
-            );
-
-            if (calendarResult.success && calendarResult.meetingLink) {
-              updateData.meetingLink = calendarResult.meetingLink;
-            }
-          } catch (error) {
-            console.error('Ошибка при обновлении события в календаре:', error);
-          }
-        }
-      }
-
-      // Проверяем, не является ли ссылка заглушкой test-mock-link
-      if (meetingLink !== undefined) {
-        if (meetingLink.includes('test-mock-link')) {
-          console.log(
-            'API: Обнаружена заглушка test-mock-link, создаем реальную ссылку'
-          );
-
-          // Импортируем функцию для создания событий в Google Calendar
-          const {
-            createCalendarEvent,
-          } = require('../../../../lib/utils/googleCalendar');
-
-          // Создаем временный объект для собеседования
-          const interviewData = {
-            id: existingInterview.id,
-            scheduledTime: existingInterview.scheduledTime,
-            meetingLink: '', // Очищаем заглушку
-          };
-
-          try {
-            // Создаем новое событие в Google Calendar с реальной ссылкой
-            const calendarResult = await createCalendarEvent(
-              existingInterview.interviewer,
-              existingInterview.interviewee,
-              interviewData
-            );
-
-            if (calendarResult.success && calendarResult.meetingLink) {
-              // Используем новую реальную ссылку
-              updateData.meetingLink = calendarResult.meetingLink;
-              // Обновляем ID события в календаре, если он есть
-              if (calendarResult.eventId) {
-                updateData.calendarEventId = calendarResult.eventId;
-              }
-            } else {
-              // Если не удалось создать новую ссылку, используем предоставленную
-              updateData.meetingLink = meetingLink;
-            }
-          } catch (error) {
-            console.error('API: Ошибка при создании реальной ссылки:', error);
-            // В случае ошибки используем предоставленную ссылку
-            updateData.meetingLink = meetingLink;
-          }
-        } else {
-          // Если это не заглушка, используем предоставленную ссылку
-          updateData.meetingLink = meetingLink;
-        }
-      }
+      if (meetingLink !== undefined) updateData.meetingLink = meetingLink;
 
       // Обновление связей с пользователями
       if (interviewerId !== undefined) {

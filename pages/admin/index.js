@@ -20,12 +20,7 @@ export default function AdminDashboard() {
         const response = await fetch('/api/admin/statistics');
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Ошибка API:', response.status, errorData);
-          throw new Error(
-            errorData.message ||
-              `Ошибка загрузки статистики: ${response.status}`
-          );
+          throw new Error('Не удалось загрузить статистику');
         }
 
         const data = await response.json();
@@ -40,7 +35,7 @@ export default function AdminDashboard() {
         });
       } catch (error) {
         console.error('Ошибка при загрузке статистики:', error);
-        showError(`Не удалось загрузить статистику: ${error.message}`);
+        showError('Не удалось загрузить статистику');
       } finally {
         setLoading(false);
       }
