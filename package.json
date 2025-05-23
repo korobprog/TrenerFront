@@ -4,7 +4,7 @@
   "description": "Платформа для тренировочных собеседований",
   "private": true,
   "scripts": {
-    "dev": "kill-port 3000 && next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -21,7 +21,7 @@
     "chart.js": "^4.4.9",
     "crypto": "^1.0.1",
     "googleapis": "^148.0.0",
-    "next": "^14.1.0",
+    "next": "^14.0.4",
     "next-auth": "^4.24.5",
     "nodemailer": "^6.9.9",
     "pm2": "^5.3.1",

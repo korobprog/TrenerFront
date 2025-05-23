@@ -45,32 +45,87 @@ export const authOptions = {
         password: { label: 'Пароль', type: 'password' },
       },
       async authorize(credentials) {
+        console.log(
+          'NextAuth authorize: Попытка авторизации с учетными данными:'
+        );
+        console.log('- username:', credentials.username);
+        console.log(
+          '- password:',
+          credentials.password ? '[СКРЫТ]' : 'отсутствует'
+        );
+
         // Ищем пользователя с ролью superadmin
         const superAdmin = await prisma.user.findFirst({
           where: { role: 'superadmin' },
         });
 
+        console.log(
+          'NextAuth authorize: Результат поиска суперадмина:',
+          superAdmin ? 'найден' : 'не найден'
+        );
+
+        if (superAdmin) {
+          console.log('NextAuth authorize: Данные суперадмина:');
+          console.log('- id:', superAdmin.id);
+          console.log('- email:', superAdmin.email);
+          console.log('- role:', superAdmin.role);
+          console.log(
+            '- password:',
+            superAdmin.password ? 'установлен' : 'не установлен'
+          );
+        }
+
         if (!superAdmin) {
+          console.log(
+            'NextAuth authorize: Супер-администратор не найден в базе данных'
+          );
           return null; // Супер-администратор не найден
         }
 
-        // Проверяем логин (username должен соответствовать email или быть 'admin')
+        // Проверяем логин (username должен соответствовать email или быть 'admin' или 'superadmin')
         const isValidUsername =
           credentials.username === 'admin' ||
+          credentials.username === 'superadmin' ||
           credentials.username === superAdmin.email;
 
+        console.log(
+          'NextAuth authorize: Проверка логина:',
+          isValidUsername ? 'успешно' : 'неуспешно'
+        );
+
         if (!isValidUsername) {
+          console.log('NextAuth authorize: Неверный логин');
           return null;
         }
 
         // Проверяем пароль
-        const isValidPassword = superAdmin.password
-          ? await bcrypt.compare(credentials.password, superAdmin.password)
-          : credentials.password === 'krishna1284radha'; // Запасной вариант для обратной совместимости
+        let isValidPassword = false;
+
+        if (superAdmin.password) {
+          // Проверяем хешированный пароль
+          isValidPassword = await bcrypt.compare(
+            credentials.password,
+            superAdmin.password
+          );
+          console.log(
+            'NextAuth authorize: Проверка хешированного пароля:',
+            isValidPassword ? 'успешно' : 'неуспешно'
+          );
+        } else {
+          // Запасной вариант для обратной совместимости
+          isValidPassword = credentials.password === 'krishna1284radha';
+          console.log(
+            'NextAuth authorize: Проверка запасного пароля:',
+            isValidPassword ? 'успешно' : 'неуспешно'
+          );
+        }
 
         if (!isValidPassword) {
+          console.log('NextAuth authorize: Неверный пароль');
           return null;
         }
+
+        console.log('NextAuth authorize: Авторизация успешна');
 
         // Возвращаем данные пользователя
         return {

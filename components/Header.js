@@ -127,6 +127,19 @@ export default function Header() {
                     >
                       История баллов
                     </Link>
+                    {session.user.role === 'superadmin' && (
+                      <>
+                        <Link href="/admin" className={styles.menuItem}>
+                          Управление
+                        </Link>
+                        <Link
+                          href="/admin/superadmin-signin"
+                          className={styles.menuItem}
+                        >
+                          Вход
+                        </Link>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

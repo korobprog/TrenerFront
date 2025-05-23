@@ -78,8 +78,8 @@ export default function SuperAdminSignIn() {
           <h1 className={styles.title}>Вход для супер-администратора</h1>
 
           <div className={styles.info}>
-            Используйте логин <strong>admin</strong> или email
-            супер-администратора
+            Используйте логин <strong>superadmin</strong> или{' '}
+            <strong>admin</strong> или email супер-администратора
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -94,7 +94,7 @@ export default function SuperAdminSignIn() {
                 value={credentials.username}
                 onChange={handleChange}
                 className={styles.input}
-                placeholder="Введите логин (admin)"
+                placeholder="Введите логин (superadmin или admin)"
                 required
               />
             </div>

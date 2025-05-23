@@ -1,10 +1,33 @@
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../auth/[...nextauth]';
 import prisma from '../../../../lib/prisma';
 
 export default async function handler(req, res) {
-  const session = await getSession({ req });
+  console.log('Запрос на feedback API:', {
+    method: req.method,
+    url: req.url,
+    query: req.query,
+    headers: req.headers,
+    cookies: req.cookies,
+  });
+
+  // Проверяем заголовки запроса для отладки
+  console.log('Feedback API: Заголовки запроса:', req.headers);
+  console.log('Feedback API: Cookie:', req.headers.cookie);
+
+  const session = await getServerSession(req, res, authOptions);
+  console.log('Сессия пользователя:', session ? 'Присутствует' : 'Отсутствует');
+  if (session) {
+    console.log('ID пользователя в сессии:', session.user?.id);
+    console.log('Детали сессии:', {
+      email: session.user?.email,
+      role: session.user?.role,
+      timestamp: session?.timestamp,
+    });
+  }
 
   if (!session) {
+    console.log('Ошибка 401: Сессия отсутствует');
     return res.status(401).json({ message: 'Необходима авторизация' });
   }
 

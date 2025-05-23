@@ -29,6 +29,12 @@ export default function InterviewAssistantSettingsPage() {
     geminiModel: 'gemini-1.5-pro',
     geminiBaseUrl: 'https://generativelanguage.googleapis.com',
     geminiTemperature: 0.7,
+    // Настройки для OpenRouter
+    openRouterApiKey: '',
+    openRouterBaseUrl: 'https://openrouter.ai/api/v1',
+    openRouterModel: 'google/gemma-3-12b-it:free',
+    openRouterTemperature: 0.7,
+    openRouterMaxTokens: 4000,
   });
 
   // Состояние для хранения ошибок валидации
@@ -244,6 +250,23 @@ export default function InterviewAssistantSettingsPage() {
                       className={styles.radioLabel}
                     >
                       LangDock API
+                    </label>
+                  </div>
+                  <div className={styles.radioOption}>
+                    <input
+                      type="radio"
+                      id="apiTypeOpenRouter"
+                      name="apiType"
+                      value="openrouter"
+                      checked={settings.apiType === 'openrouter'}
+                      onChange={handleChange}
+                      className={styles.radioInput}
+                    />
+                    <label
+                      htmlFor="apiTypeOpenRouter"
+                      className={styles.radioLabel}
+                    >
+                      OpenRouter API
                     </label>
                   </div>
                 </div>
@@ -504,6 +527,165 @@ export default function InterviewAssistantSettingsPage() {
                       Температура влияет на случайность генерации. Низкие
                       значения делают ответы более предсказуемыми, высокие -
                       более творческими.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {settings.apiType === 'openrouter' && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label
+                      htmlFor="openRouterApiKey"
+                      className={styles.formLabel}
+                    >
+                      API ключ OpenRouter
+                    </label>
+                    <div className={styles.apiKeyContainer}>
+                      <input
+                        type={showApiKey ? 'text' : 'password'}
+                        id="openRouterApiKey"
+                        name="openRouterApiKey"
+                        value={settings.openRouterApiKey}
+                        onChange={handleChange}
+                        className={styles.formInput}
+                        required={settings.apiType === 'openrouter'}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className={styles.toggleButton}
+                      >
+                        {showApiKey ? '🙈 Скрыть' : '👁️ Показать'}
+                      </button>
+                    </div>
+                    <p className={styles.formHelp}>
+                      API ключ для доступа к OpenRouter. Получите ключ на{' '}
+                      <a
+                        href="https://openrouter.ai/keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.externalLink}
+                      >
+                        сайте OpenRouter
+                      </a>
+                    </p>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label
+                      htmlFor="openRouterModel"
+                      className={styles.formLabel}
+                    >
+                      Модель OpenRouter
+                    </label>
+                    <select
+                      id="openRouterModel"
+                      name="openRouterModel"
+                      value={settings.openRouterModel}
+                      onChange={handleChange}
+                      className={styles.formSelect}
+                      required={settings.apiType === 'openrouter'}
+                    >
+                      <option value="google/gemma-3-12b-it:free">
+                        Google Gemma 3 12B (бесплатная)
+                      </option>
+                      <option value="anthropic/claude-3-opus:2024-05-23">
+                        Anthropic Claude 3 Opus
+                      </option>
+                      <option value="anthropic/claude-3-sonnet:2024-05-23">
+                        Anthropic Claude 3 Sonnet
+                      </option>
+                      <option value="anthropic/claude-3-haiku:2024-05-23">
+                        Anthropic Claude 3 Haiku
+                      </option>
+                      <option value="meta-llama/llama-3-70b-instruct:free">
+                        Meta Llama 3 70B (бесплатная)
+                      </option>
+                      <option value="mistralai/mistral-large-latest">
+                        Mistral Large
+                      </option>
+                      <option value="mistralai/mistral-medium-latest">
+                        Mistral Medium
+                      </option>
+                      <option value="mistralai/mistral-small-latest">
+                        Mistral Small
+                      </option>
+                    </select>
+                    <p className={styles.formHelp}>
+                      Выберите модель OpenRouter для использования в запросах
+                    </p>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label
+                      htmlFor="openRouterBaseUrl"
+                      className={styles.formLabel}
+                    >
+                      Базовый URL для OpenRouter API
+                    </label>
+                    <input
+                      type="text"
+                      id="openRouterBaseUrl"
+                      name="openRouterBaseUrl"
+                      value={settings.openRouterBaseUrl}
+                      onChange={handleChange}
+                      className={styles.formInput}
+                      required={settings.apiType === 'openrouter'}
+                    />
+                    <p className={styles.formHelp}>
+                      URL для доступа к API OpenRouter (по умолчанию:
+                      https://openrouter.ai/api/v1)
+                    </p>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label
+                      htmlFor="openRouterTemperature"
+                      className={styles.formLabel}
+                    >
+                      Температура генерации ({settings.openRouterTemperature})
+                    </label>
+                    <input
+                      type="range"
+                      id="openRouterTemperature"
+                      name="openRouterTemperature"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={settings.openRouterTemperature}
+                      onChange={handleChange}
+                      className={styles.formInput}
+                      required={settings.apiType === 'openrouter'}
+                    />
+                    <p className={styles.formHelp}>
+                      Температура влияет на случайность генерации. Низкие
+                      значения делают ответы более предсказуемыми, высокие -
+                      более творческими.
+                    </p>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label
+                      htmlFor="openRouterMaxTokens"
+                      className={styles.formLabel}
+                    >
+                      Максимальное количество токенов для ответа
+                    </label>
+                    <input
+                      type="number"
+                      id="openRouterMaxTokens"
+                      name="openRouterMaxTokens"
+                      value={settings.openRouterMaxTokens}
+                      onChange={handleChange}
+                      min="1000"
+                      max="10000"
+                      className={styles.formInput}
+                      required={settings.apiType === 'openrouter'}
+                    />
+                    <p className={styles.formHelp}>
+                      Максимальное количество токенов, которое может быть
+                      использовано для ответа
                     </p>
                   </div>
                 </>

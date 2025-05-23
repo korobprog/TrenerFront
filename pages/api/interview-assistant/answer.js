@@ -4,7 +4,9 @@ import { getAnswer as getAnthropicAnswer } from '../../../lib/utils/anthropicApi
 import { getAnswer as getLangdockAnswer } from '../../../lib/utils/langdockApi';
 import { getAnswer as getGeminiAnswer } from '../../../lib/utils/geminiApi';
 import { getAnswer as getHuggingfaceAnswer } from '../../../lib/utils/huggingfaceApi';
-import { getAnswer as getOpenRouterAnswer } from '../../../lib/utils/openRouterApi';
+// Импортируем CommonJS модуль и получаем нужную функцию
+import openRouterApiModule from '../../../lib/utils/openRouterApi';
+const getOpenRouterAnswer = openRouterApiModule.getAnswer;
 import prisma from '../../../prisma/client';
 
 /**

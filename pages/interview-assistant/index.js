@@ -256,11 +256,21 @@ export default function InterviewAssistant() {
       </Head>
 
       <div className={styles.container}>
-        {/* Индикатор используемого API */}
+        {/* Индикатор используемой модели ИИ */}
         <div className={styles.apiIndicator}>
-          <span className={styles.apiLabel}>API:</span>
+          <span className={styles.apiLabel}>ИИ:</span>
           <span className={styles.apiType}>
-            {companyInfo.apiType === 'langdock' ? 'LangDock' : 'Anthropic'}
+            {companyInfo.apiType === 'langdock'
+              ? 'LangDock'
+              : companyInfo.apiType === 'anthropic'
+              ? 'Anthropic'
+              : companyInfo.apiType === 'gemini'
+              ? 'Gemini'
+              : companyInfo.apiType === 'huggingface'
+              ? 'Hugging Face'
+              : companyInfo.apiType === 'openrouter'
+              ? 'OpenRouter'
+              : 'Модель'}
             {companyInfo.useCustomApi && ' (Пользовательский)'}
           </span>
         </div>
@@ -357,10 +367,18 @@ export default function InterviewAssistant() {
                       </div>
                       {item.apiType && (
                         <div className={styles.historyApiType}>
-                          API:{' '}
+                          ИИ:{' '}
                           {item.apiType === 'langdock'
                             ? 'LangDock'
-                            : 'Anthropic'}
+                            : item.apiType === 'anthropic'
+                            ? 'Anthropic'
+                            : item.apiType === 'gemini'
+                            ? 'Gemini'
+                            : item.apiType === 'huggingface'
+                            ? 'Hugging Face'
+                            : item.apiType === 'openrouter'
+                            ? 'OpenRouter'
+                            : 'Модель'}
                         </div>
                       )}
                     </div>

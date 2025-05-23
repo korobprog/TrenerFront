@@ -97,6 +97,17 @@ async function handler(req, res) {
         langdockAssistantId,
         langdockBaseUrl,
         langdockRegion,
+        // Поля для OpenRouter
+        openRouterApiKey,
+        openRouterBaseUrl,
+        openRouterModel,
+        openRouterTemperature,
+        openRouterMaxTokens,
+        // Поля для Gemini
+        geminiApiKey,
+        geminiModel,
+        geminiBaseUrl,
+        geminiTemperature,
       } = req.body;
 
       // Проверяем обязательные поля
@@ -111,7 +122,8 @@ async function handler(req, res) {
       if (
         apiType !== 'anthropic' &&
         apiType !== 'langdock' &&
-        apiType !== 'gemini'
+        apiType !== 'gemini' &&
+        apiType !== 'openrouter'
       ) {
         return res.status(400).json({
           message: 'Неверный тип API',
@@ -172,6 +184,7 @@ async function handler(req, res) {
               maxTokensPerQuestion: parseInt(maxTokensPerQuestion, 10),
               isActive,
               apiType,
+              // Поля для LangDock
               langdockAssistantId:
                 apiType === 'langdock'
                   ? langdockAssistantId ||
@@ -179,6 +192,27 @@ async function handler(req, res) {
                   : null,
               langdockBaseUrl: apiType === 'langdock' ? langdockBaseUrl : null,
               langdockRegion: apiType === 'langdock' ? langdockRegion : null,
+              // Поля для OpenRouter
+              openRouterApiKey:
+                apiType === 'openrouter' ? openRouterApiKey : null,
+              openRouterBaseUrl:
+                apiType === 'openrouter' ? openRouterBaseUrl : null,
+              openRouterModel:
+                apiType === 'openrouter' ? openRouterModel : null,
+              openRouterTemperature:
+                apiType === 'openrouter'
+                  ? parseFloat(openRouterTemperature)
+                  : null,
+              openRouterMaxTokens:
+                apiType === 'openrouter'
+                  ? parseInt(openRouterMaxTokens, 10)
+                  : null,
+              // Поля для Gemini
+              geminiApiKey: apiType === 'gemini' ? geminiApiKey : null,
+              geminiModel: apiType === 'gemini' ? geminiModel : null,
+              geminiBaseUrl: apiType === 'gemini' ? geminiBaseUrl : null,
+              geminiTemperature:
+                apiType === 'gemini' ? parseFloat(geminiTemperature) : null,
             },
           });
         });
@@ -194,6 +228,7 @@ async function handler(req, res) {
               maxTokensPerQuestion: parseInt(maxTokensPerQuestion, 10),
               isActive,
               apiType,
+              // Поля для LangDock
               langdockAssistantId:
                 apiType === 'langdock'
                   ? langdockAssistantId ||
@@ -201,6 +236,27 @@ async function handler(req, res) {
                   : null,
               langdockBaseUrl: apiType === 'langdock' ? langdockBaseUrl : null,
               langdockRegion: apiType === 'langdock' ? langdockRegion : null,
+              // Поля для OpenRouter
+              openRouterApiKey:
+                apiType === 'openrouter' ? openRouterApiKey : null,
+              openRouterBaseUrl:
+                apiType === 'openrouter' ? openRouterBaseUrl : null,
+              openRouterModel:
+                apiType === 'openrouter' ? openRouterModel : null,
+              openRouterTemperature:
+                apiType === 'openrouter'
+                  ? parseFloat(openRouterTemperature)
+                  : null,
+              openRouterMaxTokens:
+                apiType === 'openrouter'
+                  ? parseInt(openRouterMaxTokens, 10)
+                  : null,
+              // Поля для Gemini
+              geminiApiKey: apiType === 'gemini' ? geminiApiKey : null,
+              geminiModel: apiType === 'gemini' ? geminiModel : null,
+              geminiBaseUrl: apiType === 'gemini' ? geminiBaseUrl : null,
+              geminiTemperature:
+                apiType === 'gemini' ? parseFloat(geminiTemperature) : null,
             },
           });
         });
@@ -219,13 +275,26 @@ async function handler(req, res) {
           maxTokensPerQuestion,
           isActive,
           apiType,
+          // Поля для LangDock
           langdockAssistantId:
             apiType === 'langdock'
               ? langdockAssistantId || process.env.DEFAULT_LANGDOCK_ASSISTANT_ID
               : null,
           langdockBaseUrl: apiType === 'langdock' ? langdockBaseUrl : null,
           langdockRegion: apiType === 'langdock' ? langdockRegion : null,
-          // Не логируем API ключ в целях безопасности
+          // Поля для OpenRouter (без API ключа)
+          openRouterBaseUrl:
+            apiType === 'openrouter' ? openRouterBaseUrl : null,
+          openRouterModel: apiType === 'openrouter' ? openRouterModel : null,
+          openRouterTemperature:
+            apiType === 'openrouter' ? openRouterTemperature : null,
+          openRouterMaxTokens:
+            apiType === 'openrouter' ? openRouterMaxTokens : null,
+          // Поля для Gemini (без API ключа)
+          geminiModel: apiType === 'gemini' ? geminiModel : null,
+          geminiBaseUrl: apiType === 'gemini' ? geminiBaseUrl : null,
+          geminiTemperature: apiType === 'gemini' ? geminiTemperature : null,
+          // Не логируем API ключи в целях безопасности
         }
       );
 
