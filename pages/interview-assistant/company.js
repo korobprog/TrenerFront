@@ -347,6 +347,25 @@ export default function CompanyForm() {
    * Обработчик кнопки "Пропустить"
    */
   const handleSkip = () => {
+    console.log('[DEBUG] Нажата кнопка "Пропустить"');
+
+    // Попытка сохранить информацию о том, что пользователь пропустил указание компании
+    try {
+      if (typeof window !== 'undefined' && session) {
+        console.log('[DEBUG] Сохраняем информацию о пропуске в localStorage');
+        localStorage.setItem(
+          `interview-skip-company-${session.user.id}`,
+          'true'
+        );
+      }
+    } catch (error) {
+      console.error(
+        '[DEBUG] Ошибка при сохранении информации о пропуске:',
+        error
+      );
+    }
+
+    console.log('[DEBUG] Перенаправление на /interview-assistant');
     router.push('/interview-assistant');
   };
 

@@ -197,3 +197,132 @@
     color: #4a90e2;
   }
 }
+
+/* Стили для режима рации */
+.radioButton {
+  position: absolute;
+  right: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.radioButton:hover {
+  color: #4a90e2;
+}
+
+.radioButtonActive {
+  color: #4a90e2;
+  background-color: rgba(74, 144, 226, 0.1);
+}
+
+.inputWrapperRadioMode {
+  border: 1px solid #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.spaceHint {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #4a90e2;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 2px 8px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.spaceHintVisible {
+  opacity: 1;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .radioButton {
+    right: 70px;
+    padding: 6px;
+  }
+}
+
+/* Адаптация для темного режима */
+@media (prefers-color-scheme: dark) {
+  .radioButton {
+    color: #aaa;
+  }
+
+  .radioButton:hover {
+    color: #4a90e2;
+  }
+
+  .radioButtonActive {
+    color: #4a90e2;
+    background-color: rgba(74, 144, 226, 0.2);
+  }
+
+  .spaceHint {
+    background-color: rgba(42, 42, 42, 0.9);
+    color: #4a90e2;
+  }
+}
+
+/* Стили для индикатора записи "REC" */
+.recIndicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #ff0000;
+  font-weight: bold;
+  font-size: 32px;
+  padding: 15px 30px;
+  border-radius: 8px;
+  z-index: 9999;
+  animation: blink 0.8s infinite;
+  pointer-events: none; /* Чтобы индикатор не мешал взаимодействию с интерфейсом */
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  border: 2px solid #ff0000;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Адаптация для темного режима */
+@media (prefers-color-scheme: dark) {
+  .recIndicator {
+    background-color: rgba(50, 50, 50, 0.8);
+  }
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .recIndicator {
+    font-size: 20px;
+    padding: 8px 16px;
+  }
+}

@@ -59,8 +59,40 @@ export default function InterviewAssistant() {
         status: status,
       });
 
+      // Проверяем, пропустил ли пользователь указание компании
+      const checkSkipStatus = () => {
+        if (typeof window !== 'undefined' && session) {
+          const skipKey = `interview-skip-company-${session.user.id}`;
+          const hasSkipped = localStorage.getItem(skipKey) === 'true';
+
+          console.log('[DEBUG] Проверка статуса пропуска компании:', {
+            skipKey,
+            hasSkipped,
+          });
+
+          return hasSkipped;
+        }
+        return false;
+      };
+
       // Проверяем, указана ли компания для текущего пользователя
       const checkCompanyUsage = async () => {
+        // Если пользователь сознательно пропустил указание компании, не перенаправляем его
+        const hasSkippedCompany = checkSkipStatus();
+        if (hasSkippedCompany) {
+          console.log(
+            '[DEBUG] Пользователь пропустил указание компании, не перенаправляем'
+          );
+          // Устанавливаем пустую компанию, чтобы не перенаправлять пользователя
+          setCompanyInfo({
+            company: '',
+            interviewDate: null,
+            useCustomApi: false,
+            apiType: 'anthropic',
+          });
+          return; // Прерываем выполнение функции
+        }
+
         console.log('[DEBUG] Начало проверки компании для пользователя');
         try {
           console.log(
@@ -120,7 +152,7 @@ export default function InterviewAssistant() {
       // Вызываем функцию проверки
       checkCompanyUsage();
     }
-  }, [status, router]);
+  }, [status, router, session]);
 
   // Загружаем историю из localStorage при монтировании компонента
   useEffect(() => {
