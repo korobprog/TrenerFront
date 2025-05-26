@@ -1,0 +1,261 @@
+/* Основной контейнер страницы */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+/* Контейнер для ответа */
+.answerContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Стили для текста ответа */
+.answerText {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.6;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Стили для контейнера с кодом */
+.answerText pre {
+  background-color: #f1f1f1;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
+
+/* Стили для контейнера ввода */
+.inputContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background-color: white;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* Стили для индикатора загрузки */
+.loadingContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 5;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Стили для индикатора API */
+.apiIndicator {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  padding: 0.5rem 0.8rem;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+  z-index: 5;
+}
+
+.apiLabel {
+  font-weight: bold;
+  margin-right: 0.5rem;
+  color: #555;
+}
+
+.apiType {
+  color: #3498db;
+  font-weight: 500;
+}
+
+/* Стили для кнопки истории */
+.historyButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.historyButton:hover {
+  background-color: #2980b9;
+  transform: scale(1.05);
+}
+
+/* Стили для модального окна истории */
+.historyModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+.historyContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.historyItem {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.historyItem:hover {
+  background-color: #e1e1e1;
+}
+
+.historyQuestion {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.historyMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.historyTimestamp {
+  font-style: italic;
+}
+
+.historyApiType {
+  background-color: #e8f4fd;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #3498db;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+}
+
+/* Анимация появления ответа */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeIn {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 768px) {
+  .answerContainer {
+    padding: 1rem;
+  }
+
+  .answerText {
+    font-size: 1rem;
+    padding: 0.8rem;
+    max-height: calc(100vh - 100px);
+  }
+
+  .historyButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .apiIndicator {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+    top: 0.8rem;
+    left: 0.8rem;
+  }
+
+  .historyMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .historyApiType {
+    margin-top: 0.3rem;
+  }
+}

@@ -231,10 +231,19 @@ async function handler(req, res) {
         recentLogs: formattedLogs,
       });
     } catch (error) {
+      // Логируем детали ошибки для диагностики
       console.error('Ошибка при получении статистики:', error);
-      return res
-        .status(500)
-        .json({ message: 'Ошибка сервера при получении статистики' });
+      console.error('Детали ошибки при получении статистики:', {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      // Возвращаем более информативное сообщение об ошибке
+      return res.status(500).json({
+        message: 'Ошибка сервера при получении статистики',
+        error: error.message,
+        code: 'STATISTICS_FETCH_ERROR',
+      });
     }
   }
 

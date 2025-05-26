@@ -40,6 +40,12 @@ export default function FeedbackForm({ interview, onSubmitSuccess }) {
     try {
       setIsSubmitting(true);
 
+      console.log('Отправка отзыва:', {
+        interviewId: interview.id,
+        technicalScore,
+        feedback: feedback.substring(0, 30) + '...', // Логируем только начало отзыва
+      });
+
       const response = await fetch(
         `/api/mock-interviews/${interview.id}/feedback`,
         {
@@ -54,8 +60,15 @@ export default function FeedbackForm({ interview, onSubmitSuccess }) {
         }
       );
 
+      console.log('Ответ сервера:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Ошибка при отправке отзыва:', errorData);
         throw new Error(errorData.message || 'Не удалось оставить отзыв');
       }
 

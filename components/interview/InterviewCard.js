@@ -10,12 +10,14 @@ import styles from '../../styles/InterviewCard.module.css';
  * @param {Object} props.interview - Данные о собеседовании
  * @param {number} props.userPoints - Количество баллов пользователя
  * @param {Function} props.onBookInterview - Функция обработки записи на собеседование
+ * @param {Function} props.onRefresh - Функция для обновления списка собеседований
  * @returns {JSX.Element} Компонент карточки собеседования
  */
 export default function InterviewCard({
   interview,
   userPoints,
   onBookInterview,
+  onRefresh,
 }) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -83,7 +85,15 @@ export default function InterviewCard({
 
       // Обновляем страницу после успешной отметки неявки
       showSuccess('Неявка успешно отмечена');
-      router.reload();
+
+      // Вместо полной перезагрузки страницы используем SPA-навигацию
+      // и обновляем данные через функцию обновления из родительского компонента
+      if (onRefresh) {
+        onRefresh(); // Вызываем функцию обновления данных из родительского компонента
+      } else {
+        // Если функция обновления не передана, перенаправляем на ту же страницу без перезагрузки
+        router.push(router.asPath, undefined, { shallow: true });
+      }
     } catch (error) {
       console.error('Ошибка при отметке неявки:', error);
       showError(error.message || 'Произошла ошибка при отметке неявки');

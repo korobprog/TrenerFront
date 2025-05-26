@@ -33,23 +33,30 @@ export default function SignIn({ providers }) {
         )}
 
         <div className={styles.providersContainer}>
-          {Object.values(providers).map((provider) => (
-            <div key={provider.name} className={styles.providerCard}>
-              <button
-                onClick={() => signIn(provider.id, { callbackUrl: '/' })}
-                className={styles.providerButton}
-              >
-                {provider.name === 'Google' && (
-                  <img
-                    src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
-                    alt="Google"
-                    className={styles.providerIcon}
-                  />
-                )}
-                Войти через {provider.name}
-              </button>
+          {providers &&
+            Object.values(providers).map((provider) => (
+              <div key={provider.name} className={styles.providerCard}>
+                <button
+                  onClick={() => signIn(provider.id, { callbackUrl: '/' })}
+                  className={styles.providerButton}
+                >
+                  {provider.name === 'Google' && (
+                    <img
+                      src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
+                      alt="Google"
+                      className={styles.providerIcon}
+                    />
+                  )}
+                  Войти через {provider.name}
+                </button>
+              </div>
+            ))}
+          {!providers && (
+            <div className={styles.errorMessage}>
+              Не удалось загрузить провайдеры авторизации. Пожалуйста, обновите
+              страницу или попробуйте позже.
             </div>
-          ))}
+          )}
         </div>
       </main>
     </div>
