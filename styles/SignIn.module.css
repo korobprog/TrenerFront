@@ -76,3 +76,29 @@
   font-size: 0.9rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
+
+.links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 8px;
+}
+
+.link {
+  color: #0070f3;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: #0051b3;
+  text-decoration: underline;
+}
+
+.linkSeparator {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0 4px;
+}

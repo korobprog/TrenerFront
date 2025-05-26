@@ -7,8 +7,8 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
     <SessionProvider
       session={session}
-      refetchInterval={0} // Отключаем автоматическое обновление сессии
-      refetchOnWindowFocus={false} // Отключаем обновление при фокусе окна
+      refetchInterval={60} // Обновлять каждую минуту вместо 0
+      refetchOnWindowFocus={true} // Включить обновление при фокусе окна
     >
       <NotificationProvider>
         <Header />

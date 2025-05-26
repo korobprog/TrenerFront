@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -19,43 +17,47 @@ model Question {
 }
 
 model User {
-  id                   String             @id @default(cuid())
-  name                 String?
-  email                String?            @unique
-  emailVerified        DateTime?
-  image                String?
-  role                 String             @default("user") // Новое поле: "user" или "admin"
-  isBlocked            Boolean            @default(false)  // Новое поле для блокировки пользователей
-  accounts             Account[]
-  sessions             Session[]
-  userProgress         UserProgress[]
-  userPoints           UserPoints?
-  interviewerSessions  MockInterview[]    @relation("InterviewerRelation")
-  intervieweeSessions  MockInterview[]    @relation("IntervieweeRelation")
-  violations           UserViolation[]
-  pointsTransactions   PointsTransaction[]
-  conductedInterviewsCount Int            @default(0)
-  lastLoginAt          DateTime?          // Новое поле для отслеживания последнего входа
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  adminActions         AdminActionLog[]   // Связь с логами административных действий
+  id                       String                    @id @default(cuid())
+  name                     String?
+  email                    String?                   @unique
+  emailVerified            DateTime?
+  image                    String?
+  conductedInterviewsCount Int                       @default(0)
+  createdAt                DateTime                  @default(now())
+  isBlocked                Boolean                   @default(false)
+  lastLoginAt              DateTime?
+  role                     String                    @default("user")
+  updatedAt                DateTime                  @updatedAt
+  password                 String?
+  accounts                 Account[]
+  adminActions             AdminActionLog[]
+  interviewAssistantQAs    InterviewAssistantQA[]
+  interviewAssistantUsages InterviewAssistantUsage[]
+  intervieweeSessions      MockInterview[]           @relation("IntervieweeRelation")
+  interviewerSessions      MockInterview[]           @relation("InterviewerRelation")
+  pointsTransactions       PointsTransaction[]
+  sessions                 Session[]
+  apiSettings              UserApiSettings?
+  userPoints               UserPoints?
+  userProgress             UserProgress[]
+  violations               UserViolation[]
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -78,73 +80,138 @@ model VerificationToken {
 
 model UserProgress {
   id           Int      @id @default(autoincrement())
-  question     Question @relation(fields: [questionId], references: [id])
   questionId   Int
-  user         User     @relation(fields: [userId], references: [id])
-  userId       String
-  status       String   // "known", "unknown", "repeat"
+  status       String
   lastReviewed DateTime @default(now())
   reviewCount  Int      @default(0)
   knownCount   Int      @default(0)
-  unknownCount Int      @default(0)
   repeatCount  Int      @default(0)
   searchCount  Int      @default(0)
+  unknownCount Int      @default(0)
+  userId       String
+  question     Question @relation(fields: [questionId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
 
   @@unique([questionId, userId])
 }
 
-// Модель для хранения баллов пользователя
 model UserPoints {
   id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id])
   userId    String   @unique
   points    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-// Модель для мок-собеседований
 model MockInterview {
-  id                 String             @id @default(cuid())
-  interviewer        User               @relation("InterviewerRelation", fields: [interviewerId], references: [id])
-  interviewerId      String
-  interviewee        User?              @relation("IntervieweeRelation", fields: [intervieweeId], references: [id])
-  intervieweeId      String?
-  scheduledTime      DateTime
-  meetingLink        String
-  status             String             @default("pending") // pending, booked, completed, cancelled, no_show
-  calendarEventId    String?            // ID события в Google Calendar для возможности обновления
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  interviewFeedback  InterviewFeedback?
+  id                String             @id @default(cuid())
+  interviewerId     String
+  intervieweeId     String?
+  scheduledTime     DateTime
+  meetingLink       String
+  status            String             @default("pending")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  calendarEventId   String?
+  interviewFeedback InterviewFeedback?
+  interviewee       User?              @relation("IntervieweeRelation", fields: [intervieweeId], references: [id])
+  interviewer       User               @relation("InterviewerRelation", fields: [interviewerId], references: [id])
 }
 
-// Модель для отзывов о собеседовании
 model InterviewFeedback {
-  id               String        @id @default(cuid())
-  mockInterview    MockInterview @relation(fields: [mockInterviewId], references: [id])
-  mockInterviewId  String        @unique
-  technicalScore   Int           // от 1 до 5
-  feedback         String
-  interviewerRating Int?         // от 1 до 5, оценка интервьюера отвечающим
-  isAccepted       Boolean       @default(false)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  mockInterviewId   String        @unique
+  technicalScore    Int
+  feedback          String
+  isAccepted        Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  interviewerRating Int?
+  mockInterview     MockInterview @relation(fields: [mockInterviewId], references: [id])
 }
 
-// Модель для логирования административных действий
 model AdminActionLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  admin       User     @relation(fields: [adminId], references: [id])
-  action      String   // Тип действия: "block_user", "edit_interview", "delete_interview", и т.д.
-  entityType  String   // Тип сущности: "user", "interview", "feedback", и т.д.
-  entityId    String   // ID сущности, над которой выполнено действие
-  details     Json?    // Дополнительные детали действия
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+  admin      User     @relation(fields: [adminId], references: [id])
 }
 
-// Модель для хранения системной статистики
+model InterviewAssistantQA {
+  id            String    @id @default(cuid())
+  userId        String
+  question      String
+  answer        String
+  createdAt     DateTime  @default(now())
+  category      String?
+  tags          String?
+  company       String?
+  interviewDate DateTime?
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model InterviewAssistantCache {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model InterviewAssistantUsage {
+  id             String    @id @default(cuid())
+  userId         String
+  date           DateTime
+  questionsCount Int       @default(0)
+  tokensUsed     Int       @default(0)
+  apiCost        Float     @default(0)
+  company        String?
+  interviewDate  DateTime?
+  user           User      @relation(fields: [userId], references: [id])
+}
+
+model InterviewAssistantCompany {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InterviewAssistantSettings {
+  id                     String  @id @default(cuid())
+  apiKey                 String
+  maxQuestionsPerDay     Int     @default(10)
+  maxTokensPerQuestion   Int     @default(4000)
+  isActive               Boolean @default(true)
+  apiType                String  @default("gemini")
+  langdockAssistantId    String?
+  langdockBaseUrl        String  @default("https://api.langdock.com/assistant/v1/chat/completions")
+  langdockRegion         String  @default("eu")
+  geminiApiKey           String?
+  geminiBaseUrl          String  @default("https://generativelanguage.googleapis.com")
+  geminiModel            String  @default("gemini-1.5-pro")
+  geminiTemperature      Float   @default(0.7)
+  enabledModels          String  @default("gemini,anthropic,langdock,huggingface")
+  huggingfaceApiKey      String?
+  huggingfaceBaseUrl     String  @default("https://api-inference.huggingface.co/models")
+  huggingfaceMaxTokens   Int     @default(2000)
+  huggingfaceModel       String  @default("mistralai/Mistral-7B-Instruct-v0.2")
+  huggingfaceTemperature Float   @default(0.7)
+  
+  // Поля для OpenRouter
+  openRouterApiKey       String?
+  openRouterBaseUrl      String? @default("https://openrouter.ai/api/v1")
+  openRouterModel        String? @default("google/gemma-3-12b-it:free")
+  openRouterTemperature  Float?  @default(0.7)
+  openRouterMaxTokens    Int?    @default(4000)
+}
+
 model SystemStatistics {
   id                    String   @id @default(cuid())
   date                  DateTime @unique
@@ -159,24 +226,56 @@ model SystemStatistics {
   totalPointsSpent      Int      @default(0)
 }
 
-// Модель для отслеживания нарушений пользователей
 model UserViolation {
   id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
   userId      String
-  type        String   // "no_show", "cancellation", etc.
+  type        String
   description String?
   createdAt   DateTime @default(now())
-  expiresAt   DateTime // Когда истекает срок действия нарушения
+  expiresAt   DateTime
+  user        User     @relation(fields: [userId], references: [id])
 }
 
-// Модель для истории транзакций с баллами
 model PointsTransaction {
   id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
   userId      String
-  amount      Int      // Может быть положительным (начисление) или отрицательным (списание)
-  type        String   // "booking", "feedback", "cancellation", "no_show", "bonus", etc.
+  amount      Int
+  type        String
   description String?
   createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model UserApiSettings {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  apiKey                 String?
+  baseUrl                String?
+  useCustomApi           Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  apiType                String   @default("gemini")
+  langdockApiKey         String?
+  langdockAssistantId    String?
+  langdockBaseUrl        String?
+  langdockRegion         String?  @default("eu")
+  geminiApiKey           String?
+  geminiBaseUrl          String?
+  geminiModel            String?
+  geminiTemperature      Float?
+  huggingfaceApiKey      String?
+  huggingfaceBaseUrl     String?  @default("https://api-inference.huggingface.co/models")
+  huggingfaceMaxTokens   Int?     @default(100)
+  huggingfaceModel       String?  @default("distilgpt2")
+  huggingfaceTemperature Float?   @default(0.7)
+  selectedModel          String?
+  
+  // Поля для OpenRouter
+  openRouterApiKey         String?
+  openRouterBaseUrl        String?  @default("https://openrouter.ai/api")
+  openRouterModel          String?  @default("google/gemma-3-12b-it:free")
+  openRouterTemperature    Float?   @default(0.7)
+  openRouterMaxTokens      Int?     @default(4000)
+  
+  user                   User     @relation(fields: [userId], references: [id])
 }
