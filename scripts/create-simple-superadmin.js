@@ -3,90 +3,117 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
-/**
- * Функция для создания супер-администратора с простым паролем
- * @param {string} username Логин супер-администратора
- * @param {string} password Пароль супер-администратора
- * @param {string} email Email супер-администратора
- * @param {string} name Имя супер-администратора
- */
-async function createSimpleSuperAdmin(username, password, email, name) {
+async function createOrUpdateSuperAdmin() {
   try {
-    console.log('Создание супер-администратора с простым паролем...');
+    console.log('Начинаем создание/обновление супер-администратора...');
+
+    const email = 'korobprog@gmail.com';
+    const password = 'admin123';
+    const name = 'Максим Коробков';
 
     // Хешируем пароль
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Проверяем, существует ли уже супер-администратор
-    const existingSuperAdmin = await prisma.user.findFirst({
-      where: { role: 'superadmin' },
+    console.log('Проверяем, существует ли пользователь с email:', email);
+
+    // Сначала проверяем, есть ли пользователь с таким email
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email },
     });
 
-    if (existingSuperAdmin) {
-      console.log('Обновляем существующего супер-администратора:');
-      console.log(`- ID: ${existingSuperAdmin.id}`);
+    let user;
 
-      // Обновляем пароль супер-администратора
-      const updatedSuperAdmin = await prisma.user.update({
-        where: { id: existingSuperAdmin.id },
+    if (existingUser) {
+      console.log('Пользователь найден, обновляем до супер-администратора...');
+      console.log('- Текущая роль:', existingUser.role);
+
+      // Обновляем существующего пользователя
+      user = await prisma.user.update({
+        where: { email: email },
         data: {
-          name,
+          name: name,
+          role: 'superadmin',
           password: hashedPassword,
         },
       });
 
-      console.log('Супер-администратор успешно обновлен:');
-      console.log(`- ID: ${updatedSuperAdmin.id}`);
-      console.log(`- Логин: ${username}`);
-      console.log(`- Email: ${updatedSuperAdmin.email}`);
-      console.log(`- Имя: ${updatedSuperAdmin.name}`);
-      console.log(`- Новый пароль: ${password}`);
+      console.log('Пользователь успешно обновлен до супер-администратора');
+    } else {
+      console.log(
+        'Пользователь не найден, создаем нового супер-администратора...'
+      );
 
-      return;
+      // Создаем нового пользователя
+      user = await prisma.user.create({
+        data: {
+          email: email,
+          name: name,
+          role: 'superadmin',
+          password: hashedPassword,
+        },
+      });
+
+      console.log('Новый супер-администратор успешно создан');
     }
 
-    // Если супер-администратор не существует, создаем нового
-    const newSuperAdmin = await prisma.user.create({
-      data: {
-        email,
-        name,
-        role: 'superadmin',
-        password: hashedPassword,
-      },
+    console.log('Данные супер-администратора:');
+    console.log('- ID:', user.id);
+    console.log('- Email:', user.email);
+    console.log('- Имя:', user.name);
+    console.log('- Роль:', user.role);
+    console.log('- Пароль:', password);
+
+    // Проверяем и создаем UserPoints если нужно
+    console.log('Проверяем запись UserPoints...');
+    const existingPoints = await prisma.userPoints.findUnique({
+      where: { userId: user.id },
     });
 
-    console.log('Новый супер-администратор успешно создан:');
-    console.log(`- ID: ${newSuperAdmin.id}`);
-    console.log(`- Логин: ${username}`);
-    console.log(`- Email: ${newSuperAdmin.email}`);
-    console.log(`- Имя: ${newSuperAdmin.name}`);
-    console.log(`- Пароль: ${password}`);
+    if (!existingPoints) {
+      await prisma.userPoints.create({
+        data: {
+          userId: user.id,
+          points: 1000,
+        },
+      });
+      console.log('Запись UserPoints создана с 1000 баллами');
+    } else {
+      console.log(
+        'Запись UserPoints уже существует с',
+        existingPoints.points,
+        'баллами'
+      );
+    }
 
-    // Создаем запись UserPoints для суперадминистратора
-    await prisma.userPoints.create({
-      data: {
-        userId: newSuperAdmin.id,
-        points: 1000, // Начальное количество баллов
-      },
-    });
-
-    console.log('Запись UserPoints для супер-администратора создана');
+    console.log('Операция завершена успешно!');
   } catch (error) {
-    console.error('Ошибка при создании супер-администратора:', error);
+    console.error(
+      'Ошибка при создании/обновлении супер-администратора:',
+      error
+    );
+
+    // Дополнительная диагностика
+    if (error.code === 'P2002') {
+      console.error('Ошибка уникальности - возможно, email уже используется');
+    } else if (error.code === 'P2025') {
+      console.error('Запись не найдена для обновления');
+    } else {
+      console.error('Код ошибки:', error.code);
+      console.error('Сообщение:', error.message);
+    }
   } finally {
     await prisma.$disconnect();
   }
 }
 
-// Параметры супер-администратора с простым паролем
-const USERNAME = 'superadmin';
-const PASSWORD = 'admin123';
-const EMAIL = 'korobprog@gmail.com';
-const NAME = 'Супер-администратор';
-
-// Вызываем функцию создания супер-администратора
-createSimpleSuperAdmin(USERNAME, PASSWORD, EMAIL, NAME).catch((error) => {
-  console.error('Ошибка при выполнении скрипта:', error);
-  process.exit(1);
-});
+// Запускаем функцию
+createOrUpdateSuperAdmin()
+  .then(() => {
+    console.log('Скрипт завершен');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Критическая ошибка:', error);
+    process.exit(1);
+  });

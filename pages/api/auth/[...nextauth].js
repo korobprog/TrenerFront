@@ -1,25 +1,23 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import GitHubProvider from 'next-auth/providers/github';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '../../../lib/prisma';
-import bcrypt from 'bcrypt';
+import {
+  verifyPassword,
+  validateEmail,
+  validateUsername,
+} from '../../../lib/utils/passwordUtils';
 
-// Добавляем логи для отладки
-console.log('NextAuth: Инициализация с параметрами:');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
-console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
-console.log('Все переменные окружения:');
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
-console.log('NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET);
-console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
-console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET);
-console.log('GMAIL_USER_ID:', process.env.GMAIL_USER_ID);
-console.log(
-  'Текущий URL запроса:',
-  typeof window !== 'undefined' ? window.location.href : 'Серверный рендеринг'
-);
+// Логи для отладки (только в режиме разработки и при первой инициализации)
+if (process.env.NODE_ENV === 'development' && !global.nextAuthInitialized) {
+  console.log('NextAuth: Инициализация с параметрами:');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+  console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
+  global.nextAuthInitialized = true;
+}
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
@@ -38,122 +36,132 @@ export const authOptions = {
         },
       },
     }),
+    // GitHub провайдер включается только если настроены валидные учетные данные
+    ...(process.env.GITHUB_CLIENT_ID &&
+    process.env.GITHUB_CLIENT_SECRET &&
+    process.env.GITHUB_CLIENT_ID !== 'your_github_client_id'
+      ? [
+          GitHubProvider({
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true, // Разрешаем связывание аккаунтов по email
+            authorization: {
+              params: {
+                scope: 'read:user user:email',
+              },
+            },
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        username: { label: 'Логин', type: 'text' },
+        username: { label: 'Email или имя пользователя', type: 'text' },
         password: { label: 'Пароль', type: 'password' },
       },
       async authorize(credentials) {
-        console.log(
-          'NextAuth authorize: Попытка авторизации с учетными данными:'
-        );
-        console.log('- username:', credentials.username);
-        console.log(
-          '- password:',
-          credentials.password ? '[СКРЫТ]' : 'отсутствует'
-        );
-
-        // Ищем пользователя с ролью superadmin
-        const superAdmin = await prisma.user.findFirst({
-          where: { role: 'superadmin' },
-        });
-
-        console.log(
-          'NextAuth authorize: Результат поиска суперадмина:',
-          superAdmin ? 'найден' : 'не найден'
-        );
-
-        if (superAdmin) {
-          console.log('NextAuth authorize: Данные суперадмина:');
-          console.log('- id:', superAdmin.id);
-          console.log('- email:', superAdmin.email);
-          console.log('- role:', superAdmin.role);
-          console.log(
-            '- password:',
-            superAdmin.password ? 'установлен' : 'не установлен'
-          );
-        }
-
-        if (!superAdmin) {
-          console.log(
-            'NextAuth authorize: Супер-администратор не найден в базе данных'
-          );
-          return null; // Супер-администратор не найден
-        }
-
-        // Проверяем логин (username должен соответствовать email или быть 'admin' или 'superadmin')
-        const isValidUsername =
-          credentials.username === 'admin' ||
-          credentials.username === 'superadmin' ||
-          credentials.username === superAdmin.email;
-
-        console.log(
-          'NextAuth authorize: Проверка логина:',
-          isValidUsername ? 'успешно' : 'неуспешно'
-        );
-
-        if (!isValidUsername) {
-          console.log('NextAuth authorize: Неверный логин');
+        if (!credentials?.username || !credentials?.password) {
           return null;
         }
 
-        // Проверяем пароль
-        let isValidPassword = false;
+        try {
+          // Валидация входных данных
+          const isEmail = validateEmail(credentials.username);
+          const usernameValidation = validateUsername(credentials.username);
 
-        if (superAdmin.password) {
-          // Проверяем хешированный пароль
-          isValidPassword = await bcrypt.compare(
+          if (!isEmail && !usernameValidation.isValid) {
+            return null;
+          }
+
+          // Поиск пользователя по email или username
+          let user = null;
+
+          if (isEmail) {
+            user = await prisma.user.findUnique({
+              where: { email: credentials.username },
+            });
+          } else {
+            // Поиск по имени пользователя (для обратной совместимости с суперадмином)
+            if (
+              credentials.username === 'admin' ||
+              credentials.username === 'superadmin'
+            ) {
+              user = await prisma.user.findFirst({
+                where: { role: 'superadmin' },
+              });
+            }
+          }
+
+          if (!user) {
+            return null;
+          }
+
+          // Проверка пароля
+          if (!user.password) {
+            return null;
+          }
+
+          const isValidPassword = await verifyPassword(
             credentials.password,
-            superAdmin.password
+            user.password
           );
-          console.log(
-            'NextAuth authorize: Проверка хешированного пароля:',
-            isValidPassword ? 'успешно' : 'неуспешно'
-          );
-        } else {
-          // Запасной вариант для обратной совместимости
-          isValidPassword = credentials.password === 'krishna1284radha';
-          console.log(
-            'NextAuth authorize: Проверка запасного пароля:',
-            isValidPassword ? 'успешно' : 'неуспешно'
-          );
-        }
 
-        if (!isValidPassword) {
-          console.log('NextAuth authorize: Неверный пароль');
+          if (!isValidPassword) {
+            return null;
+          }
+
+          // Проверка блокировки пользователя
+          if (user.isBlocked) {
+            return null;
+          }
+
+          // Обновляем время последнего входа
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error('NextAuth authorize: Ошибка при авторизации:', error);
           return null;
         }
-
-        console.log('NextAuth authorize: Авторизация успешна');
-
-        // Возвращаем данные пользователя
-        return {
-          id: superAdmin.id,
-          email: superAdmin.email,
-          name: superAdmin.name,
-          role: superAdmin.role,
-        };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      // Если есть объект пользователя (при первом входе), добавляем роль в токен
+    async jwt({ token, user, account }) {
+      // Если есть объект пользователя (при первом входе), добавляем данные в токен
       if (user) {
         token.role = user.role;
         token.userId = user.id;
+        token.provider = account?.provider;
       }
+
+      // Добавляем информацию о провайдере для отслеживания
+      if (account) {
+        token.provider = account.provider;
+        token.providerAccountId = account.providerAccountId;
+      }
+
       return token;
     },
     async session({ session, token, user }) {
-      // Добавляем id пользователя и роль в объект сессии
+      // Добавляем данные пользователя в объект сессии
       if (user) {
         session.user.id = user.id;
         session.user.role = user.role;
       } else if (token) {
         session.user.id = token.userId;
         session.user.role = token.role;
+        session.user.provider = token.provider;
+        session.user.providerAccountId = token.providerAccountId;
       }
 
       // Добавляем метку времени для предотвращения кэширования
@@ -162,28 +170,31 @@ export const authOptions = {
       return session;
     },
     async signIn({ user, account, profile, email, credentials }) {
-      // Для входа через Google логируем информацию о токенах
-      if (account?.provider === 'google') {
-        console.log('NextAuth signIn: Получены токены Google:');
-        console.log(
-          '- refresh_token:',
-          account.refresh_token ? 'Присутствует' : 'Отсутствует'
-        );
-        console.log(
-          '- access_token:',
-          account.access_token ? 'Присутствует' : 'Отсутствует'
-        );
-        console.log('- expires_at:', account.expires_at);
-      }
+      try {
+        // Для входа через OAuth провайдеры (Google, GitHub)
+        if (account?.provider === 'google') {
+          // Для Google OAuth всегда разрешаем вход
+          return true;
+        }
 
-      // Для входа через credentials проверяем роль
-      if (account?.provider === 'credentials') {
-        return user.role === 'superadmin';
-      }
+        if (account?.provider === 'github') {
+          // Для GitHub OAuth всегда разрешаем вход
+          return true;
+        }
 
-      // Для входа через Google всегда разрешаем вход
-      // Это позволит создать новый аккаунт, если старый был удален
-      return true;
+        // Для входа через credentials проверяем дополнительные условия
+        if (account?.provider === 'credentials') {
+          // Разрешаем вход для всех пользователей с валидными учетными данными
+          // Проверка роли и блокировки уже выполнена в authorize функции
+          return true;
+        }
+
+        // Для других провайдеров по умолчанию разрешаем вход
+        return true;
+      } catch (error) {
+        console.error('NextAuth signIn: Ошибка при проверке входа:', error);
+        return false;
+      }
     },
   },
   pages: {

@@ -304,17 +304,37 @@ export default async function handler(req, res) {
 
         // Если создание события не удалось и все попытки исчерпаны
         if (!calendarResult.success) {
+          console.error(
+            'API: Не удалось создать событие в Google Calendar:',
+            calendarResult.error
+          );
+
+          // Проверяем, связана ли ошибка с авторизацией Google
+          const isAuthError =
+            calendarResult.error &&
+            (calendarResult.error.includes('invalid_grant') ||
+              calendarResult.error.includes('unauthorized') ||
+              calendarResult.error.includes('invalid_client') ||
+              calendarResult.error.includes('access_denied'));
+
           // Если это был запрос без ручной ссылки, возвращаем ошибку с флагом для фронтенда
           if (!manualMeetingLink) {
-            console.error(
-              'API: Не удалось создать событие в Google Calendar:',
-              calendarResult.error
-            );
             return res.status(400).json({
-              message: 'Не удалось автоматически создать ссылку на Google Meet',
+              message: isAuthError
+                ? 'Требуется повторная авторизация Google или ручной ввод ссылки на Google Meet'
+                : 'Не удалось автоматически создать ссылку на Google Meet',
               error: calendarResult.error,
               needManualLink: true, // Флаг для фронтенда, что нужен ручной ввод ссылки
+              isAuthError: isAuthError, // Флаг, указывающий на проблемы с авторизацией
             });
+          } else {
+            // Если была предоставлена ручная ссылка, но создание события все равно не удалось,
+            // продолжаем с ручной ссылкой (событие в календаре не обязательно)
+            console.warn(
+              'API: Используем ручную ссылку, так как автоматическое создание не удалось'
+            );
+            meetingLink = manualMeetingLink;
+            calendarEventId = null;
           }
         } else {
           // Получаем ссылку на Google Meet из результата

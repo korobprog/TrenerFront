@@ -1,0 +1,604 @@
+/* Основной контейнер */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Заголовок */
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  text-align: center;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Статистика */
+.statsSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 30px 40px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.statCard {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 5px;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Фильтры */
+.filtersSection {
+  padding: 30px 40px;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.filtersRow {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterSelect {
+  padding: 10px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.95rem;
+  color: #495057;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 150px;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.resetButton {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.resetButton:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.resetButton:active {
+  transform: translateY(0);
+}
+
+.searchRow {
+  display: flex;
+  gap: 15px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.searchInput::placeholder {
+  color: #adb5bd;
+}
+
+/* Контент */
+.content {
+  padding: 40px;
+  min-height: 400px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.1rem;
+  color: #6c757d;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+.noQuestions {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.noQuestions h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #495057;
+}
+
+.noQuestions p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+/* Секция вопроса */
+.questionSection {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.progressBar {
+  margin-bottom: 30px;
+}
+
+.progressInfo {
+  text-align: center;
+  font-size: 1rem;
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Навигация */
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  padding: 20px 0;
+  border-top: 1px solid #e9ecef;
+}
+
+.navButton {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  min-width: 120px;
+}
+
+.navButton:hover:not(:disabled) {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.navButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.navButton:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.questionCounter {
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Пагинация */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 30px 40px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.paginationButton {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.paginationButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.paginationButton:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.paginationInfo {
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .main {
+    border-radius: 15px;
+  }
+
+  .header {
+    padding: 30px 20px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .statsSection {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .statCard {
+    padding: 15px;
+  }
+
+  .statValue {
+    font-size: 1.5rem;
+  }
+
+  .filtersSection {
+    padding: 20px;
+  }
+
+  .filtersRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filterSelect {
+    min-width: auto;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .navigation {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .navButton {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .paginationButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .statsSection {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .statCard {
+    padding: 12px;
+  }
+
+  .statValue {
+    font-size: 1.3rem;
+  }
+
+  .statLabel {
+    font-size: 0.8rem;
+  }
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.questionSection {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.statCard {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Темная тема (опционально) */
+@media (prefers-color-scheme: dark) {
+  .main {
+    background: #1a1a1a;
+    color: #e9ecef;
+  }
+
+  .statsSection {
+    background: #2d3748;
+  }
+
+  .statCard {
+    background: #4a5568;
+    color: #e9ecef;
+  }
+
+  .statValue {
+    color: #90cdf4;
+  }
+
+  .filterSelect,
+  .searchInput {
+    background: #4a5568;
+    border-color: #718096;
+    color: #e9ecef;
+  }
+
+  .filterSelect:focus,
+  .searchInput:focus {
+    border-color: #90cdf4;
+    box-shadow: 0 0 0 3px rgba(144, 205, 244, 0.1);
+  }
+
+  .error {
+    background: #742a2a;
+    color: #fed7d7;
+    border-color: #e53e3e;
+  }
+
+  .pagination {
+    background: #2d3748;
+  }
+}
+
+/* Стили для таймера в тренировке */
+.questionTimer {
+  margin-bottom: 30px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Дополнительные стили для интеграции таймера */
+.timerSection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.timerWrapper {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.timerWrapper:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+/* Адаптивность для таймера */
+@media (max-width: 768px) {
+  .questionTimer {
+    margin-bottom: 20px;
+  }
+
+  .timerWrapper {
+    padding: 15px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .questionTimer {
+    margin-bottom: 15px;
+  }
+
+  .timerWrapper {
+    padding: 12px;
+  }
+}
+
+/* Стили для переключателя режимов */
+.modeToggle {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.modeButton {
+  padding: 12px 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  min-width: 160px;
+}
+
+.modeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modeButton.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border-color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modeButton.active:hover {
+  background: white;
+  transform: translateY(-3px);
+}
+
+/* Стили для секции флеш-карточек */
+.flashcardsSection {
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.flashcardsSection .container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+}
+
+/* Адаптивность для переключателя режимов */
+@media (max-width: 768px) {
+  .modeToggle {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .modeButton {
+    min-width: 200px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modeButton {
+    min-width: 180px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}

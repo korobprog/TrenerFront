@@ -164,10 +164,14 @@ export default function CreateInterview() {
 
         // Если сервер запрашивает ручной ввод ссылки
         if (responseData.needManualLink) {
-          setAutoLinkError(
-            responseData.message || 'Не удалось автоматически создать ссылку'
-          );
+          const errorMessage = responseData.isAuthError
+            ? 'Проблемы с авторизацией Google. Пожалуйста, введите ссылку на Google Meet вручную.'
+            : responseData.message ||
+              'Не удалось автоматически создать ссылку на Google Meet. Пожалуйста, введите ссылку вручную.';
+
+          setAutoLinkError(errorMessage);
           setStep(3); // Переходим на шаг ручного ввода ссылки
+          setIsSubmitting(false); // Сбрасываем состояние загрузки
           return;
         }
 

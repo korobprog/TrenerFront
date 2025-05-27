@@ -9,11 +9,19 @@ datasource db {
 }
 
 model Question {
-  id           Int            @id @default(autoincrement())
-  text         String
-  category     String?
-  createdAt    DateTime       @default(now())
-  userProgress UserProgress[]
+  id                Int                     @id @default(autoincrement())
+  text              String
+  question          String?                 // Дублируем для совместимости
+  answer            String?
+  options           Json?                   // Массив вариантов ответов
+  topic             String?
+  difficulty        String?
+  tags              Json?                   // Массив тегов
+  estimatedTime     Int?                    // Время в секундах
+  category          String?
+  createdAt         DateTime                @default(now())
+  userProgress      UserProgress[]
+  favoriteQuestions UserFavoriteQuestion[]
 }
 
 model User {
@@ -41,6 +49,7 @@ model User {
   userPoints               UserPoints?
   userProgress             UserProgress[]
   violations               UserViolation[]
+  favoriteQuestions        UserFavoriteQuestion[]
 }
 
 model Account {
@@ -89,10 +98,26 @@ model UserProgress {
   searchCount  Int      @default(0)
   unknownCount Int      @default(0)
   userId       String
+  isCorrect    Boolean?
+  timeSpent    Int?     // Время в секундах
+  lastAnswer   String?  // Последний ответ пользователя
+  needsReview  Boolean  @default(false)
+  createdAt    DateTime @default(now())
   question     Question @relation(fields: [questionId], references: [id])
   user         User     @relation(fields: [userId], references: [id])
 
   @@unique([questionId, userId])
+}
+
+model UserFavoriteQuestion {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  questionId Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
 }
 
 model UserPoints {

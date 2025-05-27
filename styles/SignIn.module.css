@@ -1,36 +1,173 @@
 .container {
   min-height: 100vh;
-  padding: 0 2rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+      circle at 20% 80%,
+      rgba(120, 119, 198, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 40%,
+      rgba(120, 119, 198, 0.2) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+  animation: backgroundFloat 20s ease-in-out infinite;
+}
+
+@keyframes backgroundFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
 }
 
 .main {
-  padding: 3rem 0;
+  padding: 3rem 2rem;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  max-width: 800px;
+  max-width: min(500px, 100%);
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: mainFadeIn 1s ease-out both;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  margin: 2rem;
+}
+
+.main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.02) 0%,
+    rgba(118, 75, 162, 0.02) 100%
+  );
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+@keyframes mainFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .title {
-  margin: 0;
-  line-height: 1.15;
+  margin: 0 0 2.5rem;
+  line-height: 1.1;
   font-size: 2.5rem;
+  font-weight: 700;
   text-align: center;
-  margin-bottom: 2rem;
+  color: #2d3748;
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  animation: titleSlideIn 1s ease-out 0.3s both;
+}
+
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+  border-radius: 2px;
+  animation: underlineGrow 1s ease-out 0.5s both;
+}
+
+@keyframes titleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes underlineGrow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 80px;
+  }
 }
 
 .providersContainer {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   width: 100%;
-  max-width: 400px;
+  max-width: 100%;
+  animation: providersSlideIn 1s ease-out 0.7s both;
+}
+
+@keyframes providersSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .providerCard {
@@ -39,66 +176,206 @@
 
 .providerButton {
   width: 100%;
-  padding: 12px 16px;
+  padding: 1.2rem 2rem;
   border: none;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #333;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #2d3748;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  transition: all 0.3s;
+  gap: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.providerButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+  transition: height 0.3s ease;
+}
+
+.providerButton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.02) 0%,
+    rgba(118, 75, 162, 0.02) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .providerButton:hover {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.providerButton:hover::before {
+  height: 5px;
+}
+
+.providerButton:hover::after {
+  opacity: 1;
+}
+
+.providerButton:active {
+  transform: translateY(-4px) scale(1.01);
 }
 
 .providerIcon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.providerButton:hover .providerIcon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
 }
 
 .errorMessage {
-  background-color: #ffebee;
+  background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
   color: #c62828;
-  padding: 12px 16px;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  padding: 1.2rem 1.8rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
   width: 100%;
-  max-width: 400px;
   text-align: center;
-  font-size: 0.9rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(198, 40, 40, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(198, 40, 40, 0.2);
+  animation: errorSlideIn 0.5s ease-out both;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .links {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
-  gap: 8px;
+  margin-top: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  animation: linksSlideIn 1s ease-out 0.9s both;
+}
+
+@keyframes linksSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .link {
-  color: #0070f3;
+  color: #667eea;
   text-decoration: none;
   font-size: 0.9rem;
-  transition: color 0.2s;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  position: relative;
+}
+
+.link::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
 }
 
 .link:hover {
-  color: #0051b3;
-  text-decoration: underline;
+  color: #764ba2;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.link:hover::before {
+  width: 80%;
 }
 
 .linkSeparator {
-  color: #666;
+  color: #999;
   font-size: 0.9rem;
-  margin: 0 4px;
+  user-select: none;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .main {
+    margin: 1rem;
+    padding: 2rem 1.5rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .links {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .linkSeparator {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    margin: 0.5rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .providerButton {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .providerIcon {
+    width: 24px;
+    height: 24px;
+  }
 }
