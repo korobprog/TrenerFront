@@ -6,7 +6,7 @@
   width: 100%;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: var(--page-gradient);
   background-attachment: fixed;
 }
 
@@ -71,11 +71,11 @@
   overflow-y: auto;
   max-height: calc(100vh - 120px);
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--card-bg);
   border-radius: 20px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--card-border);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 1;
@@ -99,7 +99,7 @@
 
 /* Стили для контейнера с кодом */
 .answerText pre {
-  background-color: #f1f1f1;
+  background-color: var(--bg-tertiary);
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
@@ -113,10 +113,10 @@
   left: 0;
   right: 0;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--card-bg);
   backdrop-filter: blur(20px);
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15), 0 -4px 16px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-lg);
+  border-top: 1px solid var(--card-border);
   z-index: 10;
 }
 
@@ -130,16 +130,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: var(--card-bg);
   z-index: 5;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(0, 0, 0, 0.1);
+  border: 5px solid var(--border-secondary);
   border-radius: 50%;
-  border-top-color: #3498db;
+  border-top-color: var(--primary);
   animation: spin 1s ease-in-out infinite;
 }
 
@@ -156,12 +156,12 @@
   left: 1rem;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--card-bg);
   backdrop-filter: blur(10px);
   padding: 0.8rem 1.2rem;
   border-radius: 24px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--card-border);
   font-size: 0.9rem;
   z-index: 5;
   animation: apiIndicatorSlideIn 0.8s ease-out both;
@@ -181,11 +181,11 @@
 .apiLabel {
   font-weight: 600;
   margin-right: 0.8rem;
-  color: #4a5568;
+  color: var(--text-secondary);
 }
 
 .apiType {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -197,7 +197,7 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: white;
   border: none;
   border-radius: 50%;
@@ -207,7 +207,7 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: historyButtonSlideIn 0.8s ease-out 0.2s both;
 }
@@ -225,8 +225,7 @@
 
 .historyButton:hover {
   transform: scale(1.1) translateY(-2px);
-  box-shadow: 0 16px 40px rgba(102, 126, 234, 0.4),
-    0 8px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl);
 }
 
 .historyButton:active {
@@ -248,12 +247,12 @@
 }
 
 .historyContent {
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--card-bg);
   backdrop-filter: blur(20px);
   padding: 2.5rem;
   border-radius: 20px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
@@ -293,10 +292,10 @@
   margin-bottom: 1.5rem;
   padding: 1.5rem;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--service-card-bg);
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid var(--border-secondary);
   position: relative;
   z-index: 1;
 }
@@ -308,16 +307,16 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(45deg, var(--primary), var(--secondary), var(--secondary-light));
   border-radius: 12px 12px 0 0;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .historyItem:hover {
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: var(--bg-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .historyItem:hover::before {
@@ -334,7 +333,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .historyTimestamp {
@@ -342,25 +341,21 @@
 }
 
 .historyApiType {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  );
+  background: var(--features-bg);
   padding: 0.4rem 0.8rem;
   border-radius: 8px;
   font-weight: 600;
-  color: #667eea;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  color: var(--primary);
+  border: 1px solid var(--border-secondary);
 }
 
 .closeButton {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--card-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -369,14 +364,14 @@
   justify-content: center;
   font-size: 1.2rem;
   cursor: pointer;
-  color: #4a5568;
+  color: var(--text-secondary);
   transition: all 0.3s ease;
   z-index: 2;
 }
 
 .closeButton:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: var(--features-bg);
+  color: var(--primary);
   transform: scale(1.1);
 }
 

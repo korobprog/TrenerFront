@@ -52,3 +52,6 @@ docker-compose.override.yml
 # Temporary files
 .tmp/
 .temp/
+
+# Windows reserved device names
+nul

@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '../styles/Header.module.css';
+import ThemeToggle from './ThemeToggle';
 
 /**
  * Компонент шапки сайта с отображением баллов пользователя
@@ -78,6 +79,8 @@ export default function Header() {
         </nav>
 
         <div className={styles.userSection}>
+          <ThemeToggle />
+          
           {status === 'loading' && (
             <div className={styles.loadingState}>Загрузка...</div>
           )}

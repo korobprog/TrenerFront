@@ -7,7 +7,7 @@
   align-items: center;
   width: 100%;
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: var(--page-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%));
   background-attachment: fixed;
   position: relative;
   overflow-x: hidden;
@@ -155,11 +155,11 @@
   width: 100%;
   max-width: min(1200px, 100%);
   padding: 3rem;
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--card-bg, rgba(255, 255, 255, 0.98));
   border-radius: 24px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow, 0 25px 50px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1));
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.3));
   position: relative;
   z-index: 1;
   animation: sectionFadeIn 1s ease-out 0.8s both;
@@ -198,7 +198,7 @@
   text-align: center;
   font-size: 2.8rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary, #2d3748);
   margin: 0 0 3.5rem;
   position: relative;
   animation: titleSlideIn 1s ease-out 1s both;
@@ -247,12 +247,12 @@
 }
 
 .serviceCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: var(--service-card-bg, linear-gradient(135deg, #ffffff 0%, #f8fafc 100%));
   border-radius: 20px;
   padding: 2.5rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--service-card-shadow, 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04));
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--service-card-border, rgba(255, 255, 255, 0.5));
   position: relative;
   overflow: hidden;
   animation: cardFadeIn 0.8s ease-out both;
@@ -365,9 +365,9 @@
 .serviceTitle {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary, #2d3748);
   margin: 0 0 1.2rem;
-  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  background: var(--service-title-gradient, linear-gradient(135deg, #2d3748 0%, #4a5568 100%));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -376,7 +376,7 @@
 .serviceDescription {
   font-size: 1.05rem;
   line-height: 1.7;
-  color: #4a5568;
+  color: var(--text-secondary, #4a5568);
   margin: 0 0 1.8rem;
   font-weight: 400;
 }
@@ -385,7 +385,7 @@
   list-style: none;
   padding: 0;
   margin: 0 0 2.5rem;
-  background: rgba(102, 126, 234, 0.03);
+  background: var(--features-bg, rgba(102, 126, 234, 0.03));
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -394,7 +394,7 @@
   position: relative;
   padding: 0.75rem 0 0.75rem 2rem;
   font-size: 0.95rem;
-  color: #4a5568;
+  color: var(--text-secondary, #4a5568);
   line-height: 1.5;
   font-weight: 500;
   transition: all 0.3s ease;
