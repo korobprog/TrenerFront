@@ -12,6 +12,12 @@
   position: relative;
   overflow-x: hidden;
   box-sizing: border-box;
+  transition: background 0.3s ease;
+}
+
+/* Темная тема для контейнера */
+[data-theme='dark'] .container {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
 }
 
 .container::before {
@@ -84,6 +90,15 @@
   animation: contentFadeIn 1s ease-out both;
   overflow-x: hidden;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Темная тема для контента */
+[data-theme='dark'] .content {
+  background: rgba(45, 55, 72, 0.95);
+  border: 1px solid rgba(74, 85, 104, 0.3);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
 .content::before {
@@ -119,9 +134,10 @@
   font-size: 2.8rem;
   font-weight: 700;
   text-align: center;
-  color: #2d3748;
+  color: var(--text-primary);
   position: relative;
   animation: titleSlideIn 1s ease-out 0.3s both;
+  transition: color 0.3s ease;
 }
 
 .title::after {
@@ -160,7 +176,7 @@
 .lastUpdated {
   text-align: center;
   font-size: 0.9rem;
-  color: #4a5568;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   padding: 1rem 1.5rem;
   background: rgba(102, 126, 234, 0.08);
@@ -168,6 +184,13 @@
   border-left: 4px solid #667eea;
   position: relative;
   animation: lastUpdatedFadeIn 1s ease-out 0.7s both;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Темная тема для lastUpdated */
+[data-theme='dark'] .lastUpdated {
+  background: rgba(102, 126, 234, 0.15);
+  color: var(--text-secondary);
 }
 
 @keyframes lastUpdatedFadeIn {
@@ -184,7 +207,8 @@
 .section {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
 .section:last-child {
@@ -232,7 +256,7 @@
 }
 
 .section h3 {
-  color: var(--text-color);
+  color: var(--text-primary);
   font-size: 1.2rem;
   margin: 1.5rem 0 0.8rem;
   font-weight: 600;
@@ -241,7 +265,7 @@
 .section p {
   line-height: 1.6;
   margin-bottom: 1rem;
-  color: var(--text-color);
+  color: var(--text-primary);
   text-align: justify;
 }
 
@@ -253,11 +277,11 @@
 .section li {
   line-height: 1.6;
   margin-bottom: 0.5rem;
-  color: var(--text-color);
+  color: var(--text-primary);
 }
 
 .section li::marker {
-  color: var(--primary-color);
+  color: #667eea;
 }
 
 .contactInfo {
@@ -270,6 +294,16 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+/* Темная тема для contactInfo */
+[data-theme='dark'] .contactInfo {
+  background: rgba(102, 126, 234, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .contactInfo:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
 .contactInfo::before {

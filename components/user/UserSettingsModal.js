@@ -92,8 +92,47 @@ export default function UserSettingsModal({ isOpen, onClose }) {
         email: session.user.email || '',
         avatarPreview: session.user.image || null,
       }));
+
+      // Автоматически генерируем дефолтную аватарку если её нет
+      if (!session.user.image) {
+        console.log('🎨 Автоматическая генерация дефолтной аватарки...');
+        generateDefaultAvatar();
+      }
     }
   }, [session]);
+
+  // Функция автоматической генерации дефолтной аватарки
+  const generateDefaultAvatar = async () => {
+    try {
+      console.log('🎨 Генерируем дефолтную аватарку автоматически...');
+
+      const response = await fetch('/api/user/avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'generate',
+          name: session?.user?.name || session?.user?.email || 'User',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.avatarUrl) {
+          console.log('✅ Дефолтная аватарка сгенерирована:', data.avatarUrl);
+          setProfileSettings((prev) => ({
+            ...prev,
+            avatarPreview: data.avatarUrl,
+          }));
+        }
+      } else {
+        console.log('⚠️ Не удалось сгенерировать дефолтную аватарку');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка при автоматической генерации аватарки:', error);
+    }
+  };
 
   // Загрузка всех настроек пользователя
   const loadUserSettings = async () => {
@@ -192,6 +231,13 @@ export default function UserSettingsModal({ isOpen, onClose }) {
   const handleGenerateAvatar = async () => {
     setAvatarLoading(true);
     try {
+      console.log('🎨 Начинаем генерацию аватарки...');
+      console.log('📝 Данные для генерации:', {
+        name: profileSettings.name || session?.user?.name || 'User',
+        method: 'POST',
+        action: 'generate',
+      });
+
       const response = await fetch('/api/user/avatar', {
         method: 'POST',
         headers: {
@@ -203,8 +249,15 @@ export default function UserSettingsModal({ isOpen, onClose }) {
         }),
       });
 
+      console.log('📡 Ответ сервера:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Данные ответа:', data);
         if (data.success && data.avatarUrl) {
           setProfileSettings((prev) => ({
             ...prev,
@@ -218,10 +271,11 @@ export default function UserSettingsModal({ isOpen, onClose }) {
         }
       } else {
         const data = await response.json();
+        console.error('❌ Ошибка сервера:', data);
         throw new Error(data.error || 'Ошибка при генерации аватарки');
       }
     } catch (error) {
-      console.error('Ошибка при генерации аватарки:', error);
+      console.error('❌ Ошибка при генерации аватарки:', error);
       showError(error.message);
     } finally {
       setAvatarLoading(false);

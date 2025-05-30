@@ -1,8 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../../../lib/prisma';
 
 /**
  * API роут для получения истории транзакций баллов пользователя
@@ -14,6 +12,14 @@ const prisma = new PrismaClient();
  * - type: фильтр по типу транзакции (опционально)
  */
 export default async function handler(req, res) {
+  // Валидация Prisma клиента
+  if (!prisma) {
+    console.error(
+      '❌ [POINTS HISTORY API] КРИТИЧЕСКАЯ ОШИБКА: Prisma клиент не инициализирован'
+    );
+    return res.status(500).json({ error: 'Ошибка подключения к базе данных' });
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Метод не поддерживается' });
   }
@@ -120,7 +126,5 @@ export default async function handler(req, res) {
       details:
         process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
-  } finally {
-    await prisma.$disconnect();
   }
 }

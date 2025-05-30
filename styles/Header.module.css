@@ -4,7 +4,7 @@
   box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3), 0 4px 16px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 100;
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--header-border);
   width: 100%;
@@ -316,7 +316,7 @@
   backdrop-filter: blur(20px);
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
-  z-index: 1100;
+  z-index: 200;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.3);
   animation: menuFadeIn 0.3s ease-out;
@@ -503,7 +503,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1200;
+  z-index: 300;
   display: none;
   backdrop-filter: blur(4px);
 }
@@ -517,7 +517,7 @@
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
-  z-index: 1300;
+  z-index: 400;
   overflow-y: auto;
   animation: slideInRight 0.3s ease-out;
 }
@@ -677,16 +677,11 @@
     display: none;
   }
 
-  .pointsContainer {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .pointsLabel {
-    font-size: 0.8rem;
-  }
-
-  .pointsValue {
-    font-size: 0.9rem;
+  /* Скрываем баллы и пользовательское меню на планшетах и мобильных устройствах */
+  .pointsContainer,
+  .pointsLink,
+  .userInfo {
+    display: none !important;
   }
 
   .userMenu {
@@ -711,16 +706,11 @@
     height: 36px !important;
   }
 
-  .pointsContainer {
-    padding: 0.4rem 0.6rem;
-  }
-
-  .pointsLabel {
-    font-size: 0.75rem;
-  }
-
-  .pointsValue {
-    font-size: 0.85rem;
+  /* Скрываем баллы и пользовательское меню на мобильных устройствах */
+  .pointsContainer,
+  .pointsLink,
+  .userInfo {
+    display: none !important;
   }
 
   .signInButton {

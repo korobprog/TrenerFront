@@ -289,7 +289,7 @@
   font-size: 32px;
   padding: 15px 30px;
   border-radius: 8px;
-  z-index: 9999;
+  z-index: 500;
   animation: blink 0.8s infinite;
   pointer-events: none; /* Чтобы индикатор не мешал взаимодействию с интерфейсом */
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);

@@ -1,73 +1,223 @@
 .boardContainer {
   width: 100%;
   margin-bottom: 2rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
 }
 
 .boardHeader {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+}
+
+.boardHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  );
+  border-radius: 24px;
+  pointer-events: none;
 }
 
 .boardTitle {
   margin: 0;
-  font-size: 1.5rem;
-  color: var(--primary-color, #0070f3);
+  font-size: 2.8rem;
+  font-weight: 800;
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f8fafc 25%,
+    #e2e8f0 50%,
+    #f1f5f9 75%,
+    #ffffff 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  animation: titleShine 4s ease-in-out infinite alternate;
+  letter-spacing: -0.02em;
+}
+
+@keyframes titleShine {
+  0% {
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.5));
+  }
 }
 
 .filterContainer {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  border: none;
+  backdrop-filter: none;
 }
 
 .filterButton {
-  padding: 0.5rem 1rem;
-  border-radius: var(--border-radius, 8px);
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
   font-size: 0.9rem;
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  color: #666;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filterButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.filterButton:hover::before {
+  left: 100%;
 }
 
 .filterButton:hover {
-  background-color: #e9ecef;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .filterButton.active {
-  background-color: var(--primary-color, #0070f3);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-color: var(--primary-color, #0070f3);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+@keyframes activeGlow {
+  0% {
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4),
+      0 6px 15px rgba(118, 75, 162, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 16px 40px rgba(102, 126, 234, 0.5),
+      0 8px 20px rgba(118, 75, 162, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+}
+
+.filterButton.active:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 .actionButtons {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  border: none;
+  backdrop-filter: none;
 }
 
 .refreshButton {
-  padding: 0.5rem 1rem;
-  border-radius: var(--border-radius, 8px);
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
   font-size: 0.9rem;
-  background-color: transparent;
-  border: 1px solid var(--primary-color, #0070f3);
-  color: var(--primary-color, #0070f3);
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.2);
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+.refreshButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.refreshButton:hover::before {
+  left: 100%;
 }
 
 .refreshButton:hover:not(:disabled) {
-  background-color: rgba(0, 112, 243, 0.1);
+  background: rgba(34, 197, 94, 0.3);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
 
 .refreshButton:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+}
+
+.refreshButton:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .boardContent {
@@ -95,58 +245,252 @@
 }
 
 .emptyState {
-  background-color: white;
-  border-radius: var(--border-radius, 8px);
-  box-shadow: var(--box-shadow, 0 4px 6px rgba(0, 0, 0, 0.1));
-  padding: 2rem;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border-radius: 32px;
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  padding: 4rem 3rem;
   text-align: center;
-  margin: 2rem 0;
+  margin: 3rem 0;
+  position: relative;
+  overflow: hidden;
+  animation: emptyStateFloat 6s ease-in-out infinite;
+}
+
+@keyframes emptyStateFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.emptyState::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  );
+  border-radius: 32px;
+  pointer-events: none;
+}
+
+.emptyState::after {
+  content: '🎯';
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  font-size: 3rem;
+  opacity: 0.3;
+  animation: iconRotate 8s linear infinite;
+}
+
+@keyframes iconRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .emptyMessage {
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #333;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f8fafc 25%,
+    #e2e8f0 50%,
+    #f1f5f9 75%,
+    #ffffff 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+  animation: messageGlow 3s ease-in-out infinite alternate;
+  letter-spacing: -0.02em;
+}
+
+@keyframes messageGlow {
+  0% {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+  }
 }
 
 .emptyHint {
-  color: #666;
-  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2.5rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .createButton {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius, 8px);
-  font-size: 1rem;
-  background-color: var(--primary-color, #0070f3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.4rem 2.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
   color: white;
   border: none;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3),
+    0 6px 15px rgba(118, 75, 162, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.02em;
+  animation: createButtonPulse 4s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes createButtonPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3),
+      0 6px 15px rgba(118, 75, 162, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 16px 40px rgba(102, 126, 234, 0.4),
+      0 8px 20px rgba(118, 75, 162, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+}
+
+.createButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.createButton:hover::before {
+  left: 100%;
 }
 
 .createButton:hover {
-  background-color: var(--primary-color-dark, #0058c7);
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 20px 50px rgba(102, 126, 234, 0.4),
+    0 10px 25px rgba(118, 75, 162, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, #7c8df0 0%, #8b5fb8 50%, #7c8df0 100%);
+}
+
+.createButton:active {
+  transform: translateY(-1px) scale(1.01);
 }
 
 .pointsInfo {
-  background-color: #f8f9fa;
-  border-radius: var(--border-radius, 8px);
-  padding: 1rem 1.5rem;
-  margin-top: 2rem;
-  border-left: 4px solid var(--info-color, #17a2b8);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2rem 2.5rem;
+  margin-top: 3rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.pointsInfo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.08) 0%,
+    rgba(16, 185, 129, 0.05) 50%,
+    rgba(34, 197, 94, 0.08) 100%
+  );
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+.pointsInfo p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .pointsValue {
-  font-weight: 600;
-  color: var(--primary-color, #0070f3);
+  font-weight: 800;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #22c55e 0%, #10b981 50%, #22c55e 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+  animation: pointsGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pointsGlow {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 15px rgba(34, 197, 94, 0.5));
+  }
 }
 
 .pointsHint {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.9rem;
-  color: #666;
+  margin: 1rem 0 0 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
 }
 
 .loadingState {
@@ -168,37 +512,524 @@
 }
 
 @media (max-width: 768px) {
+  .boardContainer {
+    padding: 0 1rem;
+  }
+
   .boardHeader {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 2rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 28px;
+    margin-bottom: 2rem;
+  }
+
+  .boardTitle {
+    font-size: 2.2rem;
+    text-align: center;
+    letter-spacing: -0.01em;
   }
 
   .filterContainer {
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
+    overflow-x: hidden;
+    padding: 0.875rem;
+    gap: 0.75rem;
+    border-radius: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .filterButton {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.85rem;
+    border-radius: 16px;
+    white-space: nowrap;
+    min-width: fit-content;
+    flex: 1 1 auto;
+    text-align: center;
   }
 
   .actionButtons {
     width: 100%;
-    display: flex;
-    justify-content: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.875rem;
+    border-radius: 18px;
+  }
+
+  .refreshButton {
+    width: 100%;
+    max-width: 280px;
+    padding: 1rem 1.75rem;
+    font-size: 0.95rem;
+    border-radius: 16px;
   }
 
   .interviewsGrid {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .emptyState {
+    padding: 3rem 2rem;
+    margin: 2rem 0;
+    border-radius: 28px;
+  }
+
+  .emptyMessage {
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .emptyHint {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    max-width: 400px;
+  }
+
+  .createButton {
+    padding: 1.2rem 2.25rem;
+    font-size: 1rem;
+    border-radius: 18px;
+  }
+
+  .pointsInfo {
+    padding: 2rem;
+    margin-top: 2rem;
+    border-radius: 20px;
+  }
+
+  .pointsInfo p {
+    font-size: 1rem;
+  }
+
+  .pointsValue {
+    font-size: 1.2rem;
+  }
+
+  .pointsHint {
+    font-size: 0.9rem;
+    line-height: 1.4;
   }
 }
 
 @media (max-width: 600px) {
-  .filterButton,
-  .refreshButton {
+  .boardContainer {
+    padding: 0 0.75rem;
+  }
+
+  .boardHeader {
+    gap: 1.5rem;
+    padding: 2rem 1.25rem;
+    border-radius: 24px;
+    margin-bottom: 1.5rem;
+  }
+
+  .boardTitle {
+    font-size: 1.9rem;
+    letter-spacing: 0;
+  }
+
+  .filterContainer {
+    padding: 0.75rem;
+    gap: 0.625rem;
+    border-radius: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .filterButton {
+    padding: 0.75rem 1rem;
     font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+    border-radius: 14px;
+    min-width: fit-content;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .actionButtons {
+    padding: 0.75rem;
+    gap: 0.875rem;
+    border-radius: 16px;
+  }
+
+  .refreshButton {
+    max-width: 260px;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+    border-radius: 14px;
   }
 
   .emptyState {
+    padding: 2.5rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 24px;
+  }
+
+  .emptyState::after {
+    font-size: 2.5rem;
+    top: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .emptyMessage {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+  }
+
+  .emptyHint {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 1.75rem;
+    max-width: 350px;
+  }
+
+  .createButton {
+    padding: 1.1rem 2rem;
+    font-size: 0.95rem;
+    border-radius: 16px;
+  }
+
+  .pointsInfo {
+    padding: 1.75rem;
+    margin-top: 1.5rem;
+    border-radius: 18px;
+  }
+
+  .pointsInfo p {
+    font-size: 0.95rem;
+  }
+
+  .pointsValue {
+    font-size: 1.15rem;
+  }
+
+  .pointsHint {
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+}
+
+@media (max-width: 480px) {
+  .boardContainer {
+    padding: 0 0.5rem;
+  }
+
+  .boardHeader {
+    gap: 1.25rem;
+    padding: 1.75rem 1rem;
+    border-radius: 20px;
+    margin-bottom: 1.25rem;
+  }
+
+  .boardTitle {
+    font-size: 1.6rem;
+    line-height: 1.1;
+  }
+
+  .filterContainer {
+    padding: 0.625rem;
+    gap: 0.5rem;
+    border-radius: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .filterButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.75rem;
+    border-radius: 12px;
+    min-width: fit-content;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .actionButtons {
+    padding: 0.625rem;
+    gap: 0.75rem;
+    border-radius: 14px;
+  }
+
+  .refreshButton {
+    max-width: 240px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .emptyState {
+    padding: 2rem 1.25rem;
+    margin: 1.25rem 0;
+    border-radius: 20px;
+  }
+
+  .emptyState::after {
+    font-size: 2rem;
+    top: 1.25rem;
+    right: 1.25rem;
+  }
+
+  .emptyMessage {
+    font-size: 1.3rem;
+    margin-bottom: 0.875rem;
+    line-height: 1.1;
+  }
+
+  .emptyHint {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    margin-bottom: 1.5rem;
+    max-width: 300px;
+  }
+
+  .createButton {
+    padding: 1rem 1.75rem;
+    font-size: 0.9rem;
+    border-radius: 14px;
+  }
+
+  .pointsInfo {
     padding: 1.5rem;
+    margin-top: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .pointsInfo p {
+    font-size: 0.9rem;
+  }
+
+  .pointsValue {
+    font-size: 1.1rem;
+  }
+
+  .pointsHint {
+    font-size: 0.8rem;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 360px) {
+  .boardContainer {
+    padding: 0 0.25rem;
+  }
+
+  .boardHeader {
+    gap: 1rem;
+    padding: 1.5rem 0.75rem;
+    border-radius: 18px;
+    margin-bottom: 1rem;
+  }
+
+  .boardTitle {
+    font-size: 1.4rem;
+    line-height: 1.05;
+  }
+
+  .filterContainer {
+    padding: 0.5rem;
+    gap: 0.375rem;
+    border-radius: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .filterButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+    border-radius: 10px;
+    min-width: fit-content;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .actionButtons {
+    padding: 0.5rem;
+    gap: 0.625rem;
+    border-radius: 12px;
+  }
+
+  .refreshButton {
+    max-width: 220px;
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+
+  .emptyState {
+    padding: 1.75rem 1rem;
+    margin: 1rem 0;
+    border-radius: 18px;
+  }
+
+  .emptyState::after {
+    font-size: 1.75rem;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .emptyMessage {
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.05;
+  }
+
+  .emptyHint {
+    font-size: 0.85rem;
+    line-height: 1.25;
+    margin-bottom: 1.25rem;
+    max-width: 280px;
+  }
+
+  /* Дополнительная адаптация для экранов 400px и меньше */
+  @media (max-width: 400px) {
+    .boardContainer {
+      padding: 0 0.125rem;
+    }
+
+    .boardHeader {
+      gap: 0.875rem;
+      padding: 1.25rem 0.5rem;
+      border-radius: 16px;
+      margin-bottom: 0.875rem;
+    }
+
+    .boardTitle {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .filterContainer {
+      padding: 0.375rem;
+      gap: 0.25rem;
+      border-radius: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    .filterButton {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.65rem;
+      border-radius: 8px;
+      min-width: fit-content;
+      flex: 1 1 auto;
+      text-align: center;
+    }
+
+    .actionButtons {
+      padding: 0.375rem;
+      gap: 0.5rem;
+      border-radius: 10px;
+    }
+
+    .refreshButton {
+      max-width: 200px;
+      padding: 0.5rem 0.875rem;
+      font-size: 0.75rem;
+      border-radius: 8px;
+    }
+
+    .emptyState {
+      padding: 1.5rem 0.75rem;
+      margin: 0.875rem 0;
+      border-radius: 16px;
+    }
+
+    .emptyState::after {
+      font-size: 1.5rem;
+      top: 0.75rem;
+      right: 0.75rem;
+    }
+
+    .emptyMessage {
+      font-size: 1rem;
+      margin-bottom: 0.625rem;
+      line-height: 1;
+    }
+
+    .emptyHint {
+      font-size: 0.8rem;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      max-width: 260px;
+    }
+
+    .createButton {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8rem;
+      border-radius: 10px;
+    }
+
+    .pointsInfo {
+      padding: 1rem;
+      margin-top: 0.875rem;
+      border-radius: 12px;
+    }
+
+    .pointsInfo p {
+      font-size: 0.8rem;
+    }
+
+    .pointsValue {
+      font-size: 0.95rem;
+    }
+
+    .pointsHint {
+      font-size: 0.7rem;
+      line-height: 1.15;
+    }
+
+    .interviewsGrid {
+      grid-template-columns: 1fr;
+      gap: 0.875rem;
+    }
+
+    .dateGroup {
+      margin-bottom: 0.75rem;
+    }
+
+    .dateHeader {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.375rem;
+    }
+  }
+
+  .createButton {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .pointsInfo {
+    padding: 1.25rem;
+    margin-top: 1rem;
+    border-radius: 14px;
+  }
+
+  .pointsInfo p {
+    font-size: 0.85rem;
+  }
+
+  .pointsValue {
+    font-size: 1rem;
+  }
+
+  .pointsHint {
+    font-size: 0.75rem;
+    line-height: 1.2;
   }
 }

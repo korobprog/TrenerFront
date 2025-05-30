@@ -1,0 +1,535 @@
+/* Overlay - полупрозрачный фон */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-mobile-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 300ms ease-out, visibility 300ms ease-out;
+  overflow: hidden;
+}
+
+.overlayOpen {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Основное меню */
+.menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 90vw;
+  min-width: 280px;
+  height: 100vh;
+  background: var(--card-bg);
+  border-right: 1px solid var(--card-border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: var(--z-mobile-menu);
+  transform: translateX(-100%);
+  transition: transform 300ms ease-out;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.menuOpen {
+  transform: translateX(0);
+}
+
+/* Адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .menu {
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 100vw;
+  }
+}
+
+/* Заголовок меню */
+.header {
+  position: sticky;
+  top: 0;
+  background: var(--header-gradient);
+  color: var(--header-text);
+  padding: 20px;
+  border-bottom: 1px solid var(--header-border);
+  z-index: 1;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: inherit;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 200ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* Индикатор свайпа */
+.swipeIndicator {
+  width: 40px;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+/* Контент меню */
+.content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Секция пользователя */
+.userSection {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: var(--header-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.userDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.userName {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Секции меню */
+.section {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px 0;
+}
+
+/* Навигация */
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 200ms ease;
+  width: 100%;
+  text-align: left;
+  font-size: 16px;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: slideInLeft 300ms ease-out forwards;
+}
+
+.navItem:hover {
+  background-color: var(--bg-hover);
+  transform: translateX(4px);
+}
+
+.navItem:active {
+  transform: translateX(4px) scale(0.98);
+}
+
+.navIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navLabel {
+  flex: 1;
+  font-weight: 500;
+}
+
+.navArrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 200ms ease;
+}
+
+.navItem:hover .navArrow {
+  transform: translateX(4px);
+}
+
+/* Футер с кнопкой выхода */
+.footer {
+  padding: 20px;
+  border-top: 1px solid var(--card-border);
+  margin-top: auto;
+}
+
+.signOutButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: 1px solid var(--error-color);
+  border-radius: 10px;
+  color: var(--error-color);
+  cursor: pointer;
+  transition: all 200ms ease;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.signOutButton:hover {
+  background-color: var(--error-color);
+  color: white;
+}
+
+.signOutButton:active {
+  transform: scale(0.98);
+}
+
+/* Секция авторизации для неавторизованных пользователей */
+.authSection {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.authMessage {
+  margin-bottom: 24px;
+}
+
+.authMessage h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.authMessage p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.signInButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--header-gradient);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 200ms ease;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.signInButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.signInButton:active {
+  transform: translateY(-1px);
+}
+
+/* Анимации */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Темная тема - дополнительные стили */
+[data-theme='dark'] .menu {
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .signInButton {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+[data-theme='dark'] .signInButton:hover {
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+/* Дополнительные стили для улучшения UX */
+.menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+  opacity: 0.3;
+}
+
+.menu::-webkit-scrollbar-thumb:hover {
+  opacity: 0.6;
+}
+
+/* Фокус для доступности */
+.closeButton:focus,
+.navItem:focus,
+.signOutButton:focus,
+.signInButton:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Анимация задержки для элементов навигации */
+.navItem:nth-child(1) {
+  animation-delay: 50ms;
+}
+.navItem:nth-child(2) {
+  animation-delay: 100ms;
+}
+.navItem:nth-child(3) {
+  animation-delay: 150ms;
+}
+.navItem:nth-child(4) {
+  animation-delay: 200ms;
+}
+.navItem:nth-child(5) {
+  animation-delay: 250ms;
+}
+.navItem:nth-child(6) {
+  animation-delay: 300ms;
+}
+.navItem:nth-child(7) {
+  animation-delay: 350ms;
+}
+.navItem:nth-child(8) {
+  animation-delay: 400ms;
+}
+
+/* Дополнительная защита от переполнения */
+.menu * {
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+
+/* Контейнеризация всех элементов меню */
+.overlay,
+.menu,
+.header,
+.content,
+.userSection,
+.section,
+.navigation,
+.footer {
+  contain: layout style;
+}
+
+/* Предотвращение выхода элементов за границы */
+.menu,
+.content,
+.userSection,
+.section {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Дополнительная защита для мобильных устройств */
+@media (max-width: 768px) {
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+
+  .menu {
+    max-width: 100vw;
+    max-height: 100vh;
+    contain: strict;
+  }
+
+  .content {
+    max-width: 100%;
+    overflow-x: hidden;
+    contain: layout;
+  }
+
+  /* Исправление для элементов навигации */
+  .navItem,
+  .userInfo,
+  .userDetails {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .userName,
+  .userEmail,
+  .navLabel {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Исправление для очень маленьких экранов */
+@media (max-width: 320px) {
+  .menu {
+    width: 100vw;
+    min-width: 100vw;
+    max-width: 100vw;
+  }
+
+  .userSection,
+  .section,
+  .footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .navItem {
+    padding: 10px 12px;
+  }
+}
+
+/* Дополнительная защита от горизонтального переполнения */
+.overlay * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Принудительное ограничение ширины для всех дочерних элементов */
+.menu > *,
+.content > *,
+.userSection > *,
+.section > *,
+.navigation > *,
+.footer > * {
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}

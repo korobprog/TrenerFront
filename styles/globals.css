@@ -15,6 +15,38 @@ html {
 
 /* CSS переменные для светлой темы (по умолчанию) */
 :root {
+  /* Z-Index переменные для всего проекта */
+  /* Обычные элементы: 1-100 */
+  --z-base: 1;
+  --z-content: 10;
+
+  /* Навигация/хедер: 100-500 */
+  --z-header: 100;
+  --z-header-dropdown: 200;
+  --z-mobile-overlay: 300;
+  --z-mobile-menu: 400;
+
+  /* Дропдауны/тултипы: 500-1000 */
+  --z-tooltip: 500;
+  --z-dropdown: 600;
+  --z-popover: 800;
+
+  /* Уведомления: 1000-2000 */
+  --z-notification: 1000;
+  --z-toast: 1500;
+
+  /* Модальные окна админки: 8000-8999 */
+  --z-admin-modal: 8000;
+  --z-admin-modal-header: 8100;
+
+  /* Пользовательские модальные окна: 50000-59999 */
+  --z-user-modal: 50000;
+  --z-user-modal-header: 50001;
+
+  /* Критические элементы: 60000+ */
+  --z-critical: 60000;
+  --z-emergency: 99999;
+
   /* Основные цвета */
   --background: #ffffff;
   --foreground: #000000;
@@ -99,6 +131,25 @@ html {
 
 /* CSS переменные для темной темы */
 [data-theme='dark'] {
+  /* Z-Index переменные для всего проекта (темная тема - те же значения) */
+  --z-base: 1;
+  --z-content: 10;
+  --z-header: 100;
+  --z-header-dropdown: 200;
+  --z-mobile-overlay: 300;
+  --z-mobile-menu: 400;
+  --z-tooltip: 500;
+  --z-dropdown: 600;
+  --z-popover: 800;
+  --z-notification: 1000;
+  --z-toast: 1500;
+  --z-admin-modal: 8000;
+  --z-admin-modal-header: 8100;
+  --z-user-modal: 50000;
+  --z-user-modal-header: 50001;
+  --z-critical: 60000;
+  --z-emergency: 99999;
+
   /* Основные цвета */
   --background: #1a202c;
   --foreground: #ffffff;

@@ -7,13 +7,28 @@ import prisma from '../../../lib/prisma';
  * GET /api/user/avatar - получить текущую аватарку пользователя
  * PUT /api/user/avatar - обновить аватарку пользователя
  * DELETE /api/user/avatar - удалить аватарку (возврат к дефолтной)
+ * POST /api/user/avatar - генерация, загрузка или сохранение аватарки
+ *   - action: 'generate' - сгенерировать аватарку с инициалами
+ *   - action: 'upload' - загрузить файл аватарки (пока не поддерживается)
+ *   - action: 'url' - сохранить URL аватарки
  */
 export default async function handler(req, res) {
   try {
+    console.log('🔍 Avatar API вызван:', {
+      method: req.method,
+      url: req.url,
+      headers: {
+        'content-type': req.headers['content-type'],
+        'user-agent': req.headers['user-agent']?.substring(0, 50) + '...',
+      },
+      body: req.method === 'POST' ? req.body : 'N/A',
+    });
+
     // Получаем сессию пользователя
     const session = await getServerSession(req, res, authOptions);
 
     if (!session?.user?.id) {
+      console.log('❌ Нет авторизации');
       return res.status(401).json({
         success: false,
         error: 'Необходима авторизация',
@@ -21,6 +36,10 @@ export default async function handler(req, res) {
     }
 
     const userId = session.user.id;
+    console.log('✅ Пользователь авторизован:', {
+      userId,
+      userName: session.user.name,
+    });
 
     if (req.method === 'GET') {
       // Получение текущей аватарки
@@ -171,7 +190,115 @@ export default async function handler(req, res) {
       }
     }
 
+    if (req.method === 'POST') {
+      // Обработка POST запросов (генерация, загрузка, сохранение URL)
+      try {
+        console.log('📝 POST запрос получен:', req.body);
+
+        const { action } = req.body;
+
+        if (action === 'generate') {
+          // Генерация аватарки с инициалами
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true, email: true },
+          });
+
+          if (!user) {
+            return res.status(404).json({
+              success: false,
+              error: 'Пользователь не найден',
+            });
+          }
+
+          const name = req.body.name || user.name || user.email;
+          const initials = getInitials(name);
+          const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+            initials
+          )}&backgroundColor=3b82f6&textColor=ffffff`;
+
+          console.log('✅ Аватарка сгенерирована:', { initials, avatarUrl });
+
+          return res.status(200).json({
+            success: true,
+            message: 'Аватарка успешно сгенерирована',
+            avatarUrl: avatarUrl,
+            initials: initials,
+          });
+        } else if (action === 'upload') {
+          // Обработка загрузки файла (пока заглушка)
+          return res.status(400).json({
+            success: false,
+            error: 'Загрузка файлов пока не поддерживается. Используйте URL.',
+          });
+        } else if (action === 'url') {
+          // Сохранение URL аватарки
+          const { avatarUrl } = req.body;
+
+          if (!avatarUrl || typeof avatarUrl !== 'string') {
+            return res.status(400).json({
+              success: false,
+              error: 'Необходимо указать URL аватарки',
+            });
+          }
+
+          if (!isValidAvatarUrl(avatarUrl)) {
+            return res.status(400).json({
+              success: false,
+              error: 'Неверный формат URL аватарки',
+            });
+          }
+
+          if (avatarUrl.length > 2000) {
+            return res.status(400).json({
+              success: false,
+              error: 'URL аватарки слишком длинный (максимум 2000 символов)',
+            });
+          }
+
+          const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { image: avatarUrl },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          });
+
+          return res.status(200).json({
+            success: true,
+            message: 'Аватарка успешно сохранена',
+            avatar: updatedUser.image,
+            user: {
+              id: updatedUser.id,
+              name: updatedUser.name,
+              email: updatedUser.email,
+            },
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            error:
+              'Неизвестное действие. Поддерживаются: generate, upload, url',
+          });
+        }
+      } catch (error) {
+        console.error('Ошибка при обработке POST запроса:', error);
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка при обработке запроса',
+        });
+      }
+    }
+
     // Метод не поддерживается
+    console.log('❌ Метод не поддерживается:', {
+      method: req.method,
+      supportedMethods: ['GET', 'PUT', 'DELETE', 'POST'],
+      body: req.body,
+    });
     return res.status(405).json({
       success: false,
       error: 'Метод не поддерживается',

@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import styles from '../styles/Header.module.css';
 import ThemeToggle from './ThemeToggle';
 import Logo from './Logo';
-import UserSettingsModal from './user/UserSettingsModal';
+import MobileMenu from './MobileMenu';
 
 /**
  * Компонент шапки сайта с отображением баллов пользователя
@@ -17,7 +17,6 @@ export default function Header() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const menuRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const router = useRouter();
@@ -242,12 +241,10 @@ export default function Header() {
                       </svg>
                       История баллов
                     </Link>
-                    <button
-                      onClick={() => {
-                        setIsSettingsOpen(true);
-                        setIsMenuOpen(false);
-                      }}
+                    <Link
+                      href="/user/profile"
                       className={styles.menuItem}
+                      onClick={() => setIsMenuOpen(false)}
                     >
                       <svg
                         width="16"
@@ -261,7 +258,7 @@ export default function Header() {
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                       </svg>
                       Настройки пользователя
-                    </button>
+                    </Link>
                     {session.user.role === 'superadmin' && (
                       <>
                         <div className={styles.menuDivider}></div>
@@ -360,147 +357,8 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Мобильное меню */}
-      {isMobileMenuOpen && (
-        <div className={styles.mobileMenuOverlay} onClick={closeMobileMenu}>
-          <div
-            className={styles.mobileMenu}
-            ref={mobileMenuRef}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.mobileMenuHeader}>
-              <span className={styles.mobileMenuTitle}>Меню</span>
-              <button
-                className={styles.mobileMenuClose}
-                onClick={closeMobileMenu}
-                aria-label="Закрыть меню"
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-
-            <nav className={styles.mobileNavigation}></nav>
-
-            {session && (
-              <div className={styles.mobileUserSection}>
-                <div className={styles.mobileUserInfo}>
-                  {session.user.image ? (
-                    <img
-                      src={session.user.image}
-                      alt={session.user.name || 'Пользователь'}
-                      className={styles.mobileUserAvatar}
-                    />
-                  ) : (
-                    <div className={styles.mobileUserAvatarPlaceholder}>
-                      {session.user.name ? session.user.name[0] : 'U'}
-                    </div>
-                  )}
-                  <span className={styles.mobileUserName}>
-                    {session.user.name || 'Пользователь'}
-                  </span>
-                </div>
-
-                <div className={styles.mobileUserActions}>
-                  <Link
-                    href="/interview-assistant/company"
-                    className={styles.mobileUserAction}
-                    onClick={closeMobileMenu}
-                  >
-                    AI-Ассистент
-                  </Link>
-                  <Link
-                    href="/mock-interviews"
-                    className={styles.mobileUserAction}
-                    onClick={closeMobileMenu}
-                  >
-                    Mock-интервью
-                  </Link>
-                  <Link
-                    href="/training"
-                    className={styles.mobileUserAction}
-                    onClick={closeMobileMenu}
-                  >
-                    Тренировка
-                  </Link>
-                  <Link
-                    href="/flashcards"
-                    className={styles.mobileUserAction}
-                    onClick={closeMobileMenu}
-                  >
-                    Карточки
-                  </Link>
-                  <Link
-                    href="/user/api-settings"
-                    className={styles.mobileUserAction}
-                    onClick={closeMobileMenu}
-                  >
-                    Настройки API
-                  </Link>
-                  <Link
-                    href="/user/points-history"
-                    className={styles.mobileUserAction}
-                    onClick={closeMobileMenu}
-                  >
-                    История баллов
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setIsSettingsOpen(true);
-                      closeMobileMenu();
-                    }}
-                    className={styles.mobileUserAction}
-                  >
-                    Настройки пользователя
-                  </button>
-                  {session.user.role === 'superadmin' && (
-                    <>
-                      <Link
-                        href="/admin"
-                        className={styles.mobileUserAction}
-                        onClick={closeMobileMenu}
-                      >
-                        Управление
-                      </Link>
-                      <Link
-                        href="/admin/superadmin-signin"
-                        className={styles.mobileUserAction}
-                        onClick={closeMobileMenu}
-                      >
-                        Админ-вход
-                      </Link>
-                    </>
-                  )}
-                  <button
-                    onClick={() => {
-                      signOut();
-                      closeMobileMenu();
-                    }}
-                    className={styles.mobileUserAction}
-                  >
-                    Выйти
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно настроек пользователя */}
-      <UserSettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+      {/* Современное мобильное меню */}
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
     </header>
   );
 }
