@@ -1,0 +1,7 @@
+# Директория для компонентов этапа 4
+
+Здесь будут размещены компоненты уведомлений:
+- NotificationCenter компонент
+- EmailNotification компонент
+- PushNotification компонент
+- NotificationSettings компонент

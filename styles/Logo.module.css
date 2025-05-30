@@ -1,0 +1,255 @@
+/* Основной контейнер логотипа */
+.logoContainer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+/* SVG логотип */
+.logoSvg {
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Размеры логотипа */
+.small {
+  width: 120px;
+  height: 36px;
+}
+
+.medium {
+  width: 160px;
+  height: 48px;
+}
+
+.large {
+  width: 200px;
+  height: 60px;
+}
+
+/* Иконка логотипа */
+.logoIcon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Путь буквы S */
+.sPath {
+  color: var(--logo-icon-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: var(--logo-icon-filter);
+}
+
+/* Декоративные точки */
+.dot {
+  color: var(--logo-accent-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.8;
+}
+
+/* Стрелка прогресса */
+.arrow {
+  color: var(--logo-accent-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.9;
+}
+
+/* Текст логотипа */
+.logoText {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Текст "Super" */
+.superText {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--logo-text-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: var(--logo-text-filter);
+}
+
+/* Текст "Mock" */
+.mockText {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--logo-text-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: var(--logo-text-filter);
+}
+
+/* Подчеркивание */
+.underline {
+  color: var(--logo-accent-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.6;
+}
+
+/* Эффекты при наведении */
+.logoContainer:hover .logoSvg {
+  transform: scale(1.05);
+}
+
+.logoContainer:hover .sPath {
+  filter: var(--logo-icon-filter-hover);
+  stroke-width: 5;
+}
+
+.logoContainer:hover .dot {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.logoContainer:hover .arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+.logoContainer:hover .superText {
+  filter: var(--logo-text-filter-hover);
+}
+
+.logoContainer:hover .mockText {
+  filter: var(--logo-text-filter-hover);
+}
+
+.logoContainer:hover .underline {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+/* Анимация появления */
+@keyframes logoFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.logoContainer {
+  animation: logoFadeIn 0.6s ease-out;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .medium {
+    width: 140px;
+    height: 42px;
+  }
+
+  .superText,
+  .mockText {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .medium {
+    width: 120px;
+    height: 36px;
+  }
+
+  .superText,
+  .mockText {
+    font-size: 12px;
+  }
+
+  .sPath {
+    stroke-width: 3;
+  }
+
+  .dot {
+    r: 1.5;
+  }
+
+  .arrow {
+    stroke-width: 1.5;
+  }
+
+  .underline {
+    stroke-width: 1.5;
+  }
+}
+
+/* Специальные эффекты для активного состояния */
+.logoContainer:active {
+  transform: scale(0.98);
+}
+
+.logoContainer:active .logoSvg {
+  transform: scale(1.02);
+}
+
+/* Плавная анимация элементов при загрузке */
+.sPath {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawPath 1.5s ease-out 0.3s forwards;
+}
+
+@keyframes drawPath {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.dot:nth-child(2) {
+  animation: fadeInDot 0.6s ease-out 0.8s both;
+}
+
+.dot:nth-child(3) {
+  animation: fadeInDot 0.6s ease-out 1s both;
+}
+
+.dot:nth-child(4) {
+  animation: fadeInDot 0.6s ease-out 1.2s both;
+}
+
+@keyframes fadeInDot {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+.arrow {
+  animation: slideInArrow 0.6s ease-out 1.4s both;
+}
+
+@keyframes slideInArrow {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 0.9;
+    transform: translateX(0);
+  }
+}
+
+.underline {
+  stroke-dasharray: 125;
+  stroke-dashoffset: 125;
+  animation: drawUnderline 0.8s ease-out 1.6s forwards;
+}
+
+@keyframes drawUnderline {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

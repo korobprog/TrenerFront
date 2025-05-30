@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Диагностика полос прокрутки</title>
+   <style>
+      * {
+         margin: 0;
+         padding: 0;
+         box-sizing: border-box;
+      }
+
+      body {
+         font-family: Arial, sans-serif;
+         background: #f0f0f0;
+         padding: 20px;
+      }
+
+      .debug-info {
+         background: white;
+         padding: 20px;
+         border-radius: 8px;
+         margin-bottom: 20px;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .debug-item {
+         margin-bottom: 10px;
+         padding: 10px;
+         background: #f8f9fa;
+         border-left: 4px solid #007bff;
+      }
+
+      .warning {
+         border-left-color: #ffc107;
+         background: #fff3cd;
+      }
+
+      .error {
+         border-left-color: #dc3545;
+         background: #f8d7da;
+      }
+
+      .success {
+         border-left-color: #28a745;
+         background: #d4edda;
+      }
+
+      code {
+         background: #e9ecef;
+         padding: 2px 4px;
+         border-radius: 3px;
+         font-family: monospace;
+      }
+   </style>
+</head>
+
+<body>
+   <h1>Диагностика полос прокрутки SuperMock</h1>
+
+   <div class="debug-info">
+      <h2>Информация о viewport и overflow</h2>
+      <div id="viewport-info"></div>
+   </div>
+
+   <div class="debug-info">
+      <h2>Анализ элементов с overflow</h2>
+      <div id="overflow-elements"></div>
+   </div>
+
+   <div class="debug-info">
+      <h2>Проблемные элементы</h2>
+      <div id="problematic-elements"></div>
+   </div>
+
+   <script>
+      function analyzeScrollbars() {
+         const results = {
+            viewport: {},
+            overflowElements: [],
+            problematicElements: []
+         };
+
+         // Анализ viewport
+         results.viewport = {
+            documentWidth: document.documentElement.scrollWidth,
+            documentHeight: document.documentElement.scrollHeight,
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+            bodyWidth: document.body.scrollWidth,
+            bodyHeight: document.body.scrollHeight,
+            htmlOverflowX: getComputedStyle(document.documentElement).overflowX,
+            htmlOverflowY: getComputedStyle(document.documentElement).overflowY,
+            bodyOverflowX: getComputedStyle(document.body).overflowX,
+            bodyOverflowY: getComputedStyle(document.body).overflowY
+         };
+
+         // Поиск элементов с overflow
+         const allElements = document.querySelectorAll('*');
+         allElements.forEach(element => {
+            const styles = getComputedStyle(element);
+            const overflowX = styles.overflowX;
+            const overflowY = styles.overflowY;
+
+            if (overflowX !== 'visible' || overflowY !== 'visible') {
+               const rect = element.getBoundingClientRect();
+               results.overflowElements.push({
+                  tagName: element.tagName,
+                  className: element.className,
+                  id: element.id,
+                  overflowX,
+                  overflowY,
+                  width: rect.width,
+                  height: rect.height,
+                  scrollWidth: element.scrollWidth,
+                  scrollHeight: element.scrollHeight
+               });
+            }
+
+            // Проверка на проблемные элементы
+            if (element.scrollWidth > element.clientWidth && overflowX === 'visible') {
+               results.problematicElements.push({
+                  element: element.tagName + (element.className ? '.' + element.className : ''),
+                  issue: 'Горизонтальное переполнение при overflow-x: visible',
+                  scrollWidth: element.scrollWidth,
+                  clientWidth: element.clientWidth
+               });
+            }
+
+            if (element.scrollHeight > element.clientHeight && overflowY === 'visible') {
+               results.problematicElements.push({
+                  element: element.tagName + (element.className ? '.' + element.className : ''),
+                  issue: 'Вертикальное переполнение при overflow-y: visible',
+                  scrollHeight: element.scrollHeight,
+                  clientHeight: element.clientHeight
+               });
+            }
+         });
+
+         return results;
+      }
+
+      function displayResults(results) {
+         // Viewport информация
+         const viewportDiv = document.getElementById('viewport-info');
+         viewportDiv.innerHTML = `
+                <div class="debug-item">
+                    <strong>Размеры документа:</strong> ${results.viewport.documentWidth}x${results.viewport.documentHeight}
+                </div>
+                <div class="debug-item">
+                    <strong>Размеры окна:</strong> ${results.viewport.windowWidth}x${results.viewport.windowHeight}
+                </div>
+                <div class="debug-item">
+                    <strong>HTML overflow:</strong> X: <code>${results.viewport.htmlOverflowX}</code>, Y: <code>${results.viewport.htmlOverflowY}</code>
+                </div>
+                <div class="debug-item">
+                    <strong>BODY overflow:</strong> X: <code>${results.viewport.bodyOverflowX}</code>, Y: <code>${results.viewport.bodyOverflowY}</code>
+                </div>
+                <div class="debug-item ${results.viewport.documentWidth > results.viewport.windowWidth ? 'warning' : 'success'}">
+                    <strong>Горизонтальная прокрутка:</strong> ${results.viewport.documentWidth > results.viewport.windowWidth ? 'ЕСТЬ' : 'НЕТ'}
+                </div>
+                <div class="debug-item ${results.viewport.documentHeight > results.viewport.windowHeight ? 'warning' : 'success'}">
+                    <strong>Вертикальная прокрутка:</strong> ${results.viewport.documentHeight > results.viewport.windowHeight ? 'ЕСТЬ' : 'НЕТ'}
+                </div>
+            `;
+
+         // Элементы с overflow
+         const overflowDiv = document.getElementById('overflow-elements');
+         if (results.overflowElements.length > 0) {
+            overflowDiv.innerHTML = results.overflowElements.map(el => `
+                    <div class="debug-item">
+                        <strong>${el.tagName}${el.className ? '.' + el.className : ''}${el.id ? '#' + el.id : ''}</strong><br>
+                        Overflow: X: <code>${el.overflowX}</code>, Y: <code>${el.overflowY}</code><br>
+                        Размеры: ${el.width.toFixed(0)}x${el.height.toFixed(0)} (scroll: ${el.scrollWidth}x${el.scrollHeight})
+                    </div>
+                `).join('');
+         } else {
+            overflowDiv.innerHTML = '<div class="debug-item success">Элементы с overflow не найдены</div>';
+         }
+
+         // Проблемные элементы
+         const problematicDiv = document.getElementById('problematic-elements');
+         if (results.problematicElements.length > 0) {
+            problematicDiv.innerHTML = results.problematicElements.map(el => `
+                    <div class="debug-item error">
+                        <strong>${el.element}</strong><br>
+                        Проблема: ${el.issue}<br>
+                        ${el.scrollWidth ? `Scroll width: ${el.scrollWidth}, Client width: ${el.clientWidth}` : ''}
+                        ${el.scrollHeight ? `Scroll height: ${el.scrollHeight}, Client height: ${el.clientHeight}` : ''}
+                    </div>
+                `).join('');
+         } else {
+            problematicDiv.innerHTML = '<div class="debug-item success">Проблемные элементы не найдены</div>';
+         }
+      }
+
+      // Запуск анализа
+      window.addEventListener('load', () => {
+         setTimeout(() => {
+            const results = analyzeScrollbars();
+            displayResults(results);
+            console.log('Результаты диагностики:', results);
+         }, 1000);
+      });
+   </script>
+</body>
+
+</html>

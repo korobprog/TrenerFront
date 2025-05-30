@@ -1,0 +1,7 @@
+# Директория для API endpoints этапа 2
+
+Здесь будут размещены WebRTC API endpoints:
+- Signaling API
+- Room management API
+- Media stream API
+- Peer connection API

@@ -1,275 +1,337 @@
+/* Базовые стили */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* CSS переменные для светлой темы (по умолчанию) */
 :root {
-  /* General */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  --border-radius: 8px;
-  --transition-speed: 0.3s;
-
-  /* Colors */
-  --primary: #667eea;
-  --primary-dark: #5a67d8;
-  --primary-light: #7f9cf5;
-  --secondary: #f093fb;
-  --secondary-dark: #e779c1;
-  --secondary-light: #f6ad55;
-  --success: #48bb78;
-  --warning: #ed8936;
-  --danger: #f56565;
-  --info: #4299e1;
-
-  /* Text Colors */
+  /* Основные цвета */
+  --background: #ffffff;
+  --foreground: #000000;
   --text-primary: #2d3748;
   --text-secondary: #4a5568;
-  --text-tertiary: #718096;
-  --text-quaternary: #a0aec0;
-  --text-placeholder: #cbd5e0;
-  --text-inverted: #ffffff;
-  --text-link: #4a5568;
-  --text-link-hover: #2d3748;
+  --text-muted: #718096;
 
-  /* Background Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7fafc;
-  --bg-tertiary: #edf2f7;
-  --bg-quaternary: #e2e8f0;
-  --bg-hover: #f7fafc;
-  --bg-inverted: #2d3748;
+  /* Цвета для header */
+  --header-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --header-border: rgba(255, 255, 255, 0.2);
+  --header-text: rgba(255, 255, 255, 0.9);
 
-  /* Border Colors */
-  --border-primary: #e2e8f0;
-  --border-secondary: #edf2f7;
-  --border-tertiary: #f7fafc;
-  --border-focus: #667eea;
+  /* Цвета для logo */
+  --logo-gradient: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  --logo-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --logo-filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.3));
 
-  /* Shadow */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-  --shadow-outline: 0 0 0 3px rgba(66, 153, 225, 0.5);
-  --shadow-none: none;
+  /* Переменные для SVG логотипа */
+  --logo-icon-color: rgba(255, 255, 255, 0.95);
+  --logo-icon-filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  --logo-icon-filter-hover: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.4));
+  --logo-text-primary: rgba(255, 255, 255, 0.98);
+  --logo-text-secondary: rgba(255, 255, 255, 0.85);
+  --logo-text-filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  --logo-text-filter-hover: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+  --logo-accent-color: rgba(255, 255, 255, 0.8);
 
-  /* Header */
-  --header-height: 70px;
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --header-border: 1px solid var(--border-primary);
-  --header-shadow: var(--shadow-md);
-  --header-text: var(--text-primary);
-  --header-gradient: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.95),
-    rgba(249, 250, 251, 0.95)
-  );
-  
-  /* Logo */
-  --logo-gradient: linear-gradient(45deg, #667eea 0%, #5a67d8 50%, #4c51bf 100%);
-  --logo-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --logo-filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.3));
-  
-  /* Username */
-  --username-color: #4a5568;
-  --username-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  
-  /* Theme Toggle */
-  --theme-toggle-icon-color: #4a5568;
-  --theme-toggle-bg: rgba(203, 213, 224, 0.5);
-  --theme-toggle-border: rgba(160, 174, 192, 0.5);
-  --theme-toggle-handle-bg: #ffffff;
-  --theme-toggle-bg-checked: rgba(74, 85, 104, 0.7);
-  --theme-toggle-handle-bg-checked: #2d3748;
-  
-  /* Sign In Button */
-  --signin-button-bg: rgba(102, 126, 234, 0.8);
+  /* Цвета для username */
+  --username-color: rgba(255, 255, 255, 0.95);
+  --username-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+  /* Цвета для кнопки входа */
+  --signin-button-bg: rgba(255, 255, 255, 0.15);
   --signin-button-text: #ffffff;
-  --signin-button-border: rgba(102, 126, 234, 0.5);
-  --signin-button-bg-hover: rgba(102, 126, 234, 0.9);
-  --signin-button-shadow-hover: 0 8px 24px rgba(102, 126, 234, 0.3);
-  
-  /* Home Page */
-  --page-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  --card-bg: rgba(255, 255, 255, 0.98);
-  --card-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
-  --card-border: rgba(255, 255, 255, 0.3);
+  --signin-button-border: rgba(255, 255, 255, 0.2);
+  --signin-button-bg-hover: rgba(255, 255, 255, 0.25);
+  --signin-button-shadow-hover: 0 8px 24px rgba(255, 255, 255, 0.2);
+
+  /* Переключатель темы */
+  --theme-toggle-bg: #ccc;
+  --theme-toggle-border: #bbb;
+  --theme-toggle-handle-bg: #fff;
+  --theme-toggle-bg-checked: #667eea;
+  --theme-toggle-handle-bg-checked: #fff;
+  --theme-toggle-icon-color: rgba(255, 255, 255, 0.8);
+
+  /* Переходы */
+  --transition-speed: 0.3s ease;
+
+  /* Основной контент */
+  --main-bg: #f7fafc;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Дополнительные переменные для страниц */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-hover: #f9f9f9;
+  --border-color: #e0e0e0;
+  --text-tertiary: #777777;
+  --primary-color: #2c7be5;
+  --secondary-color: #6c757d;
+  --secondary-color-hover: #5a6268;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+
+  /* Переменные для главной страницы */
+  --page-gradient: linear-gradient(
+    135deg,
+    #667eea 0%,
+    #764ba2 50%,
+    #f093fb 100%
+  );
   --service-card-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  --service-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
   --service-card-border: rgba(255, 255, 255, 0.5);
+  --service-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.04);
   --service-title-gradient: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
   --features-bg: rgba(102, 126, 234, 0.03);
 }
 
-/* Темная тема */
+/* CSS переменные для темной темы */
 [data-theme='dark'] {
-  /* Text Colors */
+  /* Основные цвета */
+  --background: #1a202c;
+  --foreground: #ffffff;
   --text-primary: #f7fafc;
   --text-secondary: #e2e8f0;
-  --text-tertiary: #cbd5e0;
-  --text-quaternary: #a0aec0;
-  --text-placeholder: #718096;
-  --text-inverted: #1a202c;
-  --text-link: #e2e8f0;
-  --text-link-hover: #f7fafc;
+  --text-muted: #a0aec0;
 
-  /* Background Colors */
+  /* Цвета для header */
+  --header-gradient: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  --header-border: rgba(255, 255, 255, 0.1);
+  --header-text: rgba(255, 255, 255, 0.9);
+
+  /* Цвета для logo */
+  --logo-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --logo-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --logo-filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
+
+  /* Переменные для SVG логотипа (темная тема) */
+  --logo-icon-color: #90cdf4;
+  --logo-icon-filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  --logo-icon-filter-hover: drop-shadow(0 4px 8px rgba(144, 205, 244, 0.4));
+  --logo-text-primary: #90cdf4;
+  --logo-text-secondary: #667eea;
+  --logo-text-filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  --logo-text-filter-hover: drop-shadow(0 2px 4px rgba(144, 205, 244, 0.3));
+  --logo-accent-color: #764ba2;
+
+  /* Цвета для username */
+  --username-color: rgba(255, 255, 255, 0.95);
+  --username-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+
+  /* Цвета для кнопки входа */
+  --signin-button-bg: rgba(102, 126, 234, 0.2);
+  --signin-button-text: #ffffff;
+  --signin-button-border: rgba(102, 126, 234, 0.3);
+  --signin-button-bg-hover: rgba(102, 126, 234, 0.3);
+  --signin-button-shadow-hover: 0 8px 24px rgba(102, 126, 234, 0.2);
+
+  /* Переключатель темы */
+  --theme-toggle-bg: #4a5568;
+  --theme-toggle-border: #2d3748;
+  --theme-toggle-handle-bg: #e2e8f0;
+  --theme-toggle-bg-checked: #667eea;
+  --theme-toggle-handle-bg-checked: #ffffff;
+  --theme-toggle-icon-color: rgba(255, 255, 255, 0.8);
+
+  /* Основной контент */
+  --main-bg: #1a202c;
+  --card-bg: #2d3748;
+  --card-border: #4a5568;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+  /* Дополнительные переменные для страниц (темная тема) */
   --bg-primary: #1a202c;
   --bg-secondary: #2d3748;
-  --bg-tertiary: #4a5568;
-  --bg-quaternary: #718096;
-  --bg-hover: #2d3748;
-  --bg-inverted: #f7fafc;
+  --bg-hover: #4a5568;
+  --border-color: #4a5568;
+  --text-tertiary: #718096;
+  --primary-color: #4299e1;
+  --secondary-color: #718096;
+  --secondary-color-hover: #4a5568;
+  --success-color: #38a169;
+  --error-color: #e53e3e;
 
-  /* Border Colors */
-  --border-primary: #4a5568;
-  --border-secondary: #2d3748;
-  --border-tertiary: #1a202c;
-  --border-focus: #7f9cf5;
-
-  /* Shadow */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
-    0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
-    0 10px 10px -5px rgba(0, 0, 0, 0.2);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
-  --shadow-outline: 0 0 0 3px rgba(127, 156, 245, 0.5);
-
-  /* Header */
-  --header-bg: rgba(26, 32, 44, 0.95);
-  --header-border: 1px solid var(--border-primary);
-  --header-shadow: var(--shadow-md);
-  --header-text: var(--text-primary);
-  --header-gradient: linear-gradient(
-    to right,
-    rgba(26, 32, 44, 0.95),
-    rgba(45, 55, 72, 0.95)
+  /* Переменные для главной страницы (темная тема) */
+  --page-gradient: linear-gradient(
+    135deg,
+    #1a202c 0%,
+    #2d3748 50%,
+    #4a5568 100%
   );
-  
-  /* Logo */
-  --logo-gradient: linear-gradient(45deg, #ffffff 0%, #f0f8ff 50%, #e6f3ff 100%);
-  --logo-text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  --logo-filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
-  
-  /* Username */
-  --username-color: #ffffff;
-  --username-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  
-  /* Theme Toggle */
-  --theme-toggle-icon-color: #f7fafc;
-  --theme-toggle-bg: rgba(255, 255, 255, 0.3);
-  --theme-toggle-border: rgba(255, 255, 255, 0.2);
-  --theme-toggle-handle-bg: #ffffff;
-  --theme-toggle-bg-checked: rgba(0, 0, 0, 0.5);
-  --theme-toggle-handle-bg-checked: #121212;
-  
-  /* Sign In Button */
-  --signin-button-bg: rgba(255, 255, 255, 0.2);
-  --signin-button-text: #ffffff;
-  --signin-button-border: rgba(255, 255, 255, 0.3);
-  --signin-button-bg-hover: rgba(255, 255, 255, 0.3);
-  --signin-button-shadow-hover: 0 8px 24px rgba(255, 255, 255, 0.3);
-  
-  /* Home Page */
-  --page-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
-  --card-bg: rgba(26, 32, 44, 0.98);
-  --card-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 10px 20px rgba(0, 0, 0, 0.2);
-  --card-border: rgba(74, 85, 104, 0.3);
-  --service-card-bg: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-  --service-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  --service-card-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
   --service-card-border: rgba(74, 85, 104, 0.5);
+  --service-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.1);
   --service-title-gradient: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
-  --features-bg: rgba(102, 126, 234, 0.05);
+  --features-bg: rgba(102, 126, 234, 0.1);
+}
+
+/* Базовые стили для body */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed);
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+/* Предотвращение горизонтального скролла */
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Стили для основного контента */
+.main-content {
+  min-height: calc(100vh - 80px);
+  background-color: var(--main-bg);
+  transition: background-color var(--transition-speed);
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Стили для карточек */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  transition: background-color var(--transition-speed),
+    border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+/* Стили для текста */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* Плавные переходы для всех элементов */
+* {
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed), border-color var(--transition-speed);
+}
+
+/* Дополнительная защита от горизонтального переполнения */
+* {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Предотвращение двойной прокрутки */
+#__next {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Дополнительная защита от двойной прокрутки */
+html,
+body,
+#__next {
+  scrollbar-gutter: stable;
+}
+
+/* Скрытие горизонтальной прокрутки для всех элементов */
+*::-webkit-scrollbar-horizontal {
+  display: none;
 }
 
 * {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
 }
 
-*,
-*::before,
-*::after {
-  max-width: 100%;
-  overflow-wrap: break-word;
-}
-
-html {
+/* Предотвращение переполнения для flex и grid контейнеров */
+*[style*='display: flex'],
+*[style*='display: grid'],
+.flex,
+.grid {
+  min-width: 0;
   overflow-x: hidden;
-  width: 100%;
 }
 
+/* Дополнительные стили для предотвращения двойной прокрутки */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-color);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Исправление проблем с прокруткой в контейнерах */
+.pageContainer,
+.mainGrid,
+.servicesSection,
+.authSection {
   overflow-x: hidden;
   width: 100%;
-  margin: 0;
-  padding: 0;
+  max-width: 100%;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Предотвращение горизонтального переполнения для всех элементов */
+* {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
-  border: none;
-  border-radius: var(--border-radius);
-  padding: 10px 20px;
-  font-size: 16px;
-  transition: all var(--transition-speed) ease;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-.container {
-  min-height: 100vh;
-  padding: 0 0.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-  min-height: calc(100vh - 70px); /* Вычитаем высоту шапки */
-}
-
-/* Стили для контейнера уведомлений */
-.notifications-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
+/* Исправление проблем с viewport на мобильных устройствах */
 @media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
+  html {
+    overflow-x: hidden;
   }
+
+  body {
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  #__next {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}
+
+/* Предотвращение мерцания при загрузке */
+html {
+  color-scheme: light dark;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
 }

@@ -241,15 +241,65 @@
 }
 
 .providerIcon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  flex-shrink: 0;
+}
+
+.providerText {
+  flex: 1;
+  text-align: center;
+  margin-right: 24px; /* Компенсация ширины иконки для центрирования */
 }
 
 .providerButton:hover .providerIcon {
   transform: scale(1.1);
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+
+/* Специфичные стили для провайдеров */
+.googleProvider:hover {
+  border-color: #4285f4;
+  box-shadow: 0 20px 60px rgba(66, 133, 244, 0.2),
+    0 8px 24px rgba(66, 133, 244, 0.15);
+}
+
+.githubProvider {
+  color: #24292e;
+}
+
+.githubProvider:hover {
+  border-color: #24292e;
+  box-shadow: 0 20px 60px rgba(36, 41, 46, 0.2),
+    0 8px 24px rgba(36, 41, 46, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #f6f8fa 100%);
+}
+
+.credentialsProvider {
+  color: #6366f1;
+}
+
+.credentialsProvider:hover {
+  border-color: #6366f1;
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.2),
+    0 8px 24px rgba(99, 102, 241, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.emailProvider {
+  color: #059669;
+}
+
+.emailProvider:hover {
+  border-color: #059669;
+  box-shadow: 0 20px 60px rgba(5, 150, 105, 0.2),
+    0 8px 24px rgba(5, 150, 105, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
 }
 
 .errorMessage {
@@ -377,5 +427,120 @@
   .providerIcon {
     width: 24px;
     height: 24px;
+  }
+}
+
+/* Стили для формы email */
+.emailForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.emailInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.emailLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.emailInput {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.emailInput::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+
+.emailInput:focus {
+  border-color: #059669;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1),
+    0 8px 24px rgba(5, 150, 105, 0.15);
+  transform: translateY(-2px);
+}
+
+.emailInput:focus::placeholder {
+  color: #6b7280;
+}
+
+.emailInput:hover:not(:focus) {
+  border-color: #d1d5db;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.emailInput:disabled {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.emailInput:disabled::placeholder {
+  color: #d1d5db;
+}
+
+/* Анимация для лейбла при фокусе */
+.emailInputGroup:focus-within .emailLabel {
+  color: #059669;
+  transform: translateY(-2px);
+}
+
+/* Стили для состояния загрузки */
+.emailProvider:disabled {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.emailProvider:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Дополнительные стили для мобильных устройств */
+@media (max-width: 480px) {
+  .emailInput {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .emailLabel {
+    font-size: 0.95rem;
+  }
+
+  .emailInputGroup {
+    gap: 0.5rem;
+  }
+
+  .emailForm {
+    gap: 1.25rem;
   }
 }

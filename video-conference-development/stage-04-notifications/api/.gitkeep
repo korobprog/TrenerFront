@@ -1,0 +1,7 @@
+# Директория для API endpoints этапа 4
+
+Здесь будут размещены API endpoints уведомлений:
+- Email notification API
+- Push notification API
+- Notification preferences API
+- Webhook handlers API
