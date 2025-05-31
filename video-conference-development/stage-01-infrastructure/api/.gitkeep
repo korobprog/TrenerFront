@@ -1,0 +1,6 @@
+# Директория для API endpoints этапа 1
+
+Здесь будут размещены API endpoints:
+- WebRTC signaling API
+- Конфигурационные API
+- Базовые endpoints для видеоконференций

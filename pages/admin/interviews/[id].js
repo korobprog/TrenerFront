@@ -123,9 +123,8 @@ export default function InterviewDetailsPage() {
           {interview
             ? `Собеседование ${new Date(
                 interview.scheduledTime
-              ).toLocaleDateString('ru-RU')}`
-            : 'Информация о собеседовании'}{' '}
-          | Админ-панель
+              ).toLocaleDateString('ru-RU')} | Админ-панель`
+            : 'Информация о собеседовании | Админ-панель'}
         </title>
       </Head>
 

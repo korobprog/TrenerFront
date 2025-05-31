@@ -1,281 +1,435 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import prisma from '../../../../lib/prisma';
-import { sendInterviewBookingNotification } from '../../../../lib/utils/email';
-import {
-  createCalendarEvent,
-  updateCalendarEvent,
-} from '../../../../lib/utils/googleCalendar';
 
 export default async function handler(req, res) {
-  console.log('API Book: Получен запрос на запись на собеседование');
-  console.log('API Book: Метод запроса:', req.method);
-  console.log('API Book: Параметры запроса:', req.query);
-  console.log('API Book: Заголовки запроса:', req.headers);
-
-  // Используем getServerSession для получения сессии
-  const session = await getServerSession(req, res, authOptions);
-  console.log('API Book: Сессия пользователя:', session);
-
-  if (!session) {
-    console.log('API Book: Сессия отсутствует, возвращаем 401');
-    return res.status(401).json({ message: 'Необходима авторизация' });
-  }
-
-  // Получаем ID собеседования из URL
-  const { id } = req.query;
-
-  // Обработка только POST запросов
+  // Поддерживаем только POST метод для записи на собеседование
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Метод не поддерживается' });
+    console.log(
+      `API mock-interviews/[id]/book: Неподдерживаемый метод ${req.method}`
+    );
+    return res.status(405).json({
+      message: 'Метод не поддерживается',
+      allowedMethods: ['POST'],
+    });
   }
 
   try {
-    console.log('API Book: ID собеседования:', id);
-    console.log('API Book: ID пользователя:', session.user.id);
+    // Получаем ID интервью из параметров запроса
+    const { id } = req.query;
 
-    // Проверяем, существует ли собеседование и доступно ли оно для записи
+    console.log(
+      `API mock-interviews/[id]/book: Запрос записи на интервью с ID: ${id}`
+    );
+
+    // Валидация ID
+    if (!id || typeof id !== 'string') {
+      console.log('API mock-interviews/[id]/book: Некорректный ID интервью');
+      return res.status(400).json({
+        message: 'Некорректный ID интервью',
+      });
+    }
+
+    // Проверяем аутентификацию с детальным логированием
+    const timestamp = new Date().toISOString();
+    console.log(
+      `[BOOK_DEBUG] ${timestamp} Проверка аутентификации для записи на интервью ${id}`
+    );
+
+    const session = await getServerSession(req, res, authOptions);
+
+    // Детальное логирование состояния сессии
+    try {
+      console.log(`[BOOK_DEBUG] ${timestamp} Состояние сессии:`, {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        hasUserId: !!session?.user?.id,
+        sessionStructure: session
+          ? {
+              user: session.user
+                ? {
+                    id: session.user.id || 'отсутствует',
+                    email: session.user.email || 'отсутствует',
+                    name: session.user.name || 'отсутствует',
+                    role: session.user.role || 'отсутствует',
+                    provider: session.user.provider || 'отсутствует',
+                  }
+                : 'объект user отсутствует',
+              timestamp: session.timestamp || 'отсутствует',
+            }
+          : 'сессия полностью отсутствует',
+      });
+    } catch (logError) {
+      console.error(
+        `[BOOK_DEBUG] ${timestamp} Ошибка логирования сессии:`,
+        logError
+      );
+    }
+
+    if (!session || !session.user) {
+      console.log(
+        `[BOOK_DEBUG] ${timestamp} Пользователь не авторизован - отказ в доступе`
+      );
+      console.log('API mock-interviews/[id]/book: Пользователь не авторизован');
+      return res.status(401).json({
+        message: 'Необходима авторизация для записи на собеседование',
+      });
+    }
+
+    // Дополнительная проверка ID пользователя
+    if (!session.user.id) {
+      console.log(
+        `[BOOK_DEBUG] ${timestamp} ID пользователя отсутствует в сессии`
+      );
+      return res.status(401).json({
+        message: 'Некорректная сессия пользователя - отсутствует ID',
+      });
+    }
+
+    console.log(`[BOOK_DEBUG] ${timestamp} Пользователь успешно авторизован`);
+    console.log(
+      `API mock-interviews/[id]/book: Пользователь авторизован: ${
+        session?.user?.email || 'email не указан'
+      } (ID: ${session?.user?.id || 'ID не указан'})`
+    );
+
+    // Получаем интервью для проверки доступности
+    console.log(
+      'API mock-interviews/[id]/book: Получение данных интервью из базы данных'
+    );
     const interview = await prisma.mockInterview.findUnique({
-      where: { id },
-      include: {
-        interviewer: true,
-      },
-    });
-
-    console.log(
-      'API Book: Найденное собеседование:',
-      interview
-        ? {
-            id: interview.id,
-            status: interview.status,
-            interviewerId: interview.interviewerId,
-            scheduledTime: interview.scheduledTime,
-          }
-        : 'не найдено'
-    );
-
-    if (!interview) {
-      console.log('API Book: Собеседование не найдено');
-      return res.status(404).json({ message: 'Собеседование не найдено' });
-    }
-
-    if (interview.status !== 'pending') {
-      console.log('API Book: Собеседование уже забронировано или завершено');
-      return res
-        .status(400)
-        .json({ message: 'Это собеседование уже забронировано или завершено' });
-    }
-
-    if (interview.interviewerId === session.user.id) {
-      console.log(
-        'API Book: Пользователь пытается записаться на собственное собеседование'
-      );
-      return res.status(400).json({
-        message: 'Вы не можете записаться на собственное собеседование',
-      });
-    }
-
-    // Проверяем, есть ли у пользователя достаточно баллов
-    const userPoints = await prisma.userPoints.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    console.log('API Book: Баллы пользователя:', userPoints);
-
-    // Если у пользователя нет записи о баллах, создаем её с 0 баллами
-    if (!userPoints) {
-      console.log(
-        'API Book: У пользователя нет записи о баллах, создаем с 0 баллами'
-      );
-      await prisma.userPoints.create({
-        data: {
-          userId: session.user.id,
-          points: 0,
-        },
-      });
-      return res.status(400).json({
-        message: 'У вас недостаточно баллов для записи на собеседование',
-      });
-    }
-
-    // Проверяем, достаточно ли баллов (нужно минимум 1)
-    if (userPoints.points < 1) {
-      console.log(
-        'API Book: У пользователя недостаточно баллов:',
-        userPoints.points
-      );
-      return res.status(400).json({
-        message: 'У вас недостаточно баллов для записи на собеседование',
-      });
-    }
-
-    // Проверяем наличие активных нарушений
-    const activeViolations = await prisma.userViolation.findMany({
       where: {
-        userId: session.user.id,
-        expiresAt: {
-          gt: new Date(),
+        id: id,
+      },
+      include: {
+        interviewer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        interviewee: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       },
     });
 
-    if (activeViolations.length > 0) {
+    // Проверяем, существует ли интервью
+    if (!interview) {
       console.log(
-        'API Book: У пользователя есть активные нарушения:',
-        activeViolations.length
+        `API mock-interviews/[id]/book: Интервью с ID ${id} не найдено`
       );
-      return res.status(403).json({
-        message:
-          'Вы временно не можете записываться на собеседования из-за нарушений',
+      return res.status(404).json({
+        message: 'Интервью не найдено',
       });
     }
 
     console.log(
-      'API Book: У пользователя достаточно баллов:',
-      userPoints.points
+      `API mock-interviews/[id]/book: Интервью найдено. Статус: ${interview.status}, Интервьюер: ${interview.interviewerId}, Интервьюируемый: ${interview.intervieweeId}`
     );
 
-    // Проверяем, есть ли в запросе ссылка на Google Meet и ID события календаря
-    const { meetingLink, calendarEventId } = req.body;
+    // Проверяем, что пользователь не является интервьюером
+    if (interview.interviewerId === session?.user?.id) {
+      console.log(
+        `API mock-interviews/[id]/book: Пользователь ${
+          session?.user?.id || 'неизвестный'
+        } является интервьюером и не может записаться на собственное интервью`
+      );
+      return res.status(400).json({
+        message: 'Вы не можете записаться на собственное интервью',
+      });
+    }
 
-    // Начинаем транзакцию для обновления собеседования и списания баллов
-    const result = await prisma.$transaction([
-      // Обновляем статус собеседования, добавляем отвечающего и, если предоставлены, ссылку на Google Meet и ID события календаря
-      prisma.mockInterview.update({
-        where: { id },
+    // Проверяем, что интервью доступно для записи
+    if (interview.status !== 'pending') {
+      console.log(
+        `API mock-interviews/[id]/book: Интервью ${id} недоступно для записи. Статус: ${interview.status}`
+      );
+      return res.status(400).json({
+        message: 'Интервью недоступно для записи',
+        currentStatus: interview.status,
+      });
+    }
+
+    // Проверяем, что на интервью еще никто не записан
+    if (interview.intervieweeId) {
+      console.log(
+        `API mock-interviews/[id]/book: На интервью ${id} уже записан пользователь ${interview.intervieweeId}`
+      );
+      return res.status(400).json({
+        message: 'На это интервью уже записан другой пользователь',
+      });
+    }
+
+    // Проверяем, что интервью запланировано на будущее время
+    const now = new Date();
+    if (interview.scheduledTime <= now) {
+      console.log(
+        `API mock-interviews/[id]/book: Интервью ${id} запланировано на прошедшее время: ${interview.scheduledTime}`
+      );
+      return res.status(400).json({
+        message: 'Нельзя записаться на интервью, которое уже прошло',
+      });
+    }
+
+    // Проверяем баллы пользователя перед записью
+    const userId = session?.user?.id;
+    if (!userId) {
+      console.log(
+        `[BOOK_DEBUG] ${timestamp} ID пользователя недоступен для проверки баллов`
+      );
+      return res.status(401).json({
+        message: 'Некорректная сессия пользователя',
+      });
+    }
+
+    console.log(
+      `API mock-interviews/[id]/book: Проверка баллов пользователя ${userId}`
+    );
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { userPoints: true },
+    });
+
+    const currentPoints = user?.userPoints?.points || 0;
+    if (!user || currentPoints < 1) {
+      console.log(
+        `API mock-interviews/[id]/book: Недостаточно баллов у пользователя ${userId}. Текущие баллы: ${currentPoints}`
+      );
+      return res.status(400).json({
+        message:
+          'Недостаточно баллов для записи на собеседование. Необходимо минимум 1 балл',
+        currentPoints: currentPoints,
+      });
+    }
+
+    // Записываем пользователя на интервью и списываем балл в транзакции
+    console.log(
+      `API mock-interviews/[id]/book: Запись пользователя ${userId} на интервью ${id} и списание 1 балла`
+    );
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Повторно проверяем баллы пользователя внутри транзакции для предотвращения race conditions
+      const userInTransaction = await tx.user.findUnique({
+        where: { id: userId },
+        include: { userPoints: true },
+      });
+
+      const transactionPoints = userInTransaction?.userPoints?.points || 0;
+      if (!userInTransaction || transactionPoints < 1) {
+        throw new Error('INSUFFICIENT_POINTS');
+      }
+
+      // Проверяем, что интервью все еще доступно для записи
+      const interviewInTransaction = await tx.mockInterview.findUnique({
+        where: { id: id },
+        select: { status: true, intervieweeId: true },
+      });
+
+      if (
+        !interviewInTransaction ||
+        interviewInTransaction.status !== 'pending' ||
+        interviewInTransaction.intervieweeId
+      ) {
+        throw new Error('INTERVIEW_NOT_AVAILABLE');
+      }
+
+      // Обновляем интервью
+      const updatedInterview = await tx.mockInterview.update({
+        where: { id: id },
         data: {
-          status: 'booked',
-          interviewee: {
-            connect: { id: session.user.id },
-          },
-          ...(meetingLink && calendarEventId
-            ? {
-                meetingLink: meetingLink,
-                calendarEventId: calendarEventId,
-              }
-            : {}),
+          intervieweeId: userId,
+          status: 'scheduled',
+          updatedAt: new Date(),
         },
-      }),
-      // Списываем 1 балл у пользователя
-      prisma.userPoints.update({
-        where: { userId: session.user.id },
-        data: {
+        include: {
+          interviewer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          interviewee: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      // Списываем 1 балл у пользователя через UserPoints
+      const updatedUserPoints = await tx.userPoints.upsert({
+        where: { userId: userId },
+        update: {
           points: {
             decrement: 1,
           },
         },
-      }),
-      // Создаем запись в истории транзакций
-      prisma.pointsTransaction.create({
-        data: {
-          userId: session.user.id,
-          amount: -1,
-          type: 'booking',
-          description: 'Запись на собеседование',
+        create: {
+          userId: userId,
+          points: 0, // Если записи нет, создаем с 0 баллов (недостаточно для операции)
         },
-      }),
-    ]);
+        select: { points: true },
+      });
 
-    // Получаем полные данные об интервьюере и интервьюируемом
-    const interviewer = await prisma.user.findUnique({
-      where: { id: result[0].interviewerId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      },
-    });
+      // Проверяем, что баллы не ушли в минус
+      if (updatedUserPoints.points < 0) {
+        throw new Error('INSUFFICIENT_POINTS');
+      }
 
-    const interviewee = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      },
-    });
-
-    console.log('API Book: Отправка уведомления интервьюеру');
-
-    // Отправляем email-уведомление интервьюеру
-    const emailResult = await sendInterviewBookingNotification(
-      interviewer,
-      interviewee,
-      result[0]
-    );
-
-    console.log('API Book: Результат отправки email:', emailResult);
-
-    let calendarResult;
-
-    if (meetingLink && calendarEventId) {
-      // Если в запросе есть ссылка и ID события, используем их
-      console.log(
-        'API Book: Используем предоставленную ссылку на Google Meet:',
-        meetingLink
-      );
-      console.log(
-        'API Book: Используем предоставленный ID события календаря:',
-        calendarEventId
-      );
-
-      calendarResult = {
-        success: true,
-        eventId: calendarEventId,
-        meetingLink: meetingLink,
-      };
-    } else if (result[0].calendarEventId) {
-      // Если есть ID события, обновляем его
-      console.log(
-        'API Book: Обновляем существующее событие в календаре:',
-        result[0].calendarEventId
-      );
-      calendarResult = await updateCalendarEvent(
-        result[0].calendarEventId,
-        interviewer,
-        interviewee,
-        result[0]
-      );
-    } else {
-      // Иначе создаем новое событие
-      console.log('API Book: Создаем новое событие в календаре');
-      calendarResult = await createCalendarEvent(
-        interviewer,
-        interviewee,
-        result[0]
-      );
-
-      // Сохраняем ID события и ссылку на встречу
-      if (calendarResult.success) {
-        await prisma.mockInterview.update({
-          where: { id },
+      // Создаем запись в истории баллов для отслеживания транзакции
+      try {
+        await tx.pointsTransaction.create({
           data: {
-            calendarEventId: calendarResult.eventId,
-            meetingLink: calendarResult.meetingLink,
+            userId: userId,
+            amount: -1,
+            type: 'spent',
+            description: `Списание 1 балла за запись на интервью ${id}`,
           },
         });
+      } catch (historyError) {
+        console.warn(
+          `API mock-interviews/[id]/book: Не удалось создать запись в истории баллов:`,
+          historyError.message
+        );
+        // Не прерываем транзакцию, так как это не критично
       }
-    }
+
+      console.log(
+        `API mock-interviews/[id]/book: Балл успешно списан. Остаток баллов: ${updatedUserPoints.points}`
+      );
+
+      return updatedInterview;
+    });
+
+    const updatedInterview = result;
 
     console.log(
-      'API Book: Результат работы с событием в календаре:',
-      calendarResult
+      `API mock-interviews/[id]/book: Пользователь успешно записан на интервью ${id}`
     );
 
-    return res.status(200).json({
-      message: 'Вы успешно записались на собеседование',
-      interview: result[0],
-      notifications: {
-        email: emailResult,
-        calendar: calendarResult,
-      },
+    // Создаем событие в календаре (если необходимо)
+    try {
+      await prisma.customCalendarEvent.create({
+        data: {
+          title: `Собеседование с ${
+            interview.interviewer.name || interview.interviewer.email
+          }`,
+          description: `Запланированное собеседование`,
+          startTime: interview.scheduledTime,
+          endTime: new Date(interview.scheduledTime.getTime() + 60 * 60 * 1000), // +1 час
+          userId: userId,
+          eventType: 'interview',
+          mockInterviewId: id,
+        },
+      });
+      console.log(
+        `API mock-interviews/[id]/book: Событие календаря создано для интервью ${id}`
+      );
+    } catch (calendarError) {
+      console.warn(
+        `API mock-interviews/[id]/book: Не удалось создать событие календаря для интервью ${id}:`,
+        calendarError.message
+      );
+      // Не прерываем выполнение, так как основная операция записи прошла успешно
+    }
+
+    // Получаем актуальный баланс пользователя для ответа
+    const userBalance = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { userPoints: true },
     });
+
+    // Возвращаем обновленные данные интервью
+    const responseData = {
+      ...updatedInterview,
+      message: 'Вы успешно записались на собеседование',
+      isCurrentUserInterviewee: true,
+      currentUserRole: 'interviewee',
+      pointsSpent: 1,
+      remainingPoints: userBalance?.userPoints?.points || 0,
+    };
+
+    console.log(
+      `API mock-interviews/[id]/book: Запись на интервью ${id} завершена успешно`
+    );
+
+    return res.status(200).json(responseData);
   } catch (error) {
-    console.error('Ошибка при записи на собеседование:', error);
-    return res
-      .status(500)
-      .json({ message: 'Ошибка сервера при записи на собеседование' });
+    console.error(
+      'API mock-interviews/[id]/book: Ошибка при записи на интервью:',
+      error
+    );
+    console.error('API mock-interviews/[id]/book: Стек ошибки:', error.stack);
+
+    // Логируем дополнительную информацию для отладки
+    console.error('API mock-interviews/[id]/book: Детали ошибки:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    });
+
+    // Обрабатываем специфические ошибки из транзакции
+    if (error.message === 'INSUFFICIENT_POINTS') {
+      console.log(
+        `API mock-interviews/[id]/book: Недостаточно баллов у пользователя ${
+          session?.user?.id || 'неизвестный'
+        } во время транзакции`
+      );
+      return res.status(400).json({
+        message:
+          'Недостаточно баллов для записи на собеседование. Возможно, баллы были потрачены в другой операции',
+        currentPoints: 0,
+      });
+    }
+
+    if (error.message === 'INTERVIEW_NOT_AVAILABLE') {
+      console.log(
+        `API mock-interviews/[id]/book: Интервью ${id} стало недоступным во время транзакции`
+      );
+      return res.status(400).json({
+        message:
+          'Интервью больше недоступно для записи. Возможно, на него уже записался другой пользователь',
+      });
+    }
+
+    // Проверяем специфические ошибки Prisma
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        message: 'Конфликт данных при записи на интервью',
+      });
+    }
+
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        message: 'Интервью не найдено или недоступно',
+      });
+    }
+
+    // Ошибки связанные с недостаточными правами или ограничениями
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        message: 'Нарушение ограничений базы данных при записи на интервью',
+      });
+    }
+
+    return res.status(500).json({
+      message: 'Внутренняя ошибка сервера при записи на интервью',
+    });
+  } finally {
+    // Закрываем соединение с Prisma
+    await prisma.$disconnect();
+    console.log(
+      'API mock-interviews/[id]/book: Соединение с базой данных закрыто'
+    );
   }
 }

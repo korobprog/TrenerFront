@@ -1,0 +1,7 @@
+# Директория для API endpoints этапа 5
+
+Здесь будут размещены тестовые и мониторинговые API endpoints:
+- Health check API
+- Performance metrics API
+- Test results API
+- Monitoring dashboard API

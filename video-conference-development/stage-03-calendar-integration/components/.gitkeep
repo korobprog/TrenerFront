@@ -1,0 +1,7 @@
+# Директория для компонентов этапа 3
+
+Здесь будут размещены календарные компоненты:
+- CalendarIntegration компонент
+- EventScheduler компонент
+- MeetingPlanner компонент
+- CalendarSync компонент

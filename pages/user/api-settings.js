@@ -20,7 +20,7 @@ export default function ApiSettingsPage() {
     apiKey: '',
     baseUrl: 'https://api.anthropic.com', // URL по умолчанию для Anthropic
     usePersonalSettings: false,
-    apiType: 'anthropic', // По умолчанию используем Anthropic API
+    apiType: 'openrouter', // По умолчанию используем OpenRouter API
     langdockApiKey: '',
     langdockAssistantId: '',
     langdockBaseUrl: 'https://api.langdock.com/assistant/v1/chat/completions', // URL по умолчанию для LangDock
@@ -63,10 +63,22 @@ export default function ApiSettingsPage() {
     try {
       console.log('Запрос настроек API пользователя');
       const response = await fetch('/api/user/api-settings');
-      if (!response.ok) {
-        throw new Error('Ошибка при получении настроек API');
-      }
+
+      // Парсим JSON ответ независимо от статуса
       const data = await response.json();
+
+      if (!response.ok) {
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message || data.error || 'Ошибка при получении настроек API';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для просмотра настроек API');
+        }
+
+        throw new Error(errorMessage);
+      }
       console.log('Получены настройки API от сервера:', {
         useCustomApi: data.usePersonalSettings,
         apiType: data.apiType,
@@ -81,7 +93,7 @@ export default function ApiSettingsPage() {
         apiKey: data.apiKey || '',
         baseUrl: data.baseUrl || 'https://api.anthropic.com',
         usePersonalSettings: data.usePersonalSettings === true, // Явно преобразуем в boolean
-        apiType: data.apiType || 'anthropic',
+        apiType: data.apiType || 'openrouter',
         langdockApiKey: data.langdockApiKey || '',
         langdockAssistantId: data.langdockAssistantId || '',
         langdockBaseUrl:
@@ -215,11 +227,21 @@ export default function ApiSettingsPage() {
         body: JSON.stringify(apiData),
       });
 
-      if (!response.ok) {
-        throw new Error('Ошибка при сохранении настроек API');
-      }
-
+      // Парсим JSON ответ независимо от статуса
       const data = await response.json();
+
+      if (!response.ok) {
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message || data.error || 'Ошибка при сохранении настроек API';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для сохранения настроек API');
+        }
+
+        throw new Error(errorMessage);
+      }
       console.log('Ответ сервера после сохранения настроек:', data);
       showSuccess(data.message || 'Настройки API успешно сохранены');
 
@@ -239,7 +261,7 @@ export default function ApiSettingsPage() {
           apiKey: data.settings.apiKey || '',
           baseUrl: data.settings.baseUrl || 'https://api.anthropic.com',
           usePersonalSettings: data.settings.usePersonalSettings === true, // Явно преобразуем в boolean
-          apiType: data.settings.apiType || 'anthropic',
+          apiType: data.settings.apiType || 'openrouter',
           langdockApiKey: data.settings.langdockApiKey || '',
           langdockAssistantId: data.settings.langdockAssistantId || '',
           langdockBaseUrl:

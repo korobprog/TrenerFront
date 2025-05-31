@@ -9,11 +9,19 @@ datasource db {
 }
 
 model Question {
-  id           Int            @id @default(autoincrement())
-  text         String
-  category     String?
-  createdAt    DateTime       @default(now())
-  userProgress UserProgress[]
+  id                Int                     @id @default(autoincrement())
+  text              String
+  question          String?                 // Дублируем для совместимости
+  answer            String?
+  options           Json?                   // Массив вариантов ответов
+  topic             String?
+  difficulty        String?
+  tags              Json?                   // Массив тегов
+  estimatedTime     Int?                    // Время в секундах
+  category          String?
+  createdAt         DateTime                @default(now())
+  userProgress      UserProgress[]
+  favoriteQuestions UserFavoriteQuestion[]
 }
 
 model User {
@@ -41,6 +49,16 @@ model User {
   userPoints               UserPoints?
   userProgress             UserProgress[]
   violations               UserViolation[]
+  favoriteQuestions        UserFavoriteQuestion[]
+  
+  // Новые связи для видео-календаря
+  preferences              UserPreferences?
+  calendarEvents           CustomCalendarEvent[]
+  hostedRooms              VideoRoom[]
+  roomParticipations       VideoRoomParticipant[]
+  chatMessages             VideoRoomChatMessage[]
+  notificationSubscriptions NotificationSubscription[]
+  authSettings              UserAuthSettings?
 }
 
 model Account {
@@ -89,10 +107,26 @@ model UserProgress {
   searchCount  Int      @default(0)
   unknownCount Int      @default(0)
   userId       String
+  isCorrect    Boolean?
+  timeSpent    Int?     // Время в секундах
+  lastAnswer   String?  // Последний ответ пользователя
+  needsReview  Boolean  @default(false)
+  createdAt    DateTime @default(now())
   question     Question @relation(fields: [questionId], references: [id])
   user         User     @relation(fields: [userId], references: [id])
 
   @@unique([questionId, userId])
+}
+
+model UserFavoriteQuestion {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  questionId Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
 }
 
 model UserPoints {
@@ -111,6 +145,13 @@ model MockInterview {
   scheduledTime     DateTime
   meetingLink       String
   status            String             @default("pending")
+  
+  // Обновленные поля для интеграции с видеосистемой
+  videoType         String?            @default("google_meet") // google_meet, built_in, external
+  videoRoomId       String?
+  videoRoom         VideoRoom?         @relation(fields: [videoRoomId], references: [id])
+  calendarEvents    CustomCalendarEvent[]
+  
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   calendarEventId   String?
@@ -243,7 +284,177 @@ model PointsTransaction {
   type        String
   description String?
   createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+  user                   User     @relation(fields: [userId], references: [id])
+}
+
+// Обновленные модели для видео-календаря
+
+model UserPreferences {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Настройки календаря
+  defaultCalendarView   String   @default("month") // month, week, day
+  workingHoursStart     Int      @default(9)       // 9:00
+  workingHoursEnd       Int      @default(18)      // 18:00
+  timezone              String   @default("Europe/Moscow")
+  
+  // Настройки уведомлений
+  emailNotifications    Boolean  @default(true)
+  pushNotifications     Boolean  @default(true)
+  reminderMinutes       Int      @default(15)      // за сколько минут напоминать
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model CustomCalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  
+  // Связи
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Тип события
+  eventType   String   @default("meeting") // meeting, interview, personal, other
+  
+  // Видеоконференция (опционально)
+  videoRoomId String?
+  videoRoom   VideoRoom? @relation(fields: [videoRoomId], references: [id])
+  
+  // Интеграция с собеседованиями
+  mockInterviewId String?
+  mockInterview   MockInterview? @relation(fields: [mockInterviewId], references: [id])
+  
+  // Повторяющиеся события
+  isRecurring Boolean  @default(false)
+  recurringPattern String? // daily, weekly, monthly
+  recurringEndDate DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId, startTime])
+  @@index([eventType])
+}
+
+model VideoRoom {
+  id          String   @id @default(cuid())
+  code        String   @unique // уникальный код комнаты
+  name        String
+  description String?
+  
+  // Создатель комнаты
+  hostId      String
+  host        User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  
+  // Настройки комнаты
+  isActive    Boolean  @default(true)
+  isPrivate   Boolean  @default(false)
+  maxParticipants Int  @default(10)
+  requiresPassword Boolean @default(false)
+  password    String?
+  recordingEnabled Boolean @default(false)
+  settings    Json?
+  
+  // Время жизни комнаты
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  actualStart    DateTime?
+  actualEnd      DateTime?
+  
+  // Связи
+  participants VideoRoomParticipant[]
+  chatMessages VideoRoomChatMessage[]
+  calendarEvents CustomCalendarEvent[]
+  mockInterviews MockInterview[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([code])
+  @@index([hostId])
+  @@index([isActive])
+}
+
+model VideoRoomParticipant {
+  id          String   @id @default(cuid())
+  
+  // Связи
+  roomId      String
+  room        VideoRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Гостевые участники (без регистрации)
+  guestName   String?
+  
+  // Статус участника
+  status      String   @default("joined") // joined, left, kicked, banned
+  role        String   @default("participant") // host, moderator, participant
+  
+  // Медиа настройки
+  audioEnabled Boolean @default(true)
+  videoEnabled Boolean @default(true)
+  screenSharing Boolean @default(false)
+  
+  // Время участия
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+}
+
+model VideoRoomChatMessage {
+  id          String   @id @default(cuid())
+  
+  // Связи
+  roomId      String
+  room        VideoRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Содержимое
+  message     String
+  messageType String   @default("text") // text, system, file
+  
+  // Гостевые сообщения
+  guestName   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([roomId, createdAt])
+  @@index([userId])
+}
+
+model NotificationSubscription {
+  id          String   @id @default(cuid())
+  
+  // Связи
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Push уведомления
+  endpoint    String
+  p256dh      String
+  auth        String
+  
+  // Метаданные
+  userAgent   String?
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, endpoint])
+  @@index([userId])
 }
 
 model UserApiSettings {
@@ -278,4 +489,23 @@ model UserApiSettings {
   openRouterMaxTokens      Int?     @default(4000)
   
   user                   User     @relation(fields: [userId], references: [id])
+}
+
+model UserAuthSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Настройки способов входа
+  enableEmailAuth       Boolean  @default(true)   // Магические ссылки
+  enableGoogleAuth      Boolean  @default(true)   // Google OAuth
+  enableGithubAuth      Boolean  @default(true)   // GitHub OAuth
+  enableCredentialsAuth Boolean  @default(true)   // Логин/пароль
+  
+  // Настройки безопасности
+  requireTwoFactor      Boolean  @default(false)  // Двухфакторная аутентификация
+  sessionTimeout        Int      @default(24)     // Время жизни сессии в часах
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

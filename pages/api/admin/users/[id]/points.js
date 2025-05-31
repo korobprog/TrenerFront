@@ -5,7 +5,7 @@ import {
 import { withPrisma } from '../../../../../lib/prisma';
 
 /**
- * Обработчик API запросов для управления баллами пользователя
+ * Обработчик API запросов для изменения баллов пользователя
  * @param {Object} req - HTTP запрос
  * @param {Object} res - HTTP ответ
  */
@@ -13,120 +13,180 @@ async function handler(req, res) {
   // Получаем ID пользователя из параметров запроса
   const { id } = req.query;
 
+  console.log(
+    `Admin Points API: Запрос ${req.method} для пользователя ${id} от администратора ${req.admin.id}`
+  );
+
   // Проверяем, что ID пользователя предоставлен
   if (!id) {
-    return res.status(400).json({ message: 'ID пользователя не указан' });
-  }
-
-  // Обработка только POST запросов
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Метод не поддерживается' });
-  }
-
-  try {
-    // Получаем данные из тела запроса
-    const { amount, type, description } = req.body;
-
-    // Валидация входных данных
-    if (amount === undefined || amount === null) {
-      return res.status(400).json({ message: 'Сумма баллов не указана' });
-    }
-
-    // Преобразуем amount в число
-    const pointsAmount = Number(amount);
-
-    // Проверяем, что amount является числом
-    if (isNaN(pointsAmount)) {
-      return res
-        .status(400)
-        .json({ message: 'Сумма баллов должна быть числом' });
-    }
-
-    // Проверяем тип операции
-    const allowedTypes = ['admin_adjustment', 'bonus', 'penalty'];
-    if (!allowedTypes.includes(type)) {
-      return res.status(400).json({
-        message:
-          'Недопустимый тип операции. Разрешенные типы: admin_adjustment, bonus, penalty',
-      });
-    }
-
-    // Проверяем описание
-    if (!description) {
-      return res.status(400).json({ message: 'Описание операции не указано' });
-    }
-
-    // Проверяем, что пользователь существует
-    const user = await withPrisma(async (prisma) => {
-      return await prisma.user.findUnique({
-        where: { id },
-        include: { userPoints: true },
-      });
+    console.error('Admin Points API: ID пользователя не указан');
+    return res.status(400).json({
+      success: false,
+      message: 'ID пользователя не указан',
     });
+  }
 
-    if (!user) {
-      return res.status(404).json({ message: 'Пользователь не найден' });
-    }
+  // Обработка POST запроса - изменение баллов пользователя
+  if (req.method === 'POST') {
+    try {
+      const { userId, amount, type, description } = req.body;
 
-    // Выполняем транзакцию для обновления баллов и создания записи в истории
-    const result = await withPrisma(async (prisma) => {
-      return await prisma.$transaction(async (tx) => {
-        // Создаем запись в истории транзакций
-        const transaction = await tx.pointsTransaction.create({
-          data: {
-            userId: id,
-            amount: pointsAmount,
-            type,
-            description,
+      console.log(`Admin Points API: Изменение баллов пользователя ${id}:`, {
+        userId,
+        amount,
+        type,
+        description,
+      });
+
+      // Валидация входящих данных
+      if (!amount || typeof amount !== 'number') {
+        console.error('Admin Points API: Некорректное значение amount');
+        return res.status(400).json({
+          success: false,
+          message: 'Некорректное значение количества баллов',
+        });
+      }
+
+      if (!type) {
+        console.error('Admin Points API: Тип операции не указан');
+        return res.status(400).json({
+          success: false,
+          message: 'Тип операции не указан',
+        });
+      }
+
+      if (!description) {
+        console.error('Admin Points API: Описание операции не указано');
+        return res.status(400).json({
+          success: false,
+          message: 'Описание операции не указано',
+        });
+      }
+
+      // Проверяем, что userId соответствует id из URL
+      if (userId && userId !== id) {
+        console.error('Admin Points API: Несоответствие ID пользователя');
+        return res.status(400).json({
+          success: false,
+          message: 'Несоответствие ID пользователя',
+        });
+      }
+
+      const result = await withPrisma(async (prisma) => {
+        // Проверяем, что пользователь существует
+        const existingUser = await prisma.user.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            userPoints: true,
           },
         });
 
-        // Получаем текущий баланс пользователя или создаем новый, если не существует
-        let userPoints;
-        if (user.userPoints) {
-          // Обновляем существующий баланс
-          userPoints = await tx.userPoints.update({
-            where: { userId: id },
-            data: {
-              points: { increment: pointsAmount },
-            },
-          });
-        } else {
-          // Создаем новый баланс
-          userPoints = await tx.userPoints.create({
-            data: {
-              userId: id,
-              points: pointsAmount,
-            },
-          });
+        if (!existingUser) {
+          throw new Error('Пользователь не найден');
         }
 
-        return { transaction, userPoints };
+        console.log(`Admin Points API: Найден пользователь:`, {
+          id: existingUser.id,
+          name: existingUser.name,
+          currentPoints: existingUser.userPoints?.points || 0,
+        });
+
+        // Получаем текущие баллы пользователя
+        let currentPoints = 0;
+        if (existingUser.userPoints) {
+          currentPoints = existingUser.userPoints.points;
+        }
+
+        // Вычисляем новое количество баллов
+        const newPoints = Math.max(0, currentPoints + amount); // Не позволяем баллам стать отрицательными
+
+        console.log(`Admin Points API: Изменение баллов:`, {
+          currentPoints,
+          amount,
+          newPoints,
+        });
+
+        // Обновляем или создаем запись UserPoints
+        const updatedUserPoints = await prisma.userPoints.upsert({
+          where: { userId: id },
+          update: {
+            points: newPoints,
+          },
+          create: {
+            userId: id,
+            points: newPoints,
+          },
+        });
+
+        // Создаем запись в истории транзакций
+        await prisma.pointsTransaction.create({
+          data: {
+            userId: id,
+            amount: amount,
+            type: type,
+            description: description,
+          },
+        });
+
+        // Получаем обновленную информацию о пользователе
+        const updatedUser = await prisma.user.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            userPoints: true,
+          },
+        });
+
+        return { updatedUser, previousPoints: currentPoints, newPoints };
       });
-    });
 
-    // Логируем действие администратора
-    await logAdminAction(req.admin.id, 'update_user_points', 'user', id, {
-      amount: pointsAmount,
-      type,
-      description,
-      previousBalance: user.userPoints?.points || 0,
-      newBalance: result.userPoints.points,
-    });
+      // Логируем действие администратора
+      await logAdminAction(req.admin.id, 'update_user_points', 'user', id, {
+        previousPoints: result.previousPoints,
+        newPoints: result.newPoints,
+        amount: amount,
+        type: type,
+        description: description,
+      });
 
-    // Возвращаем результат
-    return res.status(200).json({
-      message: 'Баллы пользователя успешно обновлены',
-      transaction: result.transaction,
-      userPoints: result.userPoints,
-    });
-  } catch (error) {
-    console.error('Ошибка при обновлении баллов пользователя:', error);
-    return res.status(500).json({
-      message: 'Ошибка сервера при обновлении баллов пользователя',
-      error: error.message,
-    });
+      console.log(
+        `Admin Points API: Баллы пользователя ${id} успешно обновлены с ${result.previousPoints} до ${result.newPoints}`
+      );
+
+      // Возвращаем обновленную информацию о пользователе
+      return res.status(200).json({
+        success: true,
+        user: {
+          id: result.updatedUser.id,
+          name: result.updatedUser.name,
+          points: result.updatedUser.userPoints?.points || 0,
+        },
+        message: 'Баллы пользователя успешно обновлены',
+      });
+    } catch (error) {
+      console.error(
+        'Admin Points API: Ошибка при изменении баллов пользователя:',
+        error
+      );
+      return res.status(500).json({
+        success: false,
+        message:
+          error.message || 'Ошибка сервера при изменении баллов пользователя',
+      });
+    }
   }
+
+  // Если метод запроса не поддерживается
+  console.error(`Admin Points API: Неподдерживаемый метод ${req.method}`);
+  return res.status(405).json({
+    success: false,
+    message: 'Метод не поддерживается',
+  });
 }
 
 export default withAdminAuth(handler);

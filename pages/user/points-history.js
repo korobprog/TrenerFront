@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../api/auth/[...nextauth]';
 import { useNotification } from '../../contexts/NotificationContext';
-import styles from '../../styles/PointsHistory.module.css';
+import styles from '../../styles/user/PointsHistory.module.css';
 
 export default function PointsHistory() {
   const { data: session, status } = useSession();
@@ -43,14 +45,34 @@ export default function PointsHistory() {
       });
 
       const response = await fetch(`/api/user/points-history?${queryParams}`);
+
+      // Парсим JSON ответ независимо от статуса
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить историю транзакций');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          result.message ||
+          result.error ||
+          'Не удалось загрузить историю транзакций';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error(
+            'Необходима авторизация для просмотра истории баллов'
+          );
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      setTransactions(data.transactions);
-      setTotalCount(data.totalCount);
-      setCurrentPoints(data.currentPoints);
+      if (result.success && result.data) {
+        setTransactions(result.data.transactions);
+        setTotalCount(result.data.pagination.totalCount);
+        setCurrentPoints(result.data.currentPoints);
+      } else {
+        throw new Error(result.error || 'Неизвестная ошибка');
+      }
       // Убрано уведомление об успешной загрузке, чтобы не показывать его слишком часто
     } catch (error) {
       console.error('Ошибка при загрузке истории транзакций:', error);
@@ -106,6 +128,10 @@ export default function PointsHistory() {
     <div className={styles.container}>
       <Head>
         <title>История баллов | Тренер собеседований</title>
+        <meta
+          name="description"
+          content="История транзакций баллов пользователя"
+        />
       </Head>
 
       <h1 className={styles.title}>История баллов</h1>
@@ -244,4 +270,25 @@ export default function PointsHistory() {
       </div>
     </div>
   );
+}
+
+// Серверная проверка авторизации
+export async function getServerSideProps(context) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  // Если пользователь не авторизован, перенаправляем на страницу входа
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/auth/signin',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {
+      session,
+    },
+  };
 }

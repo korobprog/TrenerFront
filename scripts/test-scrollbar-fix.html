@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Тест исправления двойной прокрутки</title>
+   <style>
+      body {
+         margin: 0;
+         padding: 20px;
+         font-family: Arial, sans-serif;
+         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         color: white;
+         min-height: 100vh;
+      }
+
+      .container {
+         max-width: 800px;
+         margin: 0 auto;
+         background: rgba(255, 255, 255, 0.1);
+         padding: 2rem;
+         border-radius: 20px;
+         backdrop-filter: blur(10px);
+      }
+
+      .test-section {
+         margin: 2rem 0;
+         padding: 1rem;
+         background: rgba(255, 255, 255, 0.1);
+         border-radius: 10px;
+      }
+
+      .status {
+         padding: 1rem;
+         margin: 1rem 0;
+         border-radius: 10px;
+         font-weight: bold;
+      }
+
+      .success {
+         background: rgba(40, 167, 69, 0.8);
+      }
+
+      .warning {
+         background: rgba(255, 193, 7, 0.8);
+         color: #000;
+      }
+
+      .error {
+         background: rgba(220, 53, 69, 0.8);
+      }
+
+      .info {
+         background: rgba(23, 162, 184, 0.8);
+      }
+
+      .test-content {
+         height: 200vh;
+         background: linear-gradient(to bottom,
+               rgba(255, 255, 255, 0.1) 0%,
+               rgba(255, 255, 255, 0.05) 50%,
+               rgba(255, 255, 255, 0.1) 100%);
+         padding: 2rem;
+         margin: 2rem 0;
+         border-radius: 10px;
+      }
+
+      .scroll-indicator {
+         position: fixed;
+         top: 10px;
+         right: 10px;
+         background: rgba(0, 0, 0, 0.8);
+         color: white;
+         padding: 10px;
+         border-radius: 5px;
+         font-size: 12px;
+      }
+   </style>
+</head>
+
+<body>
+   <div class="scroll-indicator" id="scrollIndicator">
+      Прокрутка: 0px
+   </div>
+
+   <div class="container">
+      <h1>🔧 Тест исправления двойной прокрутки</h1>
+
+      <div class="status info">
+         <h3>📋 Инструкции по тестированию:</h3>
+         <ol>
+            <li>Откройте DevTools (F12)</li>
+            <li>Проверьте количество полос прокрутки</li>
+            <li>Прокрутите страницу вниз</li>
+            <li>Убедитесь, что прокрутка работает плавно</li>
+            <li>Проверьте на разных размерах экрана</li>
+         </ol>
+      </div>
+
+      <div class="test-section">
+         <h3>🔍 Диагностика прокрутки</h3>
+         <div id="diagnostics"></div>
+      </div>
+
+      <div class="test-section">
+         <h3>📏 Размеры viewport</h3>
+         <div id="viewport-info"></div>
+      </div>
+
+      <div class="test-content">
+         <h3>📜 Длинный контент для тестирования прокрутки</h3>
+         <p>Этот раздел создан для тестирования прокрутки. Он должен быть достаточно длинным, чтобы вызвать появление
+            полосы прокрутки.</p>
+
+         <div style="margin: 2rem 0;">
+            <h4>✅ Ожидаемое поведение:</h4>
+            <ul>
+               <li>Только одна вертикальная полоса прокрутки справа</li>
+               <li>Отсутствие горизонтальной прокрутки</li>
+               <li>Плавная прокрутка без рывков</li>
+               <li>Отсутствие двойной прокрутки</li>
+            </ul>
+         </div>
+
+         <div style="margin: 2rem 0;">
+            <h4>❌ Проблемы, которые должны быть исправлены:</h4>
+            <ul>
+               <li>Две полосы прокрутки слева</li>
+               <li>Конфликт overflow настроек</li>
+               <li>Проблемы с layout на мобильных устройствах</li>
+               <li>Горизонтальное переполнение</li>
+            </ul>
+         </div>
+
+         <div
+            style="height: 100vh; background: rgba(255,255,255,0.05); margin: 2rem 0; padding: 2rem; border-radius: 10px;">
+            <h4>🎯 Дополнительный контент</h4>
+            <p>Этот блок добавляет еще больше высоты для тестирования прокрутки на длинных страницах.</p>
+            <p>Прокрутите до конца страницы, чтобы убедиться, что прокрутка работает корректно.</p>
+         </div>
+      </div>
+
+      <div class="status success">
+         <h3>🎉 Если вы видите только одну полосу прокрутки справа - исправление работает!</h3>
+      </div>
+   </div>
+
+   <script>
+      // Диагностика прокрутки
+      function updateDiagnostics() {
+         const diagnostics = document.getElementById('diagnostics');
+         const viewportInfo = document.getElementById('viewport-info');
+         const scrollIndicator = document.getElementById('scrollIndicator');
+
+         const bodyScrollWidth = document.body.scrollWidth;
+         const bodyClientWidth = document.body.clientWidth;
+         const documentScrollWidth = document.documentElement.scrollWidth;
+         const documentClientWidth = document.documentElement.clientWidth;
+         const windowInnerWidth = window.innerWidth;
+         const windowOuterWidth = window.outerWidth;
+
+         const hasHorizontalScroll = bodyScrollWidth > bodyClientWidth || documentScrollWidth > documentClientWidth;
+         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+         diagnostics.innerHTML = `
+                <div class="status ${hasHorizontalScroll ? 'error' : 'success'}">
+                    <strong>Горизонтальная прокрутка:</strong> ${hasHorizontalScroll ? '❌ Обнаружена' : '✅ Отсутствует'}
+                </div>
+                <p><strong>Body:</strong> scrollWidth: ${bodyScrollWidth}px, clientWidth: ${bodyClientWidth}px</p>
+                <p><strong>Document:</strong> scrollWidth: ${documentScrollWidth}px, clientWidth: ${documentClientWidth}px</p>
+                <p><strong>Разница:</strong> Body: ${bodyScrollWidth - bodyClientWidth}px, Document: ${documentScrollWidth - documentClientWidth}px</p>
+            `;
+
+         viewportInfo.innerHTML = `
+                <p><strong>Window:</strong> innerWidth: ${windowInnerWidth}px, outerWidth: ${windowOuterWidth}px</p>
+                <p><strong>Screen:</strong> ${screen.width}x${screen.height}px</p>
+                <p><strong>Device Pixel Ratio:</strong> ${window.devicePixelRatio}</p>
+            `;
+
+         scrollIndicator.textContent = `Прокрутка: ${Math.round(scrollY)}px`;
+      }
+
+      // Обновляем диагностику при загрузке и прокрутке
+      window.addEventListener('load', updateDiagnostics);
+      window.addEventListener('scroll', updateDiagnostics);
+      window.addEventListener('resize', updateDiagnostics);
+
+      // Первоначальная диагностика
+      updateDiagnostics();
+   </script>
+</body>
+
+</html>

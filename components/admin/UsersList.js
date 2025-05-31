@@ -36,16 +36,16 @@ export default function UsersList({
       width: '25%',
       format: (value, user) => (
         <div className={styles.userNameCell}>
-          {user.image && (
+          {user?.image && (
             <img
               src={user.image}
-              alt={user.name}
+              alt={user?.name || 'Пользователь'}
               className={styles.userAvatar}
             />
           )}
           <div className={styles.userInfo}>
-            <div className={styles.userName}>{value}</div>
-            <div className={styles.userEmail}>{user.email}</div>
+            <div className={styles.userName}>{value || 'Без имени'}</div>
+            <div className={styles.userEmail}>{user?.email || 'Без email'}</div>
           </div>
         </div>
       ),
@@ -96,8 +96,8 @@ export default function UsersList({
       sortable: false,
       width: '15%',
       format: (value) => {
-        const interviewerCount = value.interviewerSessions || 0;
-        const intervieweeCount = value.intervieweeSessions || 0;
+        const interviewerCount = value?.interviewerSessions || 0;
+        const intervieweeCount = value?.intervieweeSessions || 0;
         return (
           <div className={styles.interviewsCount}>
             <div className={styles.interviewerCount}>
@@ -116,12 +116,15 @@ export default function UsersList({
       sortable: true,
       width: '15%',
       format: (value) => {
+        if (!value) return 'Не указано';
         const date = new Date(value);
-        return date.toLocaleDateString('ru-RU', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
+        return isNaN(date.getTime())
+          ? 'Неверная дата'
+          : date.toLocaleDateString('ru-RU', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            });
       },
     },
     {
@@ -135,23 +138,29 @@ export default function UsersList({
             className={`${styles.actionButton} ${styles.viewButton}`}
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/admin/users/${user.id}`);
+              if (user?.id) {
+                router.push(`/admin/users/${user.id}`);
+              }
             }}
             title="Просмотр"
+            disabled={!user?.id}
           >
             👁️
           </button>
           <button
             className={`${styles.actionButton} ${
-              user.isBlocked ? styles.unblockButton : styles.blockButton
+              user?.isBlocked ? styles.unblockButton : styles.blockButton
             }`}
             onClick={(e) => {
               e.stopPropagation();
-              handleToggleBlock(user);
+              if (user?.id) {
+                handleToggleBlock(user);
+              }
             }}
-            title={user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
+            title={user?.isBlocked ? 'Разблокировать' : 'Заблокировать'}
+            disabled={!user?.id}
           >
-            {user.isBlocked ? '🔓' : '🔒'}
+            {user?.isBlocked ? '🔓' : '🔒'}
           </button>
         </div>
       ),
@@ -160,7 +169,9 @@ export default function UsersList({
 
   // Обработчик клика на строку таблицы
   const handleRowClick = (user) => {
-    router.push(`/admin/users/${user.id}`);
+    if (user?.id) {
+      router.push(`/admin/users/${user.id}`);
+    }
   };
 
   // Обработчик изменения сортировки
@@ -172,6 +183,12 @@ export default function UsersList({
 
   // Обработчик блокировки/разблокировки пользователя
   const handleToggleBlock = async (user) => {
+    if (!user?.id) {
+      console.error('Невозможно изменить статус: отсутствует ID пользователя');
+      alert('Ошибка: отсутствует ID пользователя');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/admin/users/${user.id}`, {
         method: 'PATCH',
@@ -204,7 +221,7 @@ export default function UsersList({
     <div className={styles.usersListContainer}>
       <AdminTable
         columns={columns}
-        data={users}
+        data={users || []}
         onRowClick={handleRowClick}
         sortBy={sorting?.sortBy}
         sortOrder={sorting?.sortOrder}
@@ -213,10 +230,10 @@ export default function UsersList({
 
       <div className={styles.paginationWrapper}>
         <AdminPagination
-          currentPage={pagination.page}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.total}
-          pageSize={pagination.limit}
+          currentPage={pagination?.page || 1}
+          totalPages={pagination?.pages || pagination?.totalPages || 0}
+          totalItems={pagination?.total || 0}
+          pageSize={pagination?.limit || 10}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
         />

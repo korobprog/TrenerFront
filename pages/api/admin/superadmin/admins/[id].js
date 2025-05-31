@@ -1,56 +1,83 @@
-import {
-  withSuperAdminAuth,
-  logSuperAdminAction,
-} from '../../../../../lib/middleware/superAdminAuth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../auth/[...nextauth]';
 import { withPrisma } from '../../../../../lib/prisma';
-import bcrypt from 'bcrypt';
 
 /**
- * API для управления отдельным администратором (получение, обновление, удаление)
- * @param {Object} req - HTTP запрос
- * @param {Object} res - HTTP ответ
+ * API для управления отдельным администратором (только для супер-администраторов)
+ * GET - получение информации об администраторе
+ * PATCH - обновление администратора (блокировка/разблокировка, изменение роли)
+ * DELETE - удаление администратора
  */
-async function handler(req, res) {
-  const { method } = req;
-  const { id } = req.query;
+export default async function handler(req, res) {
+  try {
+    // Проверяем аутентификацию и права супер-администратора
+    const session = await getServerSession(req, res, authOptions);
 
-  if (!id) {
-    return res.status(400).json({ message: 'Не указан ID администратора' });
-  }
+    if (!session || !session.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Необходима авторизация',
+      });
+    }
 
-  switch (method) {
-    case 'GET':
-      return getAdmin(req, res, id);
-    case 'PATCH':
-      return updateAdmin(req, res, id);
-    case 'DELETE':
-      return deleteAdmin(req, res, id);
-    default:
+    if (session.user.role !== 'superadmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Доступ запрещен. Требуются права супер-администратора',
+      });
+    }
+
+    const { id } = req.query;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID администратора обязателен',
+      });
+    }
+
+    if (req.method === 'GET') {
+      return await handleGetAdmin(req, res, id);
+    } else if (req.method === 'PATCH') {
+      return await handleUpdateAdmin(req, res, id, session.user.id);
+    } else if (req.method === 'DELETE') {
+      return await handleDeleteAdmin(req, res, id, session.user.id);
+    } else {
       res.setHeader('Allow', ['GET', 'PATCH', 'DELETE']);
-      return res.status(405).json({ message: `Метод ${method} не разрешен` });
+      return res.status(405).json({
+        success: false,
+        message: `Метод ${req.method} не поддерживается`,
+      });
+    }
+  } catch (error) {
+    console.error('Ошибка в API управления администратором:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Внутренняя ошибка сервера',
+    });
   }
 }
 
 /**
- * Получение информации об администраторе
- * @param {Object} req - HTTP запрос
- * @param {Object} res - HTTP ответ
- * @param {string} id - ID администратора
+ * Обработчик GET запроса - получение информации об администраторе
  */
-async function getAdmin(req, res, id) {
-  try {
-    // Получаем администратора из базы данных
-    const admin = await withPrisma(async (prisma) => {
-      return await prisma.user.findUnique({
-        where: { id },
+async function handleGetAdmin(req, res, adminId) {
+  return withPrisma(async (prisma) => {
+    try {
+      const admin = await prisma.user.findUnique({
+        where: {
+          id: adminId,
+          role: {
+            in: ['admin', 'superadmin'],
+          },
+        },
         select: {
           id: true,
           name: true,
           email: true,
-          role: true,
           image: true,
+          role: true,
           isBlocked: true,
-          lastLoginAt: true,
           createdAt: true,
           updatedAt: true,
           _count: {
@@ -58,185 +85,102 @@ async function getAdmin(req, res, id) {
               adminActions: true,
             },
           },
-          adminActions: {
-            take: 10,
-            orderBy: {
-              createdAt: 'desc',
-            },
-            select: {
-              id: true,
-              action: true,
-              entityType: true,
-              entityId: true,
-              details: true,
-              createdAt: true,
-            },
-          },
         },
       });
-    });
 
-    // Если администратор не найден, возвращаем ошибку
-    if (!admin) {
-      return res.status(404).json({ message: 'Администратор не найден' });
-    }
-
-    // Проверяем, является ли пользователь администратором или супер-администратором
-    if (admin.role !== 'admin' && admin.role !== 'superadmin') {
-      return res
-        .status(400)
-        .json({
-          message: 'Указанный пользователь не является администратором',
+      if (!admin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Администратор не найден',
         });
-    }
+      }
 
-    // Форматируем данные для ответа
-    const formattedAdmin = {
-      id: admin.id,
-      name: admin.name,
-      email: admin.email,
-      role: admin.role,
-      image: admin.image,
-      isBlocked: admin.isBlocked,
-      lastLoginAt: admin.lastLoginAt,
-      createdAt: admin.createdAt,
-      updatedAt: admin.updatedAt,
-      actionsCount: admin._count.adminActions,
-      recentActions: admin.adminActions,
-    };
-
-    // Возвращаем информацию об администраторе
-    return res.status(200).json({ admin: formattedAdmin });
-  } catch (error) {
-    console.error('Ошибка при получении информации об администраторе:', error);
-    return res
-      .status(500)
-      .json({
-        message: 'Ошибка сервера при получении информации об администраторе',
+      // Получаем последние действия администратора
+      const recentActions = await prisma.adminActionLog.findMany({
+        where: { adminId: adminId },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          action: true,
+          details: true,
+          createdAt: true,
+        },
       });
-  }
+
+      return res.status(200).json({
+        success: true,
+        admin: {
+          ...admin,
+          actionsCount: admin._count.adminActions,
+          recentActions,
+        },
+      });
+    } catch (error) {
+      console.error(
+        'Ошибка при получении информации об администраторе:',
+        error
+      );
+      return res.status(500).json({
+        success: false,
+        message: 'Ошибка при получении информации об администраторе',
+      });
+    }
+  });
 }
 
 /**
- * Обновление информации об администраторе
- * @param {Object} req - HTTP запрос
- * @param {Object} res - HTTP ответ
- * @param {string} id - ID администратора
+ * Обработчик PATCH запроса - обновление администратора
  */
-async function updateAdmin(req, res, id) {
-  try {
-    const { name, email, password, role, isBlocked } = req.body;
-    const updateData = {};
-    const logDetails = {};
+async function handleUpdateAdmin(req, res, adminId, currentUserId) {
+  return withPrisma(async (prisma) => {
+    try {
+      const { isBlocked, role } = req.body;
 
-    // Проверяем, существует ли администратор
-    const existingAdmin = await withPrisma(async (prisma) => {
-      return await prisma.user.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          isBlocked: true,
+      // Проверяем, что администратор существует
+      const existingAdmin = await prisma.user.findUnique({
+        where: {
+          id: adminId,
+          role: {
+            in: ['admin', 'superadmin'],
+          },
         },
       });
-    });
 
-    if (!existingAdmin) {
-      return res.status(404).json({ message: 'Администратор не найден' });
-    }
-
-    // Проверяем, является ли пользователь администратором или супер-администратором
-    if (existingAdmin.role !== 'admin' && existingAdmin.role !== 'superadmin') {
-      return res
-        .status(400)
-        .json({
-          message: 'Указанный пользователь не является администратором',
+      if (!existingAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Администратор не найден',
         });
-    }
+      }
 
-    // Запрещаем супер-администратору блокировать самого себя
-    if (id === req.superAdmin.id && isBlocked === true) {
-      return res
-        .status(400)
-        .json({
+      // Запрещаем блокировать самого себя
+      if (adminId === currentUserId && isBlocked === true) {
+        return res.status(400).json({
+          success: false,
           message: 'Невозможно заблокировать собственную учетную запись',
         });
-    }
+      }
 
-    // Формируем данные для обновления
-    if (name !== undefined) {
-      updateData.name = name;
-      logDetails.name = name;
-    }
+      // Формируем данные для обновления
+      const updateData = {};
+      if (typeof isBlocked === 'boolean') {
+        updateData.isBlocked = isBlocked;
+      }
+      if (role && ['admin', 'superadmin'].includes(role)) {
+        updateData.role = role;
+      }
 
-    if (email !== undefined && email !== existingAdmin.email) {
-      // Проверяем, не занят ли email другим пользователем
-      const emailExists = await withPrisma(async (prisma) => {
-        return await prisma.user.findFirst({
-          where: {
-            email,
-            id: { not: id },
-          },
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Нет данных для обновления',
         });
-      });
-
-      if (emailExists) {
-        return res
-          .status(400)
-          .json({ message: 'Пользователь с таким email уже существует' });
       }
 
-      updateData.email = email;
-      logDetails.email = email;
-    }
-
-    if (password) {
-      // Хешируем новый пароль
-      updateData.password = await bcrypt.hash(password, 10);
-      logDetails.passwordChanged = true;
-    }
-
-    if (role !== undefined) {
-      // Проверяем корректность роли
-      if (role !== 'admin' && role !== 'superadmin') {
-        return res
-          .status(400)
-          .json({
-            message:
-              'Некорректная роль. Допустимые значения: admin, superadmin',
-          });
-      }
-
-      // Запрещаем супер-администратору понижать свою роль
-      if (id === req.superAdmin.id && role !== 'superadmin') {
-        return res
-          .status(400)
-          .json({
-            message: 'Невозможно понизить роль собственной учетной записи',
-          });
-      }
-
-      updateData.role = role;
-      logDetails.role = role;
-    }
-
-    if (isBlocked !== undefined) {
-      updateData.isBlocked = isBlocked;
-      logDetails.isBlocked = isBlocked;
-    }
-
-    // Если нет данных для обновления, возвращаем ошибку
-    if (Object.keys(updateData).length === 0) {
-      return res
-        .status(400)
-        .json({ message: 'Не указаны данные для обновления' });
-    }
-
-    // Обновляем администратора в базе данных
-    const updatedAdmin = await withPrisma(async (prisma) => {
-      return await prisma.user.update({
-        where: { id },
+      // Обновляем администратора
+      const updatedAdmin = await prisma.user.update({
+        where: { id: adminId },
         data: updateData,
         select: {
           id: true,
@@ -247,99 +191,116 @@ async function updateAdmin(req, res, id) {
           updatedAt: true,
         },
       });
-    });
 
-    // Логируем действие супер-администратора
-    await logSuperAdminAction(
-      req.superAdmin.id,
-      'update_admin',
-      'user',
-      id,
-      logDetails
-    );
+      // Логируем изменения
+      const changes = [];
+      if (typeof isBlocked === 'boolean') {
+        changes.push(
+          `статус блокировки: ${isBlocked ? 'заблокирован' : 'разблокирован'}`
+        );
+      }
+      if (role) {
+        changes.push(`роль: ${role}`);
+      }
 
-    // Возвращаем обновленные данные администратора
-    return res.status(200).json({
-      message: 'Информация об администраторе успешно обновлена',
-      admin: updatedAdmin,
-    });
-  } catch (error) {
-    console.error('Ошибка при обновлении информации об администраторе:', error);
-    return res
-      .status(500)
-      .json({
-        message: 'Ошибка сервера при обновлении информации об администраторе',
+      await prisma.adminActionLog.create({
+        data: {
+          adminId: currentUserId,
+          action: 'UPDATE_ADMIN',
+          entityType: 'USER',
+          entityId: adminId,
+          details: {
+            message: `Обновлен администратор ${existingAdmin.name} (${
+              existingAdmin.email
+            }): ${changes.join(', ')}`,
+            changes: changes,
+            targetUser: {
+              name: existingAdmin.name,
+              email: existingAdmin.email,
+            },
+          },
+        },
       });
-  }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Администратор успешно обновлен',
+        admin: updatedAdmin,
+      });
+    } catch (error) {
+      console.error('Ошибка при обновлении администратора:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Ошибка при обновлении администратора',
+      });
+    }
+  });
 }
 
 /**
- * Удаление администратора
- * @param {Object} req - HTTP запрос
- * @param {Object} res - HTTP ответ
- * @param {string} id - ID администратора
+ * Обработчик DELETE запроса - удаление администратора
  */
-async function deleteAdmin(req, res, id) {
-  try {
-    // Проверяем, существует ли администратор
-    const existingAdmin = await withPrisma(async (prisma) => {
-      return await prisma.user.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
+async function handleDeleteAdmin(req, res, adminId, currentUserId) {
+  return withPrisma(async (prisma) => {
+    try {
+      // Запрещаем удалять самого себя
+      if (adminId === currentUserId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Невозможно удалить собственную учетную запись',
+        });
+      }
+
+      // Проверяем, что администратор существует
+      const existingAdmin = await prisma.user.findUnique({
+        where: {
+          id: adminId,
+          role: {
+            in: ['admin', 'superadmin'],
+          },
         },
       });
-    });
 
-    if (!existingAdmin) {
-      return res.status(404).json({ message: 'Администратор не найден' });
-    }
-
-    // Проверяем, является ли пользователь администратором или супер-администратором
-    if (existingAdmin.role !== 'admin' && existingAdmin.role !== 'superadmin') {
-      return res
-        .status(400)
-        .json({
-          message: 'Указанный пользователь не является администратором',
+      if (!existingAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Администратор не найден',
         });
-    }
+      }
 
-    // Запрещаем супер-администратору удалять самого себя
-    if (id === req.superAdmin.id) {
-      return res
-        .status(400)
-        .json({ message: 'Невозможно удалить собственную учетную запись' });
-    }
-
-    // Удаляем администратора из базы данных
-    await withPrisma(async (prisma) => {
-      return await prisma.user.delete({
-        where: { id },
+      // Удаляем администратора
+      await prisma.user.delete({
+        where: { id: adminId },
       });
-    });
 
-    // Логируем действие супер-администратора
-    await logSuperAdminAction(req.superAdmin.id, 'delete_admin', 'user', id, {
-      name: existingAdmin.name,
-      email: existingAdmin.email,
-      role: existingAdmin.role,
-    });
+      // Логируем удаление
+      await prisma.adminActionLog.create({
+        data: {
+          adminId: currentUserId,
+          action: 'DELETE_ADMIN',
+          entityType: 'USER',
+          entityId: adminId,
+          details: {
+            message: `Удален администратор ${existingAdmin.name} (${existingAdmin.email}) с ролью ${existingAdmin.role}`,
+            deletedUser: {
+              name: existingAdmin.name,
+              email: existingAdmin.email,
+              role: existingAdmin.role,
+            },
+          },
+        },
+      });
 
-    // Возвращаем успешный ответ
-    return res.status(200).json({
-      message: 'Администратор успешно удален',
-      adminId: id,
-    });
-  } catch (error) {
-    console.error('Ошибка при удалении администратора:', error);
-    return res
-      .status(500)
-      .json({ message: 'Ошибка сервера при удалении администратора' });
-  }
+      return res.status(200).json({
+        success: true,
+        message: 'Администратор успешно удален',
+      });
+    } catch (error) {
+      console.error('Ошибка при удалении администратора:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Ошибка при удалении администратора',
+      });
+    }
+  });
 }
-
-// Оборачиваем обработчик в middleware для проверки прав супер-администратора
-export default withSuperAdminAuth(handler);

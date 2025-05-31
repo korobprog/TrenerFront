@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useNotification } from '../../contexts/NotificationContext';
 import InterviewCard from './InterviewCard';
 import styles from '../../styles/InterviewBoard.module.css';
+import { isAdmin } from '../../lib/utils/roleUtils';
 
 /**
  * Компонент доски с карточками доступных собеседований
@@ -27,7 +28,7 @@ export default function InterviewBoard({
   const { showSuccess, showError, showInfo } = useNotification();
 
   // Проверяем, является ли пользователь администратором (только если сессия загружена)
-  const isAdmin = status === 'authenticated' && session?.user?.role === 'admin';
+  const isUserAdmin = status === 'authenticated' && isAdmin(session?.user);
 
   // Удалено избыточное логирование
 
@@ -78,16 +79,33 @@ export default function InterviewBoard({
         },
       });
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || 'Не удалось записаться на собеседование'
-        );
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось записаться на собеседование';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для записи на собеседование');
+        }
+
+        throw new Error(errorMessage);
       }
 
       showSuccess('Вы успешно записались на собеседование');
-      // Перенаправляем на страницу с деталями собеседования
-      router.push(`/mock-interviews/${interviewId}`);
+
+      // Обновляем список собеседований после записи
+      if (onRefresh) {
+        await onRefresh();
+      }
+
+      // НЕ перенаправляем автоматически, позволяем пользователю увидеть обновленное состояние
+      // Пользователь может сам перейти к деталям через кнопку "Подробнее"
     } catch (error) {
       showError(error.message);
     } finally {
@@ -173,11 +191,11 @@ export default function InterviewBoard({
               </button>
               <button
                 className={`${styles.filterButton} ${
-                  filter === 'booked' ? styles.active : ''
+                  filter === 'scheduled' ? styles.active : ''
                 }`}
-                onClick={() => handleFilterChange('booked')}
+                onClick={() => handleFilterChange('scheduled')}
               >
-                Забронированы
+                Зарезервированы
               </button>
             </>
           ) : (
@@ -212,7 +230,7 @@ export default function InterviewBoard({
         </div>
 
         <div className={styles.actionButtons}>
-          {status === 'authenticated' && isAdmin && (
+          {status === 'authenticated' && isUserAdmin && (
             <button
               className={styles.refreshButton}
               onClick={() => router.push('/admin')}
@@ -263,8 +281,8 @@ export default function InterviewBoard({
               : `Нет собеседований со статусом "${
                   filter === 'pending'
                     ? 'Ожидают записи'
-                    : filter === 'booked'
-                    ? 'Забронированы'
+                    : filter === 'scheduled'
+                    ? 'Зарезервированы'
                     : filter === 'completed'
                     ? 'Завершены'
                     : filter === 'cancelled'

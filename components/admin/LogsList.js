@@ -145,8 +145,8 @@ export default function LogsList() {
     try {
       // Формируем параметры запроса
       const queryParams = new URLSearchParams({
-        page: pagination.page,
-        limit: pagination.limit,
+        page: pagination?.page || 1,
+        limit: pagination?.limit || 20,
         sortBy: sortParams.sortBy,
         sortOrder: sortParams.sortOrder,
       });
@@ -167,10 +167,22 @@ export default function LogsList() {
 
       const data = await response.json();
 
-      // Обновляем состояние
-      setLogs(data.logs);
-      setPagination(data.pagination);
-      setFilterData(data.filters);
+      // Обновляем состояние с проверкой структуры ответа API
+      if (data.success && data.data) {
+        // Новый формат API: { success: true, data: { logs: [...], pagination: {...}, filters: {...} } }
+        setLogs(data.data.logs || []);
+        setPagination(data.data.pagination || {});
+        setFilterData(
+          data.data.filters || { actionTypes: [], entityTypes: [], admins: [] }
+        );
+      } else {
+        // Fallback для старого формата API
+        setLogs(data.logs || []);
+        setPagination(data.pagination || {});
+        setFilterData(
+          data.filters || { actionTypes: [], entityTypes: [], admins: [] }
+        );
+      }
     } catch (err) {
       console.error('Ошибка при загрузке логов:', err);
       setError('Не удалось загрузить логи. Пожалуйста, попробуйте позже.');
@@ -182,16 +194,16 @@ export default function LogsList() {
   // Загружаем данные при монтировании компонента и при изменении параметров
   useEffect(() => {
     fetchLogs();
-  }, [pagination.page, pagination.limit, sortParams, filters]);
+  }, [pagination?.page, pagination?.limit, sortParams, filters]);
 
   // Обработчик изменения страницы
   const handlePageChange = (page) => {
-    setPagination((prev) => ({ ...prev, page }));
+    setPagination((prev) => ({ ...(prev || {}), page }));
   };
 
   // Обработчик изменения количества элементов на странице
   const handlePageSizeChange = (limit) => {
-    setPagination((prev) => ({ ...prev, page: 1, limit }));
+    setPagination((prev) => ({ ...(prev || {}), page: 1, limit }));
   };
 
   // Обработчик изменения сортировки
@@ -202,7 +214,7 @@ export default function LogsList() {
   // Обработчик изменения фильтров
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...(prev || {}), page: 1 }));
   };
 
   return (
@@ -240,10 +252,10 @@ export default function LogsList() {
           />
 
           <AdminPagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.total}
-            pageSize={pagination.limit}
+            currentPage={pagination?.page || 1}
+            totalPages={pagination?.pages || pagination?.totalPages || 0}
+            totalItems={pagination?.total || 0}
+            pageSize={pagination?.limit || 20}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
           />

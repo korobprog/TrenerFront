@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useNotification } from '../../../contexts/NotificationContext';
+import MockInterviewIntegration from '../../../video-conference-development/components/integration/MockInterviewIntegration';
 import styles from '../../../styles/InterviewDetails.module.css';
 
 export default function InterviewDetails() {
@@ -25,11 +26,24 @@ export default function InterviewDetails() {
       setIsLoading(true);
       const response = await fetch(`/api/mock-interviews/${id}`);
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить информацию о собеседовании');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось загрузить информацию о собеседовании';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для просмотра собеседования');
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       setInterview(data);
     } catch (err) {
       showError(err.message);
@@ -125,6 +139,12 @@ export default function InterviewDetails() {
                       </a>
                     </div>
                   )}
+
+                {/* Интеграция с видеоконференциями */}
+                <MockInterviewIntegration
+                  mockInterviewId={id}
+                  interview={interview}
+                />
               </div>
 
               {interview.interviewFeedback &&
@@ -172,8 +192,24 @@ export default function InterviewDetails() {
                                 }
                               );
 
+                              // Парсим JSON ответ независимо от статуса
+                              const data = await response.json();
+
                               if (!response.ok) {
-                                throw new Error('Не удалось принять отзыв');
+                                // Используем сообщение об ошибке из API, если доступно
+                                const errorMessage =
+                                  data.message ||
+                                  data.error ||
+                                  'Не удалось принять отзыв';
+
+                                // Специальная обработка для 401 ошибки
+                                if (response.status === 401) {
+                                  throw new Error(
+                                    'Необходима авторизация для принятия отзыва'
+                                  );
+                                }
+
+                                throw new Error(errorMessage);
                               }
 
                               showSuccess('Отзыв успешно принят');

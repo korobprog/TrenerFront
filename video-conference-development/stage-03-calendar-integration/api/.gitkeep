@@ -1,0 +1,7 @@
+# Директория для API endpoints этапа 3
+
+Здесь будут размещены календарные API endpoints:
+- Google Calendar API интеграция
+- Event creation API
+- Meeting scheduling API
+- Calendar webhook API

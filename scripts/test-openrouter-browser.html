@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Тестирование OpenRouter API</title>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         max-width: 1200px;
+         margin: 0 auto;
+         padding: 20px;
+         background-color: #f5f5f5;
+      }
+
+      .container {
+         background: white;
+         padding: 20px;
+         border-radius: 8px;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+         margin-bottom: 20px;
+      }
+
+      .test-section {
+         border: 1px solid #ddd;
+         border-radius: 4px;
+         padding: 15px;
+         margin-bottom: 15px;
+      }
+
+      .test-section h3 {
+         margin-top: 0;
+         color: #333;
+      }
+
+      .success {
+         background-color: #d4edda;
+         border-color: #c3e6cb;
+         color: #155724;
+      }
+
+      .error {
+         background-color: #f8d7da;
+         border-color: #f5c6cb;
+         color: #721c24;
+      }
+
+      .info {
+         background-color: #d1ecf1;
+         border-color: #bee5eb;
+         color: #0c5460;
+      }
+
+      button {
+         background-color: #007bff;
+         color: white;
+         border: none;
+         padding: 10px 20px;
+         border-radius: 4px;
+         cursor: pointer;
+         margin: 5px;
+      }
+
+      button:hover {
+         background-color: #0056b3;
+      }
+
+      button:disabled {
+         background-color: #6c757d;
+         cursor: not-allowed;
+      }
+
+      .log {
+         background-color: #f8f9fa;
+         border: 1px solid #dee2e6;
+         border-radius: 4px;
+         padding: 10px;
+         margin: 10px 0;
+         font-family: monospace;
+         font-size: 12px;
+         max-height: 300px;
+         overflow-y: auto;
+      }
+
+      .form-group {
+         margin-bottom: 15px;
+      }
+
+      label {
+         display: block;
+         margin-bottom: 5px;
+         font-weight: bold;
+      }
+
+      input,
+      select {
+         width: 100%;
+         padding: 8px;
+         border: 1px solid #ddd;
+         border-radius: 4px;
+         box-sizing: border-box;
+      }
+
+      .summary {
+         font-size: 18px;
+         font-weight: bold;
+         text-align: center;
+         padding: 20px;
+         border-radius: 8px;
+         margin: 20px 0;
+      }
+   </style>
+</head>
+
+<body>
+   <div class="container">
+      <h1>🚀 Финальное тестирование OpenRouter API</h1>
+      <p><strong>Цель:</strong> Проверить исправленную функциональность настроек OpenRouter API</p>
+
+      <div class="test-section info">
+         <h3>📋 Тестовые данные</h3>
+         <div class="form-group">
+            <label>API ключ:</label>
+            <input type="text" id="apiKey"
+               value="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">
+         </div>
+         <div class="form-group">
+            <label>Базовый URL:</label>
+            <input type="text" id="baseUrl" value="https://openrouter.ai/api/v1">
+         </div>
+         <div class="form-group">
+            <label>Модель:</label>
+            <input type="text" id="model" value="google/gemma-3-12b-it:free">
+         </div>
+         <div class="form-group">
+            <label>Температура:</label>
+            <input type="number" id="temperature" value="0.7" step="0.1" min="0" max="2">
+         </div>
+         <div class="form-group">
+            <label>Максимум токенов:</label>
+            <input type="number" id="maxTokens" value="4000" min="1" max="8000">
+         </div>
+      </div>
+
+      <div class="test-section">
+         <h3>🔧 Управление тестами</h3>
+         <button onclick="runAllTests()">Запустить все тесты</button>
+         <button onclick="testGetSettings()">Тест 1: GET настройки</button>
+         <button onclick="testSaveSettings()">Тест 2: Сохранить настройки</button>
+         <button onclick="testValidation()">Тест 3: Валидация</button>
+         <button onclick="clearLogs()">Очистить логи</button>
+      </div>
+
+      <div id="testResults"></div>
+
+      <div class="test-section">
+         <h3>📊 Логи тестирования</h3>
+         <div id="logs" class="log"></div>
+      </div>
+   </div>
+
+   <script>
+      const testData = {
+         maxQuestionsPerDay: 10,
+         maxTokensPerQuestion: 4000,
+         isActive: true,
+         openRouterApiKey: '',
+         openRouterBaseUrl: '',
+         openRouterModel: '',
+         openRouterTemperature: 0.7,
+         openRouterMaxTokens: 4000
+      };
+
+      let testResults = {
+         total: 0,
+         passed: 0,
+         failed: 0,
+         tests: []
+      };
+
+      function log(message, type = 'info') {
+         const timestamp = new Date().toLocaleTimeString();
+         const logElement = document.getElementById('logs');
+         const logEntry = document.createElement('div');
+         logEntry.innerHTML = `[${timestamp}] ${message}`;
+
+         if (type === 'error') {
+            logEntry.style.color = '#dc3545';
+         } else if (type === 'success') {
+            logEntry.style.color = '#28a745';
+         } else if (type === 'warning') {
+            logEntry.style.color = '#ffc107';
+         }
+
+         logElement.appendChild(logEntry);
+         logElement.scrollTop = logElement.scrollHeight;
+      }
+
+      function clearLogs() {
+         document.getElementById('logs').innerHTML = '';
+         document.getElementById('testResults').innerHTML = '';
+         testResults = { total: 0, passed: 0, failed: 0, tests: [] };
+      }
+
+      function updateTestData() {
+         testData.openRouterApiKey = document.getElementById('apiKey').value;
+         testData.openRouterBaseUrl = document.getElementById('baseUrl').value;
+         testData.openRouterModel = document.getElementById('model').value;
+         testData.openRouterTemperature = parseFloat(document.getElementById('temperature').value);
+         testData.openRouterMaxTokens = parseInt(document.getElementById('maxTokens').value);
+      }
+
+      async function makeRequest(method, data = null) {
+         const options = {
+            method: method,
+            headers: {
+               'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+         };
+
+         if (data) {
+            options.body = JSON.stringify(data);
+         }
+
+         try {
+            const response = await fetch('/api/admin/interview-assistant-settings', options);
+            const responseData = await response.json();
+
+            return {
+               statusCode: response.status,
+               data: responseData,
+               ok: response.ok
+            };
+         } catch (error) {
+            throw new Error(`Ошибка запроса: ${error.message}`);
+         }
+      }
+
+      async function testGetSettings() {
+         log('🔍 ТЕСТ 1: Получение настроек OpenRouter API', 'info');
+
+         try {
+            const response = await makeRequest('GET');
+
+            log(`Статус ответа: ${response.statusCode}`, response.ok ? 'success' : 'error');
+            log(`Данные ответа: ${JSON.stringify(response.data, null, 2)}`);
+
+            const testResult = {
+               name: 'GET запрос настроек',
+               passed: response.ok && response.data.settings,
+               details: {
+                  statusCode: response.statusCode,
+                  hasSettings: !!response.data.settings
+               }
+            };
+
+            testResults.tests.push(testResult);
+            testResults.total++;
+
+            if (testResult.passed) {
+               log('✅ ТЕСТ 1 ПРОЙДЕН: GET запрос успешен', 'success');
+               testResults.passed++;
+            } else {
+               log('❌ ТЕСТ 1 НЕ ПРОЙДЕН: GET запрос неуспешен', 'error');
+               testResults.failed++;
+            }
+
+            return testResult;
+
+         } catch (error) {
+            log(`❌ ТЕСТ 1 НЕ ПРОЙДЕН: ${error.message}`, 'error');
+
+            const testResult = {
+               name: 'GET запрос настроек',
+               passed: false,
+               error: error.message
+            };
+
+            testResults.tests.push(testResult);
+            testResults.total++;
+            testResults.failed++;
+
+            return testResult;
+         }
+      }
+
+      async function testSaveSettings() {
+         log('💾 ТЕСТ 2: Сохранение настроек OpenRouter API', 'info');
+         updateTestData();
+
+         log(`Отправляемые данные: ${JSON.stringify(testData, null, 2)}`);
+
+         try {
+            const response = await makeRequest('PUT', testData);
+
+            log(`Статус ответа: ${response.statusCode}`, response.ok ? 'success' : 'error');
+            log(`Данные ответа: ${JSON.stringify(response.data, null, 2)}`);
+
+            const testResult = {
+               name: 'PUT запрос сохранения настроек',
+               passed: response.ok,
+               details: {
+                  statusCode: response.statusCode,
+                  hasMessage: !!response.data.message,
+                  hasSettings: !!response.data.settings,
+                  errorCode: response.data.code || null
+               }
+            };
+
+            testResults.tests.push(testResult);
+            testResults.total++;
+
+            if (testResult.passed) {
+               log('✅ ТЕСТ 2 ПРОЙДЕН: PUT запрос успешен, ошибка 500 отсутствует', 'success');
+               testResults.passed++;
+
+               if (response.data.settings) {
+                  log('🔍 ПРОВЕРКА СОХРАНЕННЫХ ДАННЫХ:', 'info');
+                  const settings = response.data.settings;
+                  log(`- API ключ сохранен: ${!!settings.openRouterApiKey}`);
+                  log(`- Базовый URL: ${settings.openRouterBaseUrl}`);
+                  log(`- Модель: ${settings.openRouterModel}`);
+                  log(`- Температура: ${settings.openRouterTemperature}`);
+                  log(`- Максимум токенов: ${settings.openRouterMaxTokens}`);
+                  log(`- Тип API: ${settings.apiType}`);
+               }
+            } else {
+               log('❌ ТЕСТ 2 НЕ ПРОЙДЕН: PUT запрос неуспешен', 'error');
+               testResults.failed++;
+
+               if (response.statusCode === 500) {
+                  log('🚨 КРИТИЧЕСКАЯ ОШИБКА: Ошибка 500 все еще присутствует!', 'error');
+               }
+            }
+
+            return testResult;
+
+         } catch (error) {
+            log(`❌ ТЕСТ 2 НЕ ПРОЙДЕН: ${error.message}`, 'error');
+
+            const testResult = {
+               name: 'PUT запрос сохранения настроек',
+               passed: false,
+               error: error.message
+            };
+
+            testResults.tests.push(testResult);
+            testResults.total++;
+            testResults.failed++;
+
+            return testResult;
+         }
+      }
+
+      async function testValidation() {
+         log('🛡️ ТЕСТ 3: Валидация полей', 'info');
+
+         const invalidData = {
+            ...testData,
+            openRouterApiKey: '', // Пустой API ключ
+            openRouterTemperature: 'invalid', // Некорректная температура
+            maxQuestionsPerDay: 'not_a_number' // Некорректное число
+         };
+
+         log(`Отправляемые некорректные данные: ${JSON.stringify(invalidData, null, 2)}`);
+
+         try {
+            const response = await makeRequest('PUT', invalidData);
+
+            log(`Статус ответа: ${response.statusCode}`, response.statusCode === 400 ? 'success' : 'error');
+            log(`Данные ответа: ${JSON.stringify(response.data, null, 2)}`);
+
+            const testResult = {
+               name: 'Валидация полей',
+               passed: response.statusCode === 400, // Ожидаем ошибку валидации
+               details: {
+                  statusCode: response.statusCode,
+                  errorCode: response.data.code || null,
+                  message: response.data.message || null
+               }
+            };
+
+            testResults.tests.push(testResult);
+            testResults.total++;
+
+            if (testResult.passed) {
+               log('✅ ТЕСТ 3 ПРОЙДЕН: Валидация работает корректно', 'success');
+               testResults.passed++;
+            } else {
+               log('❌ ТЕСТ 3 НЕ ПРОЙДЕН: Валидация не работает', 'error');
+               testResults.failed++;
+            }
+
+            return testResult;
+
+         } catch (error) {
+            log(`❌ ТЕСТ 3 НЕ ПРОЙДЕН: ${error.message}`, 'error');
+
+            const testResult = {
+               name: 'Валидация полей',
+               passed: false,
+               error: error.message
+            };
+
+            testResults.tests.push(testResult);
+            testResults.total++;
+            testResults.failed++;
+
+            return testResult;
+         }
+      }
+
+      async function runAllTests() {
+         clearLogs();
+         log('🚀 НАЧАЛО ФИНАЛЬНОГО ТЕСТИРОВАНИЯ OPENROUTER API', 'info');
+         log('='.repeat(60));
+
+         // Отключаем кнопки во время тестирования
+         const buttons = document.querySelectorAll('button');
+         buttons.forEach(btn => btn.disabled = true);
+
+         try {
+            await testGetSettings();
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Пауза между тестами
+
+            await testSaveSettings();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            await testValidation();
+
+            // Показываем итоговый отчет
+            showFinalReport();
+
+         } finally {
+            // Включаем кнопки обратно
+            buttons.forEach(btn => btn.disabled = false);
+         }
+      }
+
+      function showFinalReport() {
+         log('='.repeat(60), 'info');
+         log('📊 ИТОГОВЫЙ ОТЧЕТ ФИНАЛЬНОГО ТЕСТИРОВАНИЯ', 'info');
+         log('='.repeat(60), 'info');
+
+         log(`📈 СТАТИСТИКА:`, 'info');
+         log(`- Всего тестов: ${testResults.total}`);
+         log(`- Пройдено: ${testResults.passed} ✅`, 'success');
+         log(`- Не пройдено: ${testResults.failed} ❌`, 'error');
+         log(`- Процент успеха: ${Math.round((testResults.passed / testResults.total) * 100)}%`);
+
+         log(`📋 ДЕТАЛИ ТЕСТОВ:`, 'info');
+         testResults.tests.forEach((test, index) => {
+            const status = test.passed ? '✅ ПРОЙДЕН' : '❌ НЕ ПРОЙДЕН';
+            const color = test.passed ? 'success' : 'error';
+            log(`${index + 1}. ${test.name}: ${status}`, color);
+            if (test.error) {
+               log(`   Ошибка: ${test.error}`, 'error');
+            }
+         });
+
+         // Определение статуса исправления
+         const isFixed = testResults.passed >= 2; // Минимум 2 из 3 тестов должны пройти
+         const has500Error = testResults.tests.some(test =>
+            test.details && test.details.statusCode === 500
+         );
+
+         log(`🎯 СТАТУС ИСПРАВЛЕНИЯ:`, 'info');
+         if (isFixed && !has500Error) {
+            log('✅ ИСПРАВЛЕНИЕ УСПЕШНО: Ошибка 500 устранена, API работает корректно', 'success');
+         } else if (has500Error) {
+            log('❌ ИСПРАВЛЕНИЕ НЕ ЗАВЕРШЕНО: Ошибка 500 все еще присутствует', 'error');
+         } else {
+            log('⚠️ ИСПРАВЛЕНИЕ ЧАСТИЧНО: Некоторые функции работают некорректно', 'warning');
+         }
+
+         log(`🔑 ТЕСТИРОВАНИЕ С ПРЕДОСТАВЛЕННЫМ КЛЮЧОМ:`, 'info');
+         log(`- API ключ: ${document.getElementById('apiKey').value}`);
+         log(`- Статус: ${isFixed ? 'Работает корректно ✅' : 'Требует дополнительной проверки ❌'}`, isFixed ? 'success' : 'error');
+
+         // Показываем визуальный отчет
+         showVisualReport(isFixed, has500Error);
+      }
+
+      function showVisualReport(isFixed, has500Error) {
+         const resultsDiv = document.getElementById('testResults');
+
+         let summaryClass = 'summary ';
+         let summaryText = '';
+
+         if (isFixed && !has500Error) {
+            summaryClass += 'success';
+            summaryText = '✅ ИСПРАВЛЕНИЕ УСПЕШНО ЗАВЕРШЕНО';
+         } else if (has500Error) {
+            summaryClass += 'error';
+            summaryText = '❌ ОШИБКА 500 ВСЕ ЕЩЕ ПРИСУТСТВУЕТ';
+         } else {
+            summaryClass += 'info';
+            summaryText = '⚠️ ИСПРАВЛЕНИЕ ТРЕБУЕТ ДОРАБОТКИ';
+         }
+
+         resultsDiv.innerHTML = `
+                <div class="${summaryClass}">
+                    ${summaryText}
+                </div>
+                <div class="test-section">
+                    <h3>📊 Результаты тестирования</h3>
+                    <p><strong>Всего тестов:</strong> ${testResults.total}</p>
+                    <p><strong>Пройдено:</strong> ${testResults.passed}</p>
+                    <p><strong>Не пройдено:</strong> ${testResults.failed}</p>
+                    <p><strong>Процент успеха:</strong> ${Math.round((testResults.passed / testResults.total) * 100)}%</p>
+                </div>
+            `;
+      }
+
+      // Инициализация при загрузке страницы
+      window.onload = function () {
+         log('🔧 Страница тестирования загружена', 'info');
+         log('📝 Для начала тестирования нажмите "Запустить все тесты"', 'info');
+      };
+   </script>
+</body>
+
+</html>

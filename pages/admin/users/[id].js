@@ -46,8 +46,8 @@ export default function UserDetailsPage() {
 
       const userData = await response.json();
 
-      // Обновляем состояние
-      setUser(userData);
+      // Обновляем состояние - извлекаем данные пользователя из ответа API
+      setUser(userData.data || userData);
     } catch (error) {
       console.error('Ошибка при загрузке данных пользователя:', error);
       showError('Не удалось загрузить информацию о пользователе');
@@ -81,8 +81,9 @@ export default function UserDetailsPage() {
     <AdminLayout>
       <Head>
         <title>
-          {user ? `${user.name} | Пользователь` : 'Информация о пользователе'} |
-          Админ-панель
+          {user
+            ? `${user.name || 'Пользователь'} | Пользователь | Админ-панель`
+            : 'Информация о пользователе | Админ-панель'}
         </title>
       </Head>
 

@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { useNotification } from '../../contexts/NotificationContext';
 import InterviewCalendar from '../../components/interview/InterviewCalendar';
+import InterviewTypeSelector from '../../components/interview/InterviewTypeSelector';
 import styles from '../../styles/CreateInterview.module.css';
 
 export default function CreateInterview() {
@@ -23,10 +24,11 @@ export default function CreateInterview() {
   console.log('CreateInterview: Данные сессии:', session);
   console.log('CreateInterview: Заголовки запроса недоступны на клиенте');
 
+  const [videoType, setVideoType] = useState(null);
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState(1); // 1: выбор времени, 2: подтверждение, 3: ручной ввод ссылки
+  const [step, setStep] = useState(0); // 0: выбор типа, 1: выбор времени, 2: подтверждение, 3: ручной ввод ссылки
   const [manualMeetingLink, setManualMeetingLink] = useState('');
   const [autoLinkError, setAutoLinkError] = useState('');
 
@@ -53,6 +55,11 @@ export default function CreateInterview() {
 
   // Переход к следующему шагу
   const handleNextStep = () => {
+    if (step === 0 && !videoType) {
+      showError('Пожалуйста, выберите тип собеседования');
+      return;
+    }
+
     if (step === 1 && (!scheduledDate || !scheduledTime)) {
       showError('Пожалуйста, выберите дату и время собеседования');
       return;
@@ -137,6 +144,7 @@ export default function CreateInterview() {
       // Подготавливаем данные для отправки
       const requestData = {
         scheduledTime: scheduledDateTime,
+        videoType: videoType,
       };
 
       // Если есть ручная ссылка, добавляем её
@@ -157,23 +165,54 @@ export default function CreateInterview() {
       });
 
       console.log('Получен ответ:', response.status);
+
+      // Парсим JSON ответ независимо от статуса
       const responseData = await response.json();
 
       if (!response.ok) {
         console.error('Ошибка при создании собеседования:', responseData);
 
-        // Если сервер запрашивает ручной ввод ссылки
-        if (responseData.needManualLink) {
-          setAutoLinkError(
-            responseData.message || 'Не удалось автоматически создать ссылку'
-          );
-          setStep(3); // Переходим на шаг ручного ввода ссылки
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          const errorMessage =
+            responseData.message ||
+            'Необходима авторизация для создания собеседования';
+          showError(errorMessage);
+          router.push('/auth/signin');
           return;
         }
 
-        throw new Error(
-          responseData.message || 'Не удалось создать собеседование'
-        );
+        // Если сервер запрашивает ручной ввод ссылки (только для Google Meet)
+        if (responseData.needManualLink && videoType === 'google_meet') {
+          const errorMessage = responseData.isAuthError
+            ? 'Проблемы с авторизацией Google. Пожалуйста, введите ссылку на Google Meet вручную.'
+            : responseData.message ||
+              'Не удалось автоматически создать ссылку на Google Meet. Пожалуйста, введите ссылку вручную.';
+
+          setAutoLinkError(errorMessage);
+          setStep(3); // Переходим на шаг ручного ввода ссылки
+          setIsSubmitting(false); // Сбрасываем состояние загрузки
+          return;
+        }
+
+        // Если это ошибка встроенной видеосистемы с возможностью повтора
+        if (responseData.needRetry && videoType === 'built_in') {
+          const errorMessage =
+            responseData.message ||
+            'Не удалось создать встроенную видеосистему';
+          showError(
+            `${errorMessage}. Попробуйте еще раз или выберите Google Meet.`
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          responseData.message ||
+          responseData.error ||
+          'Не удалось создать собеседование';
+        throw new Error(errorMessage);
       }
 
       showSuccess('Собеседование успешно создано');
@@ -203,20 +242,34 @@ export default function CreateInterview() {
 
         <div className={styles.card}>
           <div className={styles.stepIndicator}>
-            <div className={`${styles.step} ${step >= 1 ? styles.active : ''}`}>
+            <div className={`${styles.step} ${step >= 0 ? styles.active : ''}`}>
               1
             </div>
             <div className={styles.stepLine}></div>
-            <div className={`${styles.step} ${step >= 2 ? styles.active : ''}`}>
+            <div className={`${styles.step} ${step >= 1 ? styles.active : ''}`}>
               2
             </div>
             <div className={styles.stepLine}></div>
-            <div className={`${styles.step} ${step >= 3 ? styles.active : ''}`}>
+            <div className={`${styles.step} ${step >= 2 ? styles.active : ''}`}>
               3
+            </div>
+            <div className={styles.stepLine}></div>
+            <div className={`${styles.step} ${step >= 3 ? styles.active : ''}`}>
+              4
             </div>
           </div>
 
           <form onSubmit={handleSubmit}>
+            {step === 0 && (
+              <div className={styles.formStep}>
+                <InterviewTypeSelector
+                  selectedType={videoType}
+                  onTypeSelect={setVideoType}
+                  onNext={handleNextStep}
+                />
+              </div>
+            )}
+
             {step === 1 && (
               <div className={styles.formStep}>
                 <InterviewCalendar
@@ -269,7 +322,9 @@ export default function CreateInterview() {
                       Примечание:
                     </span>
                     <span className={styles.confirmationValue}>
-                      Ссылка на Google Meet будет создана автоматически
+                      {videoType === 'google_meet'
+                        ? 'Ссылка на Google Meet будет создана автоматически'
+                        : 'Будет создана комната во встроенной видеосистеме'}
                     </span>
                   </div>
                 </div>

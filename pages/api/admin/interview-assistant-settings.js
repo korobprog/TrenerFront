@@ -35,15 +35,15 @@ async function handler(req, res) {
       if (!settings) {
         return res.status(200).json({
           settings: {
-            apiKey: '',
             maxQuestionsPerDay: 10,
             maxTokensPerQuestion: 4000,
             isActive: true,
-            apiType: 'anthropic', // По умолчанию используем Anthropic
-            langdockAssistantId: '',
-            langdockBaseUrl:
-              'https://api.langdock.com/assistant/v1/chat/completions',
-            langdockRegion: 'eu',
+            apiType: 'openrouter', // По умолчанию используем OpenRouter
+            openRouterApiKey: '',
+            openRouterBaseUrl: 'https://openrouter.ai/api/v1',
+            openRouterModel: 'google/gemma-3-12b-it:free',
+            openRouterTemperature: 0.7,
+            openRouterMaxTokens: 4000,
           },
         });
       }
@@ -87,77 +87,178 @@ async function handler(req, res) {
   // Обработка PUT запроса - обновление настроек
   if (req.method === 'PUT') {
     try {
+      console.log('🔍 ДИАГНОСТИКА API: Начало обработки PUT запроса');
+      console.log(
+        '🔍 ДИАГНОСТИКА API: Тело запроса:',
+        JSON.stringify(req.body, null, 2)
+      );
+
       // Получаем данные из тела запроса
       const {
-        apiKey,
         maxQuestionsPerDay,
         maxTokensPerQuestion,
         isActive,
-        apiType,
-        langdockAssistantId,
-        langdockBaseUrl,
-        langdockRegion,
         // Поля для OpenRouter
         openRouterApiKey,
         openRouterBaseUrl,
         openRouterModel,
         openRouterTemperature,
         openRouterMaxTokens,
-        // Поля для Gemini
-        geminiApiKey,
-        geminiModel,
-        geminiBaseUrl,
-        geminiTemperature,
       } = req.body;
 
-      // Проверяем обязательные поля
-      if (!apiKey) {
+      console.log('🔍 ДИАГНОСТИКА API: Извлеченные поля:');
+      console.log(
+        '  - maxQuestionsPerDay:',
+        maxQuestionsPerDay,
+        typeof maxQuestionsPerDay
+      );
+      console.log(
+        '  - maxTokensPerQuestion:',
+        maxTokensPerQuestion,
+        typeof maxTokensPerQuestion
+      );
+      console.log('  - isActive:', isActive, typeof isActive);
+      console.log(
+        '  - openRouterApiKey:',
+        openRouterApiKey ? '[СКРЫТ]' : 'отсутствует',
+        typeof openRouterApiKey
+      );
+      console.log(
+        '  - openRouterBaseUrl:',
+        openRouterBaseUrl,
+        typeof openRouterBaseUrl
+      );
+      console.log(
+        '  - openRouterModel:',
+        openRouterModel,
+        typeof openRouterModel
+      );
+      console.log(
+        '  - openRouterTemperature:',
+        openRouterTemperature,
+        typeof openRouterTemperature
+      );
+      console.log(
+        '  - openRouterMaxTokens:',
+        openRouterMaxTokens,
+        typeof openRouterMaxTokens
+      );
+
+      // Принудительно устанавливаем тип API как OpenRouter
+      const apiType = 'openrouter';
+      const apiKey = openRouterApiKey;
+
+      console.log('🔍 ДИАГНОСТИКА API: Установленные значения:');
+      console.log('  - apiType:', apiType);
+      console.log('  - apiKey:', apiKey ? '[СКРЫТ]' : 'отсутствует');
+
+      // Проверяем обязательные поля для OpenRouter
+      console.log('🔍 ДИАГНОСТИКА API: Проверка обязательных полей...');
+
+      if (!openRouterApiKey) {
+        console.log('❌ ДИАГНОСТИКА API: Отсутствует openRouterApiKey');
         return res.status(400).json({
-          message: 'API ключ обязателен',
-          code: 'MISSING_API_KEY',
+          message: 'OpenRouter API ключ обязателен',
+          code: 'MISSING_OPENROUTER_API_KEY',
         });
       }
 
-      // Проверяем тип API
-      if (
-        apiType !== 'anthropic' &&
-        apiType !== 'langdock' &&
-        apiType !== 'gemini' &&
-        apiType !== 'openrouter'
-      ) {
+      if (!openRouterModel) {
+        console.log('❌ ДИАГНОСТИКА API: Отсутствует openRouterModel');
         return res.status(400).json({
-          message: 'Неверный тип API',
-          code: 'INVALID_API_TYPE',
+          message: 'Модель OpenRouter обязательна',
+          code: 'MISSING_OPENROUTER_MODEL',
         });
       }
 
-      // Проверяем обязательные поля для LangDock API
-      if (
-        apiType === 'langdock' &&
-        !langdockAssistantId &&
-        !process.env.DEFAULT_LANGDOCK_ASSISTANT_ID
-      ) {
-        return res.status(400).json({
-          message:
-            'ID ассистента LangDock обязателен или должен быть указан ID по умолчанию в настройках сервера',
-          code: 'MISSING_LANGDOCK_ASSISTANT_ID',
-        });
-      }
+      console.log('✅ ДИАГНОСТИКА API: Обязательные поля присутствуют');
 
-      // Проверяем формат UUID для LangDock API
-      if (apiType === 'langdock' && langdockAssistantId) {
-        // Регулярное выражение для проверки формата UUID
-        // Формат: 8-4-4-4-12 символов (цифры 0-9 и буквы a-f)
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      // Безопасное преобразование типов данных
+      console.log('🔍 ДИАГНОСТИКА API: Конвертация типов данных...');
 
-        if (!uuidRegex.test(langdockAssistantId)) {
-          return res.status(400).json({
-            message:
-              'ID ассистента LangDock должен быть в формате UUID (например: 123e4567-e89b-12d3-a456-426614174000)',
-            code: 'INVALID_LANGDOCK_ASSISTANT_ID_FORMAT',
-          });
+      let convertedMaxQuestionsPerDay,
+        convertedMaxTokensPerQuestion,
+        convertedOpenRouterTemperature,
+        convertedOpenRouterMaxTokens;
+
+      try {
+        convertedMaxQuestionsPerDay = parseInt(maxQuestionsPerDay, 10);
+        if (isNaN(convertedMaxQuestionsPerDay)) {
+          throw new Error('Некорректное значение maxQuestionsPerDay');
         }
+        console.log(
+          '✅ ДИАГНОСТИКА API: maxQuestionsPerDay конвертирован:',
+          convertedMaxQuestionsPerDay
+        );
+      } catch (error) {
+        console.log(
+          '❌ ДИАГНОСТИКА API: Ошибка конвертации maxQuestionsPerDay:',
+          error.message
+        );
+        return res.status(400).json({
+          message: 'Некорректное значение maxQuestionsPerDay',
+          code: 'INVALID_MAX_QUESTIONS_PER_DAY',
+        });
+      }
+
+      try {
+        convertedMaxTokensPerQuestion = parseInt(maxTokensPerQuestion, 10);
+        if (isNaN(convertedMaxTokensPerQuestion)) {
+          throw new Error('Некорректное значение maxTokensPerQuestion');
+        }
+        console.log(
+          '✅ ДИАГНОСТИКА API: maxTokensPerQuestion конвертирован:',
+          convertedMaxTokensPerQuestion
+        );
+      } catch (error) {
+        console.log(
+          '❌ ДИАГНОСТИКА API: Ошибка конвертации maxTokensPerQuestion:',
+          error.message
+        );
+        return res.status(400).json({
+          message: 'Некорректное значение maxTokensPerQuestion',
+          code: 'INVALID_MAX_TOKENS_PER_QUESTION',
+        });
+      }
+
+      try {
+        convertedOpenRouterTemperature = parseFloat(openRouterTemperature);
+        if (isNaN(convertedOpenRouterTemperature)) {
+          throw new Error('Некорректное значение openRouterTemperature');
+        }
+        console.log(
+          '✅ ДИАГНОСТИКА API: openRouterTemperature конвертирован:',
+          convertedOpenRouterTemperature
+        );
+      } catch (error) {
+        console.log(
+          '❌ ДИАГНОСТИКА API: Ошибка конвертации openRouterTemperature:',
+          error.message
+        );
+        return res.status(400).json({
+          message: 'Некорректное значение openRouterTemperature',
+          code: 'INVALID_OPENROUTER_TEMPERATURE',
+        });
+      }
+
+      try {
+        convertedOpenRouterMaxTokens = parseInt(openRouterMaxTokens, 10);
+        if (isNaN(convertedOpenRouterMaxTokens)) {
+          throw new Error('Некорректное значение openRouterMaxTokens');
+        }
+        console.log(
+          '✅ ДИАГНОСТИКА API: openRouterMaxTokens конвертирован:',
+          convertedOpenRouterMaxTokens
+        );
+      } catch (error) {
+        console.log(
+          '❌ ДИАГНОСТИКА API: Ошибка конвертации openRouterMaxTokens:',
+          error.message
+        );
+        return res.status(400).json({
+          message: 'Некорректное значение openRouterMaxTokens',
+          code: 'INVALID_OPENROUTER_MAX_TOKENS',
+        });
       }
 
       // Проверяем, существуют ли уже настройки
@@ -180,39 +281,16 @@ async function handler(req, res) {
             },
             data: {
               apiKey,
-              maxQuestionsPerDay: parseInt(maxQuestionsPerDay, 10),
-              maxTokensPerQuestion: parseInt(maxTokensPerQuestion, 10),
+              maxQuestionsPerDay: convertedMaxQuestionsPerDay,
+              maxTokensPerQuestion: convertedMaxTokensPerQuestion,
               isActive,
               apiType,
-              // Поля для LangDock
-              langdockAssistantId:
-                apiType === 'langdock'
-                  ? langdockAssistantId ||
-                    process.env.DEFAULT_LANGDOCK_ASSISTANT_ID
-                  : null,
-              langdockBaseUrl: apiType === 'langdock' ? langdockBaseUrl : null,
-              langdockRegion: apiType === 'langdock' ? langdockRegion : null,
               // Поля для OpenRouter
-              openRouterApiKey:
-                apiType === 'openrouter' ? openRouterApiKey : null,
-              openRouterBaseUrl:
-                apiType === 'openrouter' ? openRouterBaseUrl : null,
-              openRouterModel:
-                apiType === 'openrouter' ? openRouterModel : null,
-              openRouterTemperature:
-                apiType === 'openrouter'
-                  ? parseFloat(openRouterTemperature)
-                  : null,
-              openRouterMaxTokens:
-                apiType === 'openrouter'
-                  ? parseInt(openRouterMaxTokens, 10)
-                  : null,
-              // Поля для Gemini
-              geminiApiKey: apiType === 'gemini' ? geminiApiKey : null,
-              geminiModel: apiType === 'gemini' ? geminiModel : null,
-              geminiBaseUrl: apiType === 'gemini' ? geminiBaseUrl : null,
-              geminiTemperature:
-                apiType === 'gemini' ? parseFloat(geminiTemperature) : null,
+              openRouterApiKey,
+              openRouterBaseUrl,
+              openRouterModel,
+              openRouterTemperature: convertedOpenRouterTemperature,
+              openRouterMaxTokens: convertedOpenRouterMaxTokens,
             },
           });
         });
@@ -224,39 +302,16 @@ async function handler(req, res) {
           return await prisma.interviewAssistantSettings.create({
             data: {
               apiKey,
-              maxQuestionsPerDay: parseInt(maxQuestionsPerDay, 10),
-              maxTokensPerQuestion: parseInt(maxTokensPerQuestion, 10),
+              maxQuestionsPerDay: convertedMaxQuestionsPerDay,
+              maxTokensPerQuestion: convertedMaxTokensPerQuestion,
               isActive,
               apiType,
-              // Поля для LangDock
-              langdockAssistantId:
-                apiType === 'langdock'
-                  ? langdockAssistantId ||
-                    process.env.DEFAULT_LANGDOCK_ASSISTANT_ID
-                  : null,
-              langdockBaseUrl: apiType === 'langdock' ? langdockBaseUrl : null,
-              langdockRegion: apiType === 'langdock' ? langdockRegion : null,
               // Поля для OpenRouter
-              openRouterApiKey:
-                apiType === 'openrouter' ? openRouterApiKey : null,
-              openRouterBaseUrl:
-                apiType === 'openrouter' ? openRouterBaseUrl : null,
-              openRouterModel:
-                apiType === 'openrouter' ? openRouterModel : null,
-              openRouterTemperature:
-                apiType === 'openrouter'
-                  ? parseFloat(openRouterTemperature)
-                  : null,
-              openRouterMaxTokens:
-                apiType === 'openrouter'
-                  ? parseInt(openRouterMaxTokens, 10)
-                  : null,
-              // Поля для Gemini
-              geminiApiKey: apiType === 'gemini' ? geminiApiKey : null,
-              geminiModel: apiType === 'gemini' ? geminiModel : null,
-              geminiBaseUrl: apiType === 'gemini' ? geminiBaseUrl : null,
-              geminiTemperature:
-                apiType === 'gemini' ? parseFloat(geminiTemperature) : null,
+              openRouterApiKey,
+              openRouterBaseUrl,
+              openRouterModel,
+              openRouterTemperature: convertedOpenRouterTemperature,
+              openRouterMaxTokens: convertedOpenRouterMaxTokens,
             },
           });
         });
@@ -275,25 +330,11 @@ async function handler(req, res) {
           maxTokensPerQuestion,
           isActive,
           apiType,
-          // Поля для LangDock
-          langdockAssistantId:
-            apiType === 'langdock'
-              ? langdockAssistantId || process.env.DEFAULT_LANGDOCK_ASSISTANT_ID
-              : null,
-          langdockBaseUrl: apiType === 'langdock' ? langdockBaseUrl : null,
-          langdockRegion: apiType === 'langdock' ? langdockRegion : null,
           // Поля для OpenRouter (без API ключа)
-          openRouterBaseUrl:
-            apiType === 'openrouter' ? openRouterBaseUrl : null,
-          openRouterModel: apiType === 'openrouter' ? openRouterModel : null,
-          openRouterTemperature:
-            apiType === 'openrouter' ? openRouterTemperature : null,
-          openRouterMaxTokens:
-            apiType === 'openrouter' ? openRouterMaxTokens : null,
-          // Поля для Gemini (без API ключа)
-          geminiModel: apiType === 'gemini' ? geminiModel : null,
-          geminiBaseUrl: apiType === 'gemini' ? geminiBaseUrl : null,
-          geminiTemperature: apiType === 'gemini' ? geminiTemperature : null,
+          openRouterBaseUrl,
+          openRouterModel,
+          openRouterTemperature,
+          openRouterMaxTokens,
           // Не логируем API ключи в целях безопасности
         }
       );

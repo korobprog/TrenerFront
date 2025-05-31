@@ -2,162 +2,182 @@ import {
   withAdminAuth,
   logAdminAction,
 } from '../../../lib/middleware/adminAuth';
-import prisma from '../../../lib/prisma';
+import { withPrisma } from '../../../lib/prisma';
 
 /**
- * Обработчик API запросов для получения логов административных действий
- * @param {Object} req - HTTP запрос
- * @param {Object} res - HTTP ответ
+ * API эндпоинт для просмотра логов администратора
+ * Доступен администраторам и супер-администраторам
  */
 async function handler(req, res) {
-  // Обработка GET запроса - получение логов
-  if (req.method === 'GET') {
-    try {
-      // Получаем параметры запроса для фильтрации и пагинации
-      const {
-        page = 1,
-        limit = 20,
-        adminId,
-        action,
-        entityType,
-        entityId,
-        startDate,
-        endDate,
-        sortBy = 'createdAt',
-        sortOrder = 'desc',
-      } = req.query;
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Метод не поддерживается' });
+  }
 
-      // Преобразуем параметры в нужные типы
-      const pageNum = parseInt(page, 10);
-      const limitNum = parseInt(limit, 10);
-      const skip = (pageNum - 1) * limitNum;
+  try {
+    console.log(
+      'Admin Logs API: Запрос логов от администратора:',
+      req.admin.id
+    );
 
-      // Формируем условия фильтрации
+    const {
+      page = 1,
+      limit = 50,
+      adminId = '',
+      action = '',
+      entityType = '',
+      dateFrom = '',
+      dateTo = '',
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    console.log('Admin Logs API: Параметры запроса:', {
+      page: pageNum,
+      limit: limitNum,
+      adminId,
+      action,
+      entityType,
+      dateFrom,
+      dateTo,
+    });
+
+    const logs = await withPrisma(async (prisma) => {
+      // Строим условия фильтрации
       const where = {};
 
-      // Фильтрация по администратору
-      if (adminId) {
+      if (adminId && adminId !== 'all') {
         where.adminId = adminId;
       }
 
-      // Фильтрация по типу действия
-      if (action) {
+      if (action && action !== 'all') {
         where.action = action;
       }
 
-      // Фильтрация по типу сущности
-      if (entityType) {
+      if (entityType && entityType !== 'all') {
         where.entityType = entityType;
       }
 
-      // Фильтрация по ID сущности
-      if (entityId) {
-        where.entityId = entityId;
-      }
-
-      // Фильтрация по диапазону дат
-      if (startDate || endDate) {
+      // Фильтрация по датам
+      if (dateFrom || dateTo) {
         where.createdAt = {};
-
-        if (startDate) {
-          where.createdAt.gte = new Date(startDate);
+        if (dateFrom) {
+          where.createdAt.gte = new Date(dateFrom);
         }
-
-        if (endDate) {
-          where.createdAt.lte = new Date(endDate);
+        if (dateTo) {
+          const endDate = new Date(dateTo);
+          endDate.setHours(23, 59, 59, 999); // Конец дня
+          where.createdAt.lte = endDate;
         }
       }
 
-      // Определяем порядок сортировки
-      const orderBy = {};
-      orderBy[sortBy] = sortOrder;
-
-      // Получаем общее количество логов с учетом фильтров
-      const totalLogs = await prisma.adminActionLog.count({ where });
-
-      // Получаем логи с учетом фильтров, пагинации и сортировки
-      const logs = await prisma.adminActionLog.findMany({
-        where,
-        include: {
-          admin: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
+      // Получаем логи с информацией об администраторах
+      const [logsList, totalCount] = await Promise.all([
+        prisma.adminActionLog.findMany({
+          where,
+          include: {
+            admin: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
             },
           },
-        },
-        orderBy,
-        skip,
-        take: limitNum,
-      });
+          orderBy: {
+            createdAt: 'desc',
+          },
+          skip,
+          take: limitNum,
+        }),
+        prisma.adminActionLog.count({ where }),
+      ]);
 
-      // Получаем список уникальных типов действий для фильтрации
-      const actionTypes = await prisma.adminActionLog.groupBy({
+      // Получаем статистику по действиям
+      const actionStats = await prisma.adminActionLog.groupBy({
         by: ['action'],
-        _count: true,
-        orderBy: {
-          _count: {
-            action: 'desc',
-          },
+        _count: {
+          action: true,
         },
+        where: dateFrom || dateTo ? where : {},
       });
 
-      // Получаем список уникальных типов сущностей для фильтрации
-      const entityTypes = await prisma.adminActionLog.groupBy({
-        by: ['entityType'],
-        _count: true,
-        orderBy: {
-          _count: {
-            entityType: 'desc',
-          },
+      // Получаем статистику по администраторам
+      const adminStats = await prisma.adminActionLog.groupBy({
+        by: ['adminId'],
+        _count: {
+          adminId: true,
         },
+        where: dateFrom || dateTo ? where : {},
       });
 
-      // Получаем список администраторов для фильтрации
-      const admins = await prisma.user.findMany({
+      return {
+        logs: logsList,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: totalCount,
+          pages: Math.ceil(totalCount / limitNum),
+        },
+        statistics: {
+          actionStats: actionStats.reduce((acc, stat) => {
+            acc[stat.action] = stat._count.action;
+            return acc;
+          }, {}),
+          adminStats: adminStats.reduce((acc, stat) => {
+            acc[stat.adminId] = stat._count.adminId;
+            return acc;
+          }, {}),
+        },
+      };
+    });
+
+    // Получаем список всех администраторов для фильтра
+    const admins = await withPrisma(async (prisma) => {
+      return await prisma.user.findMany({
         where: {
-          role: 'admin',
+          role: {
+            in: ['admin', 'superadmin'],
+          },
         },
         select: {
           id: true,
           name: true,
           email: true,
-          image: true,
+          role: true,
+        },
+        orderBy: {
+          name: 'asc',
         },
       });
+    });
 
-      // Логируем действие администратора
-      await logAdminAction(req.admin.id, 'view_admin_logs', 'log', 'all', {
-        filters: JSON.stringify(req.query),
-      });
+    // Логируем действие администратора
+    await logAdminAction(req.admin.id, 'VIEW_LOGS', 'ADMIN_LOG', 'list', {
+      filters: { adminId, action, entityType, dateFrom, dateTo },
+      pagination: { page: pageNum, limit: limitNum },
+    });
 
-      // Возвращаем результат
-      return res.status(200).json({
-        logs,
-        pagination: {
-          total: totalLogs,
-          page: pageNum,
-          limit: limitNum,
-          totalPages: Math.ceil(totalLogs / limitNum),
-        },
-        filters: {
-          actionTypes: actionTypes.map((item) => item.action),
-          entityTypes: entityTypes.map((item) => item.entityType),
-          admins,
-        },
-      });
-    } catch (error) {
-      console.error('Ошибка при получении логов:', error);
-      return res
-        .status(500)
-        .json({ message: 'Ошибка сервера при получении логов' });
-    }
+    console.log(
+      'Admin Logs API: Логи успешно получены, количество:',
+      logs.logs.length
+    );
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...logs,
+        admins,
+      },
+    });
+  } catch (error) {
+    console.error('Admin Logs API: Ошибка при получении логов:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении логов администратора',
+    });
   }
-
-  // Если метод запроса не поддерживается
-  return res.status(405).json({ message: 'Метод не поддерживается' });
 }
 
 export default withAdminAuth(handler);

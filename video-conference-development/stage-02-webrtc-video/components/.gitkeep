@@ -1,0 +1,7 @@
+# Директория для компонентов этапа 2
+
+Здесь будут размещены WebRTC компоненты:
+- VideoCall компонент
+- MediaControls компонент
+- PeerConnection управление
+- SignalingClient компонент

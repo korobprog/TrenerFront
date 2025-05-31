@@ -1,115 +1,82 @@
-import { getSession } from 'next-auth/react';
-import prisma, { withPrisma } from '../../../lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import prisma from '../../../lib/prisma';
 
+/**
+ * API роут для получения баллов пользователя
+ * GET /api/user/points - получить текущие баллы пользователя
+ */
 export default async function handler(req, res) {
-  // Добавляем детальные логи для отладки запроса
-  console.log('API user/points: Детали запроса', {
-    method: req.method,
-    query: JSON.stringify(req.query),
-    cookies: req.headers.cookie,
-  });
-
-  const session = await getSession({ req });
-
-  // Добавляем детальные логи для отладки сессии
-  console.log('API user/points: Детали сессии', {
-    id: session?.user?.id,
-    email: session?.user?.email,
-    role: session?.user?.role,
-    timestamp: session?.timestamp,
-  });
-
-  if (!session) {
-    console.log('API user/points: Сессия отсутствует, возвращаем 401');
-    return res.status(401).json({ message: 'Необходима авторизация' });
+  // Валидация Prisma клиента
+  if (!prisma) {
+    console.error(
+      '❌ [POINTS API] КРИТИЧЕСКАЯ ОШИБКА: Prisma клиент не инициализирован'
+    );
+    return res.status(500).json({ error: 'Ошибка подключения к базе данных' });
   }
 
-  // Обработка только GET запросов
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Метод не поддерживается' });
+    return res.status(405).json({ error: 'Метод не поддерживается' });
   }
 
   try {
-    console.log('Получение баллов для пользователя:', session.user.id);
-    console.log(
-      'Полная информация о пользователе в сессии:',
-      JSON.stringify(session.user, null, 2)
-    );
+    // Получаем сессию пользователя
+    const session = await getServerSession(req, res, authOptions);
 
-    // Проверяем, есть ли у пользователя запись о баллах
-    let userPoints = await withPrisma(async (prisma) => {
-      return await prisma.userPoints.findUnique({
-        where: { userId: session.user.id },
-      });
+    if (!session || !session.user) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    // Получаем пользователя из базы данных с баллами
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        userPoints: {
+          select: {
+            points: true,
+          },
+        },
+      },
     });
 
-    console.log(
-      'Текущие баллы пользователя:',
-      userPoints ? userPoints.points : 'запись не найдена'
-    );
-
-    if (userPoints) {
-      console.log(
-        'Детали записи о баллах:',
-        JSON.stringify(userPoints, null, 2)
-      );
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
     }
 
-    // Если у пользователя нет записи о баллах, создаем её с 1 баллом
-    if (!userPoints) {
-      console.log('Создаем новую запись с 1 баллом');
-      try {
-        userPoints = await withPrisma(async (prisma) => {
-          return await prisma.userPoints.create({
-            data: {
-              userId: session.user.id,
-              points: 1,
-            },
-          });
-        });
-        console.log(
-          'Запись успешно создана:',
-          JSON.stringify(userPoints, null, 2)
-        );
-      } catch (createError) {
-        console.error('Ошибка при создании записи о баллах:', createError);
-        throw createError;
-      }
-    }
-    // Если у пользователя есть запись о баллах, но баллов 0, обновляем до 1
-    else if (userPoints.points === 0) {
-      console.log('Обновляем баллы с 0 до 1');
-      try {
-        userPoints = await withPrisma(async (prisma) => {
-          return await prisma.userPoints.update({
-            where: { userId: session.user.id },
-            data: {
-              points: 1,
-            },
-          });
-        });
-        console.log(
-          'Запись успешно обновлена:',
-          JSON.stringify(userPoints, null, 2)
-        );
-      } catch (updateError) {
-        console.error('Ошибка при обновлении баллов:', updateError);
-        throw updateError;
-      }
+    // Получаем баллы из связанной таблицы UserPoints
+    // Если записи нет, создаем её с 0 баллами
+    let points = 0;
+    if (user.userPoints) {
+      points = user.userPoints.points;
+    } else {
+      // Создаем запись баллов для пользователя, если её нет
+      const newUserPoints = await prisma.userPoints.create({
+        data: {
+          userId: user.id,
+          points: 0,
+        },
+      });
+      points = newUserPoints.points;
     }
 
-    console.log('Итоговые баллы пользователя:', userPoints.points);
-
+    // Возвращаем баллы пользователя
     return res.status(200).json({
-      points: userPoints.points,
-      userId: userPoints.userId,
-      createdAt: userPoints.createdAt,
-      updatedAt: userPoints.updatedAt,
+      points: points,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
     });
   } catch (error) {
     console.error('Ошибка при получении баллов пользователя:', error);
-    return res
-      .status(500)
-      .json({ message: 'Ошибка сервера при получении баллов пользователя' });
+    return res.status(500).json({
+      error: 'Внутренняя ошибка сервера',
+      details:
+        process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 }
