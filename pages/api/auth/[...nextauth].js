@@ -1,3 +1,16 @@
+/**
+ * NextAuth.js конфигурация с DATABASE стратегией сессий
+ *
+ * ВАЖНО: Используется database стратегия сессий с PrismaAdapter
+ * - Сессии хранятся в базе данных (таблица Session)
+ * - Более надежно для production окружения
+ * - Автоматическая очистка истекших сессий
+ * - Поддержка связывания аккаунтов по email
+ *
+ * ИСПРАВЛЕН КОНФЛИКТ: Удален 'strategy: jwt' из секции session
+ * для устранения конфликта с PrismaAdapter (database стратегия)
+ */
+
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
@@ -386,15 +399,15 @@ export const authOptions = {
     }),
   ],
   callbacks: {
+    // JWT callback не используется при database стратегии
+    // Оставляем для совместимости, но он не будет вызываться
     async jwt({ token, user, account }) {
-      // Если есть объект пользователя (при первом входе), добавляем данные в токен
       if (user) {
         token.role = user.role;
         token.userId = user.id;
         token.provider = account?.provider;
       }
 
-      // Добавляем информацию о провайдере для отслеживания
       if (account) {
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
@@ -402,22 +415,99 @@ export const authOptions = {
 
       return token;
     },
-    async session({ session, token, user }) {
-      // Добавляем данные пользователя в объект сессии
-      if (user) {
-        session.user.id = user.id;
-        session.user.role = user.role;
-      } else if (token) {
-        session.user.id = token.userId;
-        session.user.role = token.role;
-        session.user.provider = token.provider;
-        session.user.providerAccountId = token.providerAccountId;
+    async session({ session, user }) {
+      const timestamp = new Date().toISOString();
+
+      try {
+        console.log(`[SESSION_DEBUG] ${timestamp} Session callback начат`, {
+          hasSession: !!session,
+          hasUser: !!user,
+          sessionUserId: session?.user?.id,
+          userFromDb: user?.id,
+        });
+
+        // При database стратегии используем объект user из базы данных
+        // Объект token недоступен при database стратегии
+        if (user) {
+          // Защищенное присвоение с fallback значениями
+          if (session && session.user) {
+            session.user.id = user.id || session.user.id;
+            session.user.role = user.role || 'user';
+
+            // Получаем информацию о провайдере из связанных аккаунтов
+            try {
+              console.log(
+                `[SESSION_DEBUG] ${timestamp} Получение информации о провайдере для пользователя ${user.id}`
+              );
+
+              const accounts = await prisma.account.findMany({
+                where: { userId: user.id },
+                select: { provider: true, providerAccountId: true },
+              });
+
+              if (accounts && accounts.length > 0) {
+                session.user.provider = accounts[0].provider || 'unknown';
+                session.user.providerAccountId =
+                  accounts[0].providerAccountId || null;
+
+                console.log(
+                  `[SESSION_DEBUG] ${timestamp} Провайдер найден: ${accounts[0].provider}`
+                );
+              } else {
+                console.log(
+                  `[SESSION_DEBUG] ${timestamp} Провайдер не найден, используем fallback`
+                );
+                session.user.provider = 'unknown';
+                session.user.providerAccountId = null;
+              }
+            } catch (error) {
+              console.error(
+                `[SESSION_DEBUG] ${timestamp} Ошибка получения информации о провайдере:`,
+                error
+              );
+              // Fallback значения при ошибке database запроса
+              session.user.provider = 'unknown';
+              session.user.providerAccountId = null;
+            }
+          } else {
+            console.error(
+              `[SESSION_DEBUG] ${timestamp} Поврежденный объект session или session.user`
+            );
+          }
+        } else {
+          console.log(
+            `[SESSION_DEBUG] ${timestamp} Объект user отсутствует в session callback`
+          );
+        }
+
+        // Добавляем метку времени для предотвращения кэширования
+        if (session) {
+          session.timestamp = Date.now();
+        }
+
+        console.log(
+          `[SESSION_DEBUG] ${timestamp} Session callback завершен успешно`
+        );
+        return session;
+      } catch (error) {
+        console.error(
+          `[SESSION_DEBUG] ${timestamp} Критическая ошибка в session callback:`,
+          error
+        );
+
+        // Возвращаем минимально работоспособную сессию при критической ошибке
+        if (session) {
+          session.timestamp = Date.now();
+          if (session.user && !session.user.role) {
+            session.user.role = 'user';
+          }
+          if (session.user && !session.user.provider) {
+            session.user.provider = 'unknown';
+          }
+        }
+
+        return session;
       }
-
-      // Добавляем метку времени для предотвращения кэширования
-      session.timestamp = Date.now();
-
-      return session;
     },
     async signIn({ user, account, profile, email, credentials }) {
       try {
@@ -616,7 +706,8 @@ export const authOptions = {
     // signOut: '/auth/signout', // Опционально: страница выхода
   },
   session: {
-    strategy: 'jwt', // Используем JWT для сессий
+    // Используем database стратегию (по умолчанию с PrismaAdapter)
+    // Удален 'strategy: jwt' для устранения конфликта с PrismaAdapter
     maxAge: 24 * 60 * 60, // 24 часа
   },
   secret: process.env.NEXTAUTH_SECRET,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useNotification } from '../../contexts/NotificationContext';
 import styles from '../../styles/user/UserSettingsModal.module.css';
@@ -32,6 +32,12 @@ export default function UserSettingsModal({ isOpen, onClose }) {
 
   // Состояние загрузки аватарки
   const [avatarLoading, setAvatarLoading] = useState(false);
+
+  // Защита от повторных вызовов автогенерации
+  const isGeneratingRef = useRef(false);
+  const lastSessionImageRef = useRef(null);
+  const autoGenerationAttemptedRef = useRef(false);
+  const lastUserIdRef = useRef(null);
 
   // Состояние смены пароля
   const [passwordSettings, setPasswordSettings] = useState({
@@ -85,7 +91,50 @@ export default function UserSettingsModal({ isOpen, onClose }) {
 
   // Инициализация настроек профиля из сессии
   useEffect(() => {
+    const timestamp = new Date().toISOString();
+    console.log(
+      `[AVATAR_DEBUG] ${timestamp} UserSettingsModal useEffect автогенерации вызван`,
+      {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        sessionUser: session?.user,
+        isGenerating: isGeneratingRef.current,
+        lastSessionImage: lastSessionImageRef.current,
+        currentSessionImage: session?.user?.image,
+        autoGenerationAttempted: autoGenerationAttemptedRef.current,
+        lastUserId: lastUserIdRef.current,
+        currentUserId: session?.user?.id,
+        reason: 'Инициализация настроек профиля из сессии',
+      }
+    );
+
     if (session?.user) {
+      const currentUserId = session.user.id;
+      const currentImage = session.user.image;
+
+      // Проверяем, сменился ли пользователь
+      const userChanged = lastUserIdRef.current !== currentUserId;
+
+      // Если пользователь сменился, сбрасываем флаг автогенерации
+      if (userChanged) {
+        autoGenerationAttemptedRef.current = false;
+        lastUserIdRef.current = currentUserId;
+        console.log(
+          `[AVATAR_DEBUG] ${timestamp} UserSettingsModal пользователь сменился, сброс флагов`,
+          {
+            oldUserId: lastUserIdRef.current,
+            newUserId: currentUserId,
+            autoGenerationReset: true,
+          }
+        );
+      }
+
+      // Проверяем, изменился ли image в сессии
+      const hasImageChanged = lastSessionImageRef.current !== currentImage;
+
+      // Обновляем ref с текущим значением
+      lastSessionImageRef.current = currentImage;
+
       setProfileSettings((prev) => ({
         ...prev,
         name: session.user.name || '',
@@ -93,44 +142,227 @@ export default function UserSettingsModal({ isOpen, onClose }) {
         avatarPreview: session.user.image || null,
       }));
 
-      // Автоматически генерируем дефолтную аватарку если её нет
-      if (!session.user.image) {
-        console.log('🎨 Автоматическая генерация дефолтной аватарки...');
-        generateDefaultAvatar();
-      }
-    }
-  }, [session]);
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal профиль обновлен`,
+        {
+          name: session.user.name,
+          email: session.user.email,
+          hasImage: !!session.user.image,
+          imageUrl: session.user.image,
+          hasImageChanged,
+          isGenerating: isGeneratingRef.current,
+          userChanged,
+        }
+      );
 
-  // Функция автоматической генерации дефолтной аватарки
+      // Автоматически генерируем дефолтную аватарку только если:
+      // 1. Нет изображения
+      // 2. Не идет процесс генерации
+      // 3. Модальное окно открыто (чтобы избежать ненужных вызовов)
+      // 4. Автогенерация еще не была предпринята для этого пользователя
+      if (
+        !session.user.image &&
+        !isGeneratingRef.current &&
+        isOpen &&
+        !autoGenerationAttemptedRef.current
+      ) {
+        console.log(
+          `[AVATAR_DEBUG] ${timestamp} UserSettingsModal запуск автогенерации`,
+          {
+            userId: session.user.id,
+            userName: session.user.name,
+            userEmail: session.user.email,
+            isGenerating: isGeneratingRef.current,
+            isModalOpen: isOpen,
+            autoGenerationAttempted: autoGenerationAttemptedRef.current,
+            reason: 'Отсутствие session.user.image, запуск автогенерации',
+          }
+        );
+
+        // Устанавливаем флаг попытки автогенерации
+        autoGenerationAttemptedRef.current = true;
+
+        console.log(
+          '🎨 UserSettingsModal: Автоматическая генерация дефолтной аватарки...'
+        );
+        generateDefaultAvatar();
+      } else {
+        console.log(
+          `[AVATAR_DEBUG] ${timestamp} UserSettingsModal автогенерация пропущена`,
+          {
+            hasImage: !!session.user.image,
+            isGenerating: isGeneratingRef.current,
+            isModalOpen: isOpen,
+            autoGenerationAttempted: autoGenerationAttemptedRef.current,
+            imageUrl: session.user.image,
+            reason: 'Автогенерация не требуется или уже выполняется/выполнена',
+          }
+        );
+      }
+    } else {
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal нет сессии или пользователя`,
+        {
+          session: !!session,
+          user: !!session?.user,
+        }
+      );
+
+      // Сбрасываем флаги при отсутствии пользователя
+      autoGenerationAttemptedRef.current = false;
+      lastUserIdRef.current = null;
+    }
+  }, [session?.user?.id, session?.user?.image, isOpen]);
+
+  // Функция автоматической генерации дефолтной аватарки с защитой от повторных вызовов
   const generateDefaultAvatar = async () => {
+    const timestamp = new Date().toISOString();
+
+    // Проверяем, не идет ли уже процесс генерации
+    if (isGeneratingRef.current) {
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal генерация пропущена - уже выполняется`,
+        {
+          isGenerating: isGeneratingRef.current,
+          reason: 'Защита от повторных вызовов',
+        }
+      );
+      return;
+    }
+
+    // Дополнительная проверка - если автогенерация уже была предпринята
+    if (autoGenerationAttemptedRef.current) {
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal генерация пропущена - уже была предпринята`,
+        {
+          autoGenerationAttempted: autoGenerationAttemptedRef.current,
+          reason: 'Защита от повторных попыток автогенерации',
+        }
+      );
+      return;
+    }
+
+    // Устанавливаем флаг генерации
+    isGeneratingRef.current = true;
+
+    console.log(
+      `[AVATAR_DEBUG] ${timestamp} UserSettingsModal generateDefaultAvatar() начата`,
+      {
+        sessionUser: session?.user?.name,
+        sessionEmail: session?.user?.email,
+        sessionId: session?.user?.id,
+        sessionImage: session?.user?.image,
+        isGenerating: isGeneratingRef.current,
+        autoGenerationAttempted: autoGenerationAttemptedRef.current,
+        reason: 'Автоматическая генерация дефолтной аватарки',
+      }
+    );
+
     try {
-      console.log('🎨 Генерируем дефолтную аватарку автоматически...');
+      console.log('🎨 UserSettingsModal: generateDefaultAvatar() вызвана');
+      console.log(
+        '🔄 UserSettingsModal: Отправляем запрос на /api/user/avatar'
+      );
+
+      const requestData = {
+        action: 'generate',
+        name: session?.user?.name || session?.user?.email || 'User',
+      };
+
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal отправка запроса`,
+        {
+          url: '/api/user/avatar',
+          method: 'POST',
+          requestData,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
       const response = await fetch('/api/user/avatar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          action: 'generate',
-          name: session?.user?.name || session?.user?.email || 'User',
-        }),
+        body: JSON.stringify(requestData),
       });
+
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal ответ получен`,
+        {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          headers: Object.fromEntries(response.headers.entries()),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
+        console.log(
+          `[AVATAR_DEBUG] ${timestamp} UserSettingsModal данные ответа`,
+          {
+            success: data.success,
+            hasAvatarUrl: !!data.avatarUrl,
+            avatarUrl: data.avatarUrl,
+            fullData: data,
+          }
+        );
+
         if (data.success && data.avatarUrl) {
           console.log('✅ Дефолтная аватарка сгенерирована:', data.avatarUrl);
           setProfileSettings((prev) => ({
             ...prev,
             avatarPreview: data.avatarUrl,
           }));
+
+          console.log(
+            `[AVATAR_DEBUG] ${timestamp} UserSettingsModal профиль обновлен`,
+            {
+              newAvatarPreview: data.avatarUrl,
+              operation: 'setProfileSettings завершено',
+            }
+          );
+        } else {
+          console.log(
+            `[AVATAR_DEBUG] ${timestamp} UserSettingsModal неуспешный ответ`,
+            {
+              success: data.success,
+              avatarUrl: data.avatarUrl,
+              error: data.error,
+            }
+          );
         }
       } else {
+        const errorData = await response.text();
+        console.log(
+          `[AVATAR_DEBUG] ${timestamp} UserSettingsModal ошибка HTTP`,
+          {
+            status: response.status,
+            statusText: response.statusText,
+            errorData,
+          }
+        );
         console.log('⚠️ Не удалось сгенерировать дефолтную аватарку');
       }
     } catch (error) {
+      console.log(`[AVATAR_DEBUG] ${timestamp} UserSettingsModal исключение`, {
+        error: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
       console.error('❌ Ошибка при автоматической генерации аватарки:', error);
+    } finally {
+      // Сбрасываем флаг генерации в любом случае
+      isGeneratingRef.current = false;
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} UserSettingsModal генерация завершена`,
+        {
+          isGenerating: isGeneratingRef.current,
+          autoGenerationAttempted: autoGenerationAttemptedRef.current,
+          reason: 'Флаг генерации сброшен',
+        }
+      );
     }
   };
 

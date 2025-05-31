@@ -110,7 +110,7 @@ async function handleGetVideoRooms(req, res, user) {
       },
       orderBy: [
         { isActive: 'desc' },
-        { scheduledStartTime: 'asc' },
+        { scheduledStart: 'asc' },
         { createdAt: 'desc' },
       ],
       take: parseInt(limit),
@@ -165,37 +165,115 @@ async function handleCreateVideoRoom(req, res, user) {
     scheduledEndTime,
     recordingEnabled = false,
     settings = {},
+    userId, // Добавляем поддержку userId из запроса
   } = req.body;
 
-  console.log('API video-conferences: Создание новой комнаты', {
-    userId: user.id,
-    name,
-    isPrivate,
-    maxParticipants,
-  });
+  console.log(
+    'API video-conferences: Создание новой комнаты - ДЕТАЛЬНЫЕ ДАННЫЕ',
+    {
+      sessionUserId: user.id,
+      requestUserId: userId,
+      userName: user.name,
+      userEmail: user.email,
+      requestBody: JSON.stringify(req.body, null, 2),
+      extractedFields: {
+        name,
+        description,
+        isPrivate,
+        maxParticipants,
+        scheduledStartTime,
+        scheduledEndTime,
+        recordingEnabled,
+        settings,
+        userId,
+      },
+    }
+  );
 
   // Валидация входных данных
+  console.log('API video-conferences: Начало валидации входных данных');
+
+  // Определяем hostId - используем переданный userId или текущего пользователя
+  const hostId = userId || user.id;
+  console.log('API video-conferences: Определен hostId для комнаты', {
+    hostId,
+    fromRequest: !!userId,
+    sessionUserId: user.id,
+  });
+
+  // Валидация userId если он передан
+  if (userId && userId !== user.id) {
+    console.log(
+      'API video-conferences: ПРЕДУПРЕЖДЕНИЕ - userId отличается от сессии',
+      {
+        requestUserId: userId,
+        sessionUserId: user.id,
+      }
+    );
+
+    // Проверяем, существует ли пользователь с переданным userId
+    const requestedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true },
+    });
+
+    if (!requestedUser) {
+      console.log(
+        'API video-conferences: ОШИБКА ВАЛИДАЦИИ - пользователь не найден',
+        {
+          userId,
+        }
+      );
+      return res.status(400).json({
+        error: 'Указанный пользователь не найден',
+        details: { userId },
+      });
+    }
+
+    console.log('API video-conferences: Пользователь найден', {
+      requestedUser,
+    });
+  }
+
   if (!name || name.trim().length === 0) {
+    console.log(
+      'API video-conferences: ОШИБКА ВАЛИДАЦИИ - отсутствует название комнаты',
+      { name }
+    );
     return res.status(400).json({ error: 'Название комнаты обязательно' });
   }
 
   if (name.length > 100) {
+    console.log(
+      'API video-conferences: ОШИБКА ВАЛИДАЦИИ - название слишком длинное',
+      { nameLength: name.length }
+    );
     return res
       .status(400)
       .json({ error: 'Название комнаты не должно превышать 100 символов' });
   }
 
   if (description && description.length > 500) {
+    console.log(
+      'API video-conferences: ОШИБКА ВАЛИДАЦИИ - описание слишком длинное',
+      { descriptionLength: description.length }
+    );
     return res
       .status(400)
       .json({ error: 'Описание не должно превышать 500 символов' });
   }
 
   if (maxParticipants < 2 || maxParticipants > 100) {
+    console.log(
+      'API video-conferences: ОШИБКА ВАЛИДАЦИИ - неверное количество участников',
+      { maxParticipants }
+    );
     return res
       .status(400)
       .json({ error: 'Количество участников должно быть от 2 до 100' });
   }
+
+  console.log('API video-conferences: Базовая валидация пройдена успешно');
 
   if (scheduledStartTime && scheduledEndTime) {
     const startTime = new Date(scheduledStartTime);
@@ -208,37 +286,111 @@ async function handleCreateVideoRoom(req, res, user) {
     }
   }
 
-  // Проверяем, что время начала в будущем
+  // Проверяем, что время начала в будущем с улучшенной валидацией
   if (scheduledStartTime) {
     const startTime = new Date(scheduledStartTime);
     const now = new Date();
+    const bufferMinutes = 1; // Буферное время в минутах
+    const minValidTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
 
-    if (startTime <= now) {
-      return res
-        .status(400)
-        .json({ error: 'Время начала должно быть в будущем' });
+    // Детальное логирование для диагностики
+    console.log('API video-conferences: Валидация времени начала', {
+      originalInput: scheduledStartTime,
+      parsedStartTime: startTime.toISOString(),
+      currentServerTime: now.toISOString(),
+      minValidTime: minValidTime.toISOString(),
+      startTimeLocal: startTime.toLocaleString('ru-RU', {
+        timeZone: 'Europe/Moscow',
+      }),
+      currentTimeLocal: now.toLocaleString('ru-RU', {
+        timeZone: 'Europe/Moscow',
+      }),
+      differenceMinutes: (
+        (startTime.getTime() - now.getTime()) /
+        (1000 * 60)
+      ).toFixed(2),
+      isValid: startTime >= minValidTime,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+
+    if (startTime < minValidTime) {
+      const errorMessage = `Время начала должно быть минимум через ${bufferMinutes} минуту в будущем`;
+      console.log(
+        'API video-conferences: КРИТИЧЕСКАЯ ОШИБКА ВАЛИДАЦИИ ВРЕМЕНИ',
+        {
+          error: errorMessage,
+          originalInput: scheduledStartTime,
+          startTime: startTime.toISOString(),
+          minValidTime: minValidTime.toISOString(),
+          currentTime: now.toISOString(),
+          differenceMinutes: (
+            (startTime.getTime() - now.getTime()) /
+            (1000 * 60)
+          ).toFixed(2),
+          startTimeLocal: startTime.toLocaleString('ru-RU', {
+            timeZone: 'Europe/Moscow',
+          }),
+          currentTimeLocal: now.toLocaleString('ru-RU', {
+            timeZone: 'Europe/Moscow',
+          }),
+          bufferMinutes,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          requestHeaders: {
+            'user-agent': req.headers['user-agent'],
+            'content-type': req.headers['content-type'],
+          },
+        }
+      );
+
+      return res.status(400).json({
+        error: errorMessage,
+        details: {
+          scheduledTime: startTime.toISOString(),
+          currentTime: now.toISOString(),
+          minValidTime: minValidTime.toISOString(),
+          differenceMinutes: (
+            (startTime.getTime() - now.getTime()) /
+            (1000 * 60)
+          ).toFixed(2),
+        },
+      });
     }
+
+    console.log('API video-conferences: Валидация времени пройдена успешно');
   }
 
   try {
+    console.log('API video-conferences: Начало создания комнаты в базе данных');
+
     // Генерируем уникальный код комнаты
     const roomCode = await generateUniqueRoomCode();
+    console.log('API video-conferences: Сгенерирован код комнаты:', roomCode);
+
+    const createData = {
+      name: name.trim(),
+      description: description?.trim(),
+      hostId: hostId, // Используем определенный hostId
+      code: roomCode,
+      isPrivate,
+      maxParticipants,
+      scheduledStart: scheduledStartTime ? new Date(scheduledStartTime) : null,
+      scheduledEnd: scheduledEndTime ? new Date(scheduledEndTime) : null,
+      recordingEnabled,
+      settings,
+    };
+
+    console.log('API video-conferences: Данные для создания комнаты:', {
+      createData: JSON.stringify(createData, null, 2),
+      scheduledStartParsed: scheduledStartTime
+        ? new Date(scheduledStartTime).toISOString()
+        : null,
+      scheduledEndParsed: scheduledEndTime
+        ? new Date(scheduledEndTime).toISOString()
+        : null,
+    });
 
     const room = await prisma.videoRoom.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim(),
-        hostId: user.id,
-        roomCode,
-        isPrivate,
-        maxParticipants,
-        scheduledStartTime: scheduledStartTime
-          ? new Date(scheduledStartTime)
-          : null,
-        scheduledEndTime: scheduledEndTime ? new Date(scheduledEndTime) : null,
-        recordingEnabled,
-        settings,
-      },
+      data: createData,
       include: {
         host: {
           select: {
@@ -257,7 +409,9 @@ async function handleCreateVideoRoom(req, res, user) {
 
     console.log('API video-conferences: Комната создана успешно', {
       roomId: room.id,
-      roomCode: room.roomCode,
+      roomCode: room.code,
+      scheduledStart: room.scheduledStart,
+      createdAt: room.createdAt,
     });
 
     return res.status(201).json({
@@ -270,7 +424,29 @@ async function handleCreateVideoRoom(req, res, user) {
       message: 'Видеоконференция успешно создана',
     });
   } catch (error) {
-    console.error('Ошибка при создании комнаты:', error);
+    console.error(
+      'API video-conferences: КРИТИЧЕСКАЯ ОШИБКА при создании комнаты:',
+      {
+        error: error.message,
+        stack: error.stack,
+        code: error.code,
+        meta: error.meta,
+        name: error.name,
+        requestData: {
+          name,
+          description,
+          isPrivate,
+          maxParticipants,
+          scheduledStartTime,
+          scheduledEndTime,
+          recordingEnabled,
+          settings,
+        },
+        userId: user.id,
+        isPrismaError: error.name?.includes('Prisma'),
+        isValidationError: error.code === 'P2002' || error.code === 'P2003',
+      }
+    );
     throw error;
   }
 }
@@ -293,7 +469,7 @@ async function generateUniqueRoomCode() {
 
     // Проверяем уникальность
     const existingRoom = await prisma.videoRoom.findUnique({
-      where: { roomCode },
+      where: { code: roomCode },
     });
 
     if (!existingRoom) {

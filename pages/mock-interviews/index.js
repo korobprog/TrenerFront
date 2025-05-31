@@ -48,11 +48,22 @@ export default function MockInterviews() {
         statusText: response.statusText,
       });
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить собеседования');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message || data.error || 'Не удалось загрузить собеседования';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для просмотра собеседований');
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       setInterviews(data);
       // Убрано уведомление об успешной загрузке, чтобы не показывать его слишком часто
     } catch (err) {
@@ -93,18 +104,31 @@ export default function MockInterviews() {
         statusText: response.statusText,
       });
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить баллы пользователя');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось загрузить баллы пользователя';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для просмотра баллов');
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       console.log('Полный ответ API:', JSON.stringify(data, null, 2));
       console.log('Получены баллы пользователя:', data.points);
       setUserPoints(data.points);
     } catch (err) {
       console.error('Ошибка при загрузке баллов:', err);
       console.error('Детали ошибки:', err.stack);
-      showError('Не удалось загрузить баллы пользователя');
+      showError('Не удалось загрузить баллы пользователя: ' + err.message);
     }
   }
 
@@ -112,14 +136,8 @@ export default function MockInterviews() {
     router.push('/mock-interviews/new');
   }
 
-  function handleBookInterview(interviewId) {
-    if (userPoints < 1) {
-      showInfo('Для записи на собеседование необходимо минимум 1 балл');
-      return;
-    }
-
-    router.push(`/mock-interviews/${interviewId}/book`);
-  }
+  // Эта функция больше не нужна, так как логика записи обрабатывается в InterviewBoard
+  // Удаляем неправильную функцию, которая перенаправляла на несуществующую страницу
 
   return (
     <div className={styles.container}>

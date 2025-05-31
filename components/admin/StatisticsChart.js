@@ -23,7 +23,30 @@ export default function StatisticsChart({ statistics }) {
 
   // Создаем и обновляем графики при изменении данных
   useEffect(() => {
-    if (!statistics || statistics.length === 0) return;
+    // ДИАГНОСТИЧЕСКИЕ ЛОГИ
+    console.log(
+      '📊 ДИАГНОСТИКА StatisticsChart: Получены statistics:',
+      statistics
+    );
+    console.log(
+      '📊 ДИАГНОСТИКА StatisticsChart: Тип statistics:',
+      typeof statistics
+    );
+    console.log(
+      '📊 ДИАГНОСТИКА StatisticsChart: Array.isArray(statistics):',
+      Array.isArray(statistics)
+    );
+    console.log(
+      '📊 ДИАГНОСТИКА StatisticsChart: statistics.length:',
+      statistics?.length
+    );
+
+    if (!statistics || statistics.length === 0) {
+      console.log(
+        '📊 ДИАГНОСТИКА StatisticsChart: Нет данных для отображения - statistics пустой или undefined'
+      );
+      return;
+    }
 
     // Подготавливаем данные для графиков
     const dates = statistics.map((stat) =>

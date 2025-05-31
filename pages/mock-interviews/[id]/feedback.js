@@ -25,11 +25,24 @@ export default function LeaveFeedback() {
       setIsLoading(true);
       const response = await fetch(`/api/mock-interviews/${id}`);
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить информацию о собеседовании');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось загрузить информацию о собеседовании';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для просмотра собеседования');
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       setInterview(data);
 
       // Проверяем, является ли пользователь интервьюером

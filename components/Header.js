@@ -6,6 +6,7 @@ import styles from '../styles/Header.module.css';
 import ThemeToggle from './ThemeToggle';
 import Logo from './Logo';
 import MobileMenu from './MobileMenu';
+import { isAdmin } from '../lib/utils/roleUtils';
 
 /**
  * Компонент шапки сайта с отображением баллов пользователя
@@ -53,11 +54,26 @@ export default function Header() {
     setIsLoading(true);
     try {
       const response = await fetch('/api/user/points');
+
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить баллы пользователя');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось загрузить баллы пользователя';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          console.warn('Необходима авторизация для просмотра баллов');
+          return; // Не показываем ошибку в Header для 401, просто не загружаем баллы
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       setUserPoints(data.points);
     } catch (error) {
       console.error('Ошибка при загрузке баллов пользователя:', error);
@@ -259,7 +275,7 @@ export default function Header() {
                       </svg>
                       Настройки пользователя
                     </Link>
-                    {session.user.role === 'superadmin' && (
+                    {isAdmin(session.user) && (
                       <>
                         <div className={styles.menuDivider}></div>
                         <Link href="/admin" className={styles.menuItem}>

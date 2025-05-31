@@ -2,6 +2,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import prisma from '../../../lib/prisma';
 
+// Кэш для предотвращения одновременных запросов генерации от одного пользователя
+const generationCache = new Map();
+
 /**
  * API роут для управления аватаркой пользователя
  * GET /api/user/avatar - получить текущую аватарку пользователя
@@ -13,6 +16,15 @@ import prisma from '../../../lib/prisma';
  *   - action: 'url' - сохранить URL аватарки
  */
 export default async function handler(req, res) {
+  const timestamp = new Date().toISOString();
+  console.log(`[AVATAR_DEBUG] ${timestamp} Avatar API вызван`, {
+    method: req.method,
+    url: req.url,
+    userAgent: req.headers['user-agent']?.substring(0, 50),
+    contentType: req.headers['content-type'],
+    reason: 'Входящий запрос к Avatar API',
+  });
+
   try {
     console.log('🔍 Avatar API вызван:', {
       method: req.method,
@@ -27,7 +39,34 @@ export default async function handler(req, res) {
     // Получаем сессию пользователя
     const session = await getServerSession(req, res, authOptions);
 
+    try {
+      console.log(`[AVATAR_DEBUG] ${timestamp} Avatar API проверка сессии`, {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        hasUserId: !!session?.user?.id,
+        sessionUser: session?.user
+          ? {
+              id: session.user.id || 'не указано',
+              name: session.user.name || 'не указано',
+              email: session.user.email || 'не указано',
+              image: session.user.image || 'не указано',
+            }
+          : 'отсутствует',
+      });
+    } catch (logError) {
+      console.error(
+        `[AVATAR_DEBUG] ${timestamp} Ошибка логирования проверки сессии:`,
+        logError
+      );
+    }
+
     if (!session?.user?.id) {
+      console.log(`[AVATAR_DEBUG] ${timestamp} Avatar API отказ в доступе`, {
+        reason: 'Отсутствует сессия или ID пользователя',
+        session: !!session,
+        user: !!session?.user,
+        userId: session?.user?.id,
+      });
       console.log('❌ Нет авторизации');
       return res.status(401).json({
         success: false,
@@ -36,10 +75,26 @@ export default async function handler(req, res) {
     }
 
     const userId = session.user.id;
-    console.log('✅ Пользователь авторизован:', {
-      userId,
-      userName: session.user.name,
-    });
+    try {
+      console.log(
+        `[AVATAR_DEBUG] ${timestamp} Avatar API пользователь авторизован`,
+        {
+          userId,
+          userName: session?.user?.name || 'не указано',
+          userEmail: session?.user?.email || 'не указано',
+          userImage: session?.user?.image || 'не указано',
+        }
+      );
+      console.log('✅ Пользователь авторизован:', {
+        userId,
+        userName: session?.user?.name || 'не указано',
+      });
+    } catch (logError) {
+      console.error(
+        `[AVATAR_DEBUG] ${timestamp} Ошибка логирования авторизации:`,
+        logError
+      );
+    }
 
     if (req.method === 'GET') {
       // Получение текущей аватарки
@@ -191,40 +246,160 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      console.log(`[AVATAR_DEBUG] ${timestamp} Avatar API POST обработка`, {
+        hasBody: !!req.body,
+        bodyKeys: req.body ? Object.keys(req.body) : [],
+        action: req.body?.action,
+        reason: 'Обработка POST запроса',
+      });
+
       // Обработка POST запросов (генерация, загрузка, сохранение URL)
       try {
         console.log('📝 POST запрос получен:', req.body);
 
         const { action } = req.body;
 
-        if (action === 'generate') {
-          // Генерация аватарки с инициалами
-          const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { name: true, email: true },
-          });
+        console.log(
+          `[AVATAR_DEBUG] ${timestamp} Avatar API действие определено`,
+          {
+            action,
+            supportedActions: ['generate', 'upload', 'url'],
+          }
+        );
 
-          if (!user) {
-            return res.status(404).json({
-              success: false,
-              error: 'Пользователь не найден',
-            });
+        if (action === 'generate') {
+          // Проверяем, не идет ли уже генерация для этого пользователя
+          const cacheKey = `generate_${userId}`;
+          if (generationCache.has(cacheKey)) {
+            const cachedPromise = generationCache.get(cacheKey);
+            console.log(
+              `[AVATAR_DEBUG] ${timestamp} Avatar API возврат кэшированного результата`,
+              {
+                userId,
+                cacheKey,
+                reason: 'Защита от одновременных запросов генерации',
+              }
+            );
+
+            try {
+              const result = await cachedPromise;
+              return res.status(200).json(result);
+            } catch (error) {
+              // Если кэшированный запрос завершился ошибкой, удаляем из кэша и продолжаем
+              generationCache.delete(cacheKey);
+            }
           }
 
-          const name = req.body.name || user.name || user.email;
-          const initials = getInitials(name);
-          const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-            initials
-          )}&backgroundColor=3b82f6&textColor=ffffff`;
+          console.log(
+            `[AVATAR_DEBUG] ${timestamp} Avatar API генерация начата`,
+            {
+              userId,
+              requestName: req.body.name,
+              cacheKey,
+              reason: 'Запрос на генерацию аватара с инициалами',
+            }
+          );
 
-          console.log('✅ Аватарка сгенерирована:', { initials, avatarUrl });
+          // Создаем промис для генерации и кэшируем его
+          const generationPromise = (async () => {
+            try {
+              // Генерация аватарки с инициалами
+              const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, email: true, image: true },
+              });
 
-          return res.status(200).json({
-            success: true,
-            message: 'Аватарка успешно сгенерирована',
-            avatarUrl: avatarUrl,
-            initials: initials,
-          });
+              console.log(
+                `[AVATAR_DEBUG] ${timestamp} Avatar API пользователь из БД`,
+                {
+                  found: !!user,
+                  userName: user?.name,
+                  userEmail: user?.email,
+                  hasExistingImage: !!user?.image,
+                }
+              );
+
+              if (!user) {
+                console.log(
+                  `[AVATAR_DEBUG] ${timestamp} Avatar API пользователь не найден`,
+                  {
+                    userId,
+                    reason: 'Пользователь отсутствует в базе данных',
+                  }
+                );
+                throw new Error('Пользователь не найден');
+              }
+
+              // Если у пользователя уже есть аватар, не генерируем новый
+              if (user.image) {
+                console.log(
+                  `[AVATAR_DEBUG] ${timestamp} Avatar API аватар уже существует`,
+                  {
+                    userId,
+                    existingImage: user.image,
+                    reason:
+                      'Пользователь уже имеет аватар, генерация не требуется',
+                  }
+                );
+                return {
+                  success: true,
+                  message: 'Аватар уже существует',
+                  avatarUrl: user.image,
+                  alreadyExists: true,
+                };
+              }
+
+              const name = req.body.name || user.name || user.email;
+              const initials = getInitials(name);
+              const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                initials
+              )}&backgroundColor=3b82f6&textColor=ffffff`;
+
+              console.log(
+                `[AVATAR_DEBUG] ${timestamp} Avatar API аватар сгенерирован`,
+                {
+                  inputName: name,
+                  generatedInitials: initials,
+                  avatarUrl,
+                  diceBearSeed: encodeURIComponent(initials),
+                  operation: 'Генерация завершена успешно',
+                }
+              );
+
+              console.log('✅ Аватарка сгенерирована:', {
+                initials,
+                avatarUrl,
+              });
+
+              return {
+                success: true,
+                message: 'Аватарка успешно сгенерирована',
+                avatarUrl: avatarUrl,
+                initials: initials,
+              };
+            } finally {
+              // Удаляем из кэша после завершения (успешного или с ошибкой)
+              generationCache.delete(cacheKey);
+              console.log(`[AVATAR_DEBUG] ${timestamp} Avatar API кэш очищен`, {
+                cacheKey,
+                reason: 'Генерация завершена',
+              });
+            }
+          })();
+
+          // Кэшируем промис
+          generationCache.set(cacheKey, generationPromise);
+
+          try {
+            const result = await generationPromise;
+            return res.status(200).json(result);
+          } catch (error) {
+            console.error('Ошибка при генерации аватара:', error);
+            return res.status(500).json({
+              success: false,
+              error: error.message || 'Ошибка при генерации аватара',
+            });
+          }
         } else if (action === 'upload') {
           // Обработка загрузки файла (пока заглушка)
           return res.status(400).json({

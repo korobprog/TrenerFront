@@ -245,10 +245,10 @@ export default function InterviewsList({
 
       <div className={styles.paginationWrapper}>
         <AdminPagination
-          currentPage={pagination.page}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.total}
-          pageSize={pagination.limit}
+          currentPage={pagination?.page || 1}
+          totalPages={pagination?.pages || pagination?.totalPages || 0}
+          totalItems={pagination?.total || 0}
+          pageSize={pagination?.limit || 10}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
         />

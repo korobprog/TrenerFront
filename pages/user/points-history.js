@@ -45,11 +45,27 @@ export default function PointsHistory() {
       });
 
       const response = await fetch(`/api/user/points-history?${queryParams}`);
+
+      // Парсим JSON ответ независимо от статуса
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить историю транзакций');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          result.message ||
+          result.error ||
+          'Не удалось загрузить историю транзакций';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error(
+            'Необходима авторизация для просмотра истории баллов'
+          );
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
       if (result.success && result.data) {
         setTransactions(result.data.transactions);
         setTotalCount(result.data.pagination.totalCount);

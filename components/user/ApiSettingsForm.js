@@ -76,62 +76,6 @@ export default function ApiSettingsForm({
             <div className={styles.radioOption}>
               <input
                 type="radio"
-                id="apiTypeGemini"
-                name="apiType"
-                value="gemini"
-                checked={settings.apiType === 'gemini'}
-                onChange={handleChange}
-                className={styles.radioInput}
-              />
-              <label htmlFor="apiTypeGemini" className={styles.radioLabel}>
-                Google Gemini API
-              </label>
-            </div>
-            <div className={styles.radioOption}>
-              <input
-                type="radio"
-                id="apiTypeAnthropic"
-                name="apiType"
-                value="anthropic"
-                checked={settings.apiType === 'anthropic'}
-                onChange={handleChange}
-                className={styles.radioInput}
-              />
-              <label htmlFor="apiTypeAnthropic" className={styles.radioLabel}>
-                Anthropic API
-              </label>
-            </div>
-            <div className={styles.radioOption}>
-              <input
-                type="radio"
-                id="apiTypeLangdock"
-                name="apiType"
-                value="langdock"
-                checked={settings.apiType === 'langdock'}
-                onChange={handleChange}
-                className={styles.radioInput}
-              />
-              <label htmlFor="apiTypeLangdock" className={styles.radioLabel}>
-                LangDock API
-              </label>
-            </div>
-            <div className={styles.radioOption}>
-              <input
-                type="radio"
-                id="apiTypeHuggingface"
-                name="apiType"
-                value="huggingface"
-                checked={settings.apiType === 'huggingface'}
-                onChange={handleChange}
-                className={styles.radioInput}
-              />
-              <label htmlFor="apiTypeHuggingface" className={styles.radioLabel}>
-                Hugging Face API
-              </label>
-            </div>
-            <div className={styles.radioOption}>
-              <input
-                type="radio"
                 id="apiTypeOpenRouter"
                 name="apiType"
                 value="openrouter"

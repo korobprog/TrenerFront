@@ -458,6 +458,16 @@ export default function UserDetails({ user, onEdit }) {
       </div>
 
       {/* Модальное окно редактирования баллов */}
+      {/* 🔍 ДИАГНОСТИКА: Логируем user перед передачей в PointsEditModal */}
+      {console.log(
+        '🔍 ДИАГНОСТИКА UserDetails: user объект перед передачей в PointsEditModal:',
+        user
+      )}
+      {console.log('🔍 ДИАГНОСТИКА UserDetails: user.id:', user?.id)}
+      {console.log(
+        '🔍 ДИАГНОСТИКА UserDetails: typeof user?.id:',
+        typeof user?.id
+      )}
       <PointsEditModal
         isOpen={isPointsEditModalOpen}
         onClose={() => setIsPointsEditModalOpen(false)}

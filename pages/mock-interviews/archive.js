@@ -28,11 +28,26 @@ export default function ArchivedInterviews() {
       // Используем параметр status=archived для получения архивных собеседований
       const response = await fetch('/api/mock-interviews?status=archived');
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить архивные собеседования');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось загрузить архивные собеседования';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error(
+            'Необходима авторизация для просмотра архива собеседований'
+          );
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       setInterviews(data);
       // Убрано уведомление об успешной загрузке, чтобы не показывать его слишком часто
     } catch (err) {
@@ -46,15 +61,28 @@ export default function ArchivedInterviews() {
     try {
       const response = await fetch('/api/user/points');
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Не удалось загрузить баллы пользователя');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message ||
+          data.error ||
+          'Не удалось загрузить баллы пользователя';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для просмотра баллов');
+        }
+
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
       setUserPoints(data.points);
     } catch (err) {
       console.error('Ошибка при загрузке баллов:', err);
-      showError('Не удалось загрузить баллы пользователя');
+      showError('Не удалось загрузить баллы пользователя: ' + err.message);
     }
   }
 

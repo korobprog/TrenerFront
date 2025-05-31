@@ -1,0 +1,307 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  /* CSS переменные перенесены из :root */
+  --accent-color-rgb: 0, 123, 255;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.8rem;
+  text-align: center;
+  color: var(--text-primary, #333);
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--text-secondary, #6c757d);
+  line-height: 1.5;
+}
+
+.typesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.typeCard {
+  background: white;
+  border: 2px solid var(--border-color, #e9ecef);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.typeCard:hover {
+  border-color: var(--accent-color, #007bff);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.typeCard.selected {
+  border-color: var(--accent-color, #007bff);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-color-rgb, 0, 123, 255), 0.05) 0%,
+    rgba(var(--accent-color-rgb, 0, 123, 255), 0.02) 100%
+  );
+  box-shadow: 0 4px 20px rgba(var(--accent-color-rgb, 0, 123, 255), 0.2);
+}
+
+.typeCard.hovered {
+  border-color: var(--accent-color, #007bff);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.iconContainer {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    var(--accent-color, #007bff),
+    rgba(var(--accent-color-rgb, 0, 123, 255), 0.8)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(var(--accent-color-rgb, 0, 123, 255), 0.3);
+}
+
+.icon {
+  font-size: 1.5rem;
+  filter: brightness(0) invert(1);
+}
+
+.cardTitle {
+  flex: 1;
+}
+
+.cardTitle h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.cardDescription {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #6c757d);
+  line-height: 1.4;
+}
+
+.features {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.featuresTitle {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6c757d);
+  line-height: 1.3;
+}
+
+.featureIcon {
+  color: var(--accent-color, #007bff);
+  font-weight: bold;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.selectIndicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.typeCard.selected .selectIndicator {
+  opacity: 1;
+}
+
+.selectedBadge {
+  background: var(--accent-color, #007bff);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 8px rgba(var(--accent-color-rgb, 0, 123, 255), 0.3);
+}
+
+.selectedIcon {
+  font-size: 0.7rem;
+}
+
+.hint {
+  text-align: center;
+  color: var(--warning-color, #ffc107);
+  font-size: 0.9rem;
+  padding: 0.75rem;
+  background: var(--warning-color-light, #fff3cd);
+  border: 1px solid var(--warning-color-light, #fff3cd);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.nextButton {
+  background-color: var(--primary-color, #007bff);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.nextButton:hover:not(:disabled) {
+  background-color: var(--primary-color-dark, #0056b3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.nextButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.nextButton:disabled {
+  background-color: var(--text-secondary, #6c757d);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Мобильная адаптивность */
+@media (max-width: 768px) {
+  .typesGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .typeCard {
+    padding: 1.25rem;
+    min-height: 240px;
+  }
+
+  .cardHeader {
+    gap: 0.75rem;
+  }
+
+  .iconContainer {
+    width: 40px;
+    height: 40px;
+  }
+
+  .icon {
+    font-size: 1.25rem;
+  }
+
+  .cardTitle h3 {
+    font-size: 1.1rem;
+  }
+
+  .cardDescription {
+    font-size: 0.85rem;
+  }
+
+  .feature {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    gap: 1.5rem;
+  }
+
+  .typeCard {
+    padding: 1rem;
+    min-height: 220px;
+  }
+
+  .title {
+    font-size: 1.3rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .nextButton {
+    width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* CSS переменные для разных цветов акцента */
+.container .typeCard {
+  --accent-color-rgb: 0, 123, 255; /* По умолчанию синий */
+}
+
+/* Переопределение для Google цвета */
+.container .typeCard.googleColor {
+  --accent-color-rgb: 66, 133, 244;
+}
+
+/* Переопределение для зеленого цвета */
+.container .typeCard.greenColor {
+  --accent-color-rgb: 40, 167, 69;
+}

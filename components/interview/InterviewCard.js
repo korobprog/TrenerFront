@@ -78,9 +78,20 @@ export default function InterviewCard({
         }
       );
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Ошибка при отметке неявки');
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message || data.error || 'Ошибка при отметке неявки';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для отметки неявки');
+        }
+
+        throw new Error(errorMessage);
       }
 
       // Обновляем страницу после успешной отметки неявки
@@ -130,7 +141,7 @@ export default function InterviewCard({
         </div>
         <div className={styles.statusBadge} data-status={interview.status}>
           {interview.status === 'pending' && 'Ожидает записи'}
-          {interview.status === 'booked' && 'Забронировано'}
+          {interview.status === 'scheduled' && 'Зарезервировано'}
           {interview.status === 'completed' && 'Завершено'}
           {interview.status === 'cancelled' && 'Отменено'}
           {interview.status === 'no_show' && 'Неявка'}
@@ -181,7 +192,7 @@ export default function InterviewCard({
           </button>
         )}
 
-        {interview.status === 'booked' &&
+        {interview.status === 'scheduled' &&
           isInterviewer &&
           !interview.interviewFeedback && (
             <button
@@ -195,8 +206,8 @@ export default function InterviewCard({
             </button>
           )}
 
-        {/* Кнопка отметки неявки - показывается только для забронированных собеседований после запланированного времени */}
-        {interview.status === 'booked' &&
+        {/* Кнопка отметки неявки - показывается только для зарезервированных собеседований после запланированного времени */}
+        {interview.status === 'scheduled' &&
           isInterviewTimePassed &&
           (isInterviewer || isInterviewee) && (
             <button className={styles.noShowButton} onClick={handleNoShowClick}>

@@ -1,0 +1,20 @@
+<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Фон с градиентом -->
+  <defs>
+    <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Круглый фон -->
+  <circle cx="20" cy="20" r="20" fill="url(#avatarGradient)"/>
+  
+  <!-- Силуэт человека -->
+  <g fill="white" fill-opacity="0.9">
+    <!-- Голова -->
+    <circle cx="20" cy="15" r="6"/>
+    <!-- Тело -->
+    <path d="M 8 32 Q 8 25 14 25 L 26 25 Q 32 25 32 32 L 32 40 L 8 40 Z"/>
+  </g>
+</svg>

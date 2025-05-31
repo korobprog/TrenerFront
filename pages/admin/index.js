@@ -29,18 +29,51 @@ export default function AdminDashboard() {
         }
 
         const data = await response.json();
-        // Извлекаем данные summary из ответа API
+        console.log('Полученные данные от API:', data);
+
+        // Проверяем успешность ответа API
+        if (!data.success || !data.data) {
+          throw new Error('API вернул некорректную структуру данных');
+        }
+
+        const apiData = data.data;
+
+        // Извлекаем данные из фактической структуры API
+        const usersData = apiData.users || {};
+        const interviewsData = apiData.interviews || {};
+        const interviewsByStatus = interviewsData.byStatus || {};
+
+        // Рассчитываем общее количество собеседований из статусов
+        const totalInterviews = Object.values(interviewsByStatus).reduce(
+          (sum, count) => sum + count,
+          0
+        );
+
+        // Рассчитываем активные собеседования (pending + confirmed + in_progress)
+        const activeInterviewsCount =
+          (interviewsByStatus.pending || 0) +
+          (interviewsByStatus.confirmed || 0) +
+          (interviewsByStatus.in_progress || 0);
+
         setStatistics({
-          usersCount: data.summary.users.total,
-          interviewsCount: data.summary.interviews.total,
-          activeInterviewsCount:
-            data.summary.interviews.pending + data.summary.interviews.booked,
-          noShowCount: data.summary.interviews.noShow,
-          recentLogs: data.recentLogs || [],
+          usersCount: usersData.total || 0,
+          interviewsCount: totalInterviews,
+          activeInterviewsCount: activeInterviewsCount,
+          noShowCount: interviewsByStatus.no_show || 0,
+          recentLogs: [], // API не возвращает recentLogs, устанавливаем пустой массив
         });
       } catch (error) {
         console.error('Ошибка при загрузке статистики:', error);
         showError(`Не удалось загрузить статистику: ${error.message}`);
+
+        // Устанавливаем fallback значения при ошибке
+        setStatistics({
+          usersCount: 0,
+          interviewsCount: 0,
+          activeInterviewsCount: 0,
+          noShowCount: 0,
+          recentLogs: [],
+        });
       } finally {
         setLoading(false);
       }

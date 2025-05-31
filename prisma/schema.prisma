@@ -355,9 +355,12 @@ model VideoRoom {
   
   // Настройки комнаты
   isActive    Boolean  @default(true)
+  isPrivate   Boolean  @default(false)
   maxParticipants Int  @default(10)
   requiresPassword Boolean @default(false)
   password    String?
+  recordingEnabled Boolean @default(false)
+  settings    Json?
   
   // Время жизни комнаты
   scheduledStart DateTime?

@@ -66,10 +66,22 @@ export default function FeedbackForm({ interview, onSubmitSuccess }) {
         ok: response.ok,
       });
 
+      // Парсим JSON ответ независимо от статуса
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Ошибка при отправке отзыва:', errorData);
-        throw new Error(errorData.message || 'Не удалось оставить отзыв');
+        console.error('Ошибка при отправке отзыва:', data);
+
+        // Используем сообщение об ошибке из API, если доступно
+        const errorMessage =
+          data.message || data.error || 'Не удалось оставить отзыв';
+
+        // Специальная обработка для 401 ошибки
+        if (response.status === 401) {
+          throw new Error('Необходима авторизация для отправки отзыва');
+        }
+
+        throw new Error(errorMessage);
       }
 
       showSuccess('Отзыв успешно отправлен');

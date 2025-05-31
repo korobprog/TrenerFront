@@ -56,10 +56,10 @@ export default async function handler(req, res) {
       let statusFilter = {};
 
       if (status === 'active') {
-        // Для активных собеседований показываем только со статусами pending и booked
+        // Для активных собеседований показываем только со статусами pending, scheduled и booked
         statusFilter = {
           status: {
-            in: ['pending', 'booked'],
+            in: ['pending', 'scheduled', 'booked'],
           },
         };
       } else if (status === 'archived') {
@@ -138,7 +138,7 @@ export default async function handler(req, res) {
           // Если фильтр не указан или активные собеседования, то показываем только pending
           // Иначе используем общий фильтр статуса
           ...(status === 'active' || !status
-            ? { status: 'pending' }
+            ? { status: { in: ['pending', 'scheduled'] } }
             : statusFilter),
           // Получаем собеседования, созданные другими пользователями
           interviewerId: {
@@ -226,13 +226,25 @@ export default async function handler(req, res) {
 
   // Обработка POST запроса - создание нового собеседования
   if (req.method === 'POST') {
-    const { scheduledTime, manualMeetingLink } = req.body;
+    const {
+      scheduledTime,
+      manualMeetingLink,
+      videoType = 'google_meet',
+    } = req.body;
 
     // Проверка наличия обязательных полей
     if (!scheduledTime) {
       return res
         .status(400)
         .json({ message: 'Необходимо указать время собеседования' });
+    }
+
+    // Валидация videoType
+    if (!['google_meet', 'built_in'].includes(videoType)) {
+      return res.status(400).json({
+        message:
+          'Недопустимый тип видеосвязи. Допустимые значения: google_meet, built_in',
+      });
     }
 
     try {
@@ -258,30 +270,174 @@ export default async function handler(req, res) {
 
       let meetingLink = '';
       let calendarEventId = null;
+      let videoRoomId = null;
       // Флаг, указывающий, нужно ли создавать событие в Google Calendar
       let needCreateCalendarEvent = false;
 
-      // Если предоставлена ручная ссылка, проверяем, не является ли она заглушкой
-      if (manualMeetingLink) {
-        console.log(
-          'API: Использование ручной ссылки на Google Meet:',
-          manualMeetingLink
-        );
+      console.log('API: Обработка типа видеосвязи:', videoType);
 
-        // Проверяем, не является ли ссылка заглушкой test-mock-link
-        if (manualMeetingLink.includes('test-mock-link')) {
-          console.log(
-            'API: Обнаружена заглушка test-mock-link, создаем реальную ссылку'
+      // Логика для встроенной видеосистемы
+      if (videoType === 'built_in') {
+        try {
+          console.log('API: Создание встроенной видеокомнаты');
+
+          // Дополнительная валидация времени для встроенной видеосистемы
+          const scheduledDate = new Date(scheduledTime);
+          const now = new Date();
+
+          console.log('API: Валидация времени для встроенной видеосистемы', {
+            originalScheduledTime: scheduledTime,
+            parsedScheduledTime: scheduledDate.toISOString(),
+            currentTime: now.toISOString(),
+            scheduledTimeLocal: scheduledDate.toLocaleString('ru-RU', {
+              timeZone: 'Europe/Moscow',
+            }),
+            currentTimeLocal: now.toLocaleString('ru-RU', {
+              timeZone: 'Europe/Moscow',
+            }),
+            differenceHours: (
+              (scheduledDate.getTime() - now.getTime()) /
+              (1000 * 60 * 60)
+            ).toFixed(2),
+            isInFuture: scheduledDate > now,
+          });
+
+          // Создаем VideoRoom через внутренний API
+          const videoRoomData = {
+            name: `Собеседование ${new Date(scheduledTime).toLocaleDateString(
+              'ru-RU'
+            )}`,
+            description: `Собеседование запланировано на ${new Date(
+              scheduledTime
+            ).toLocaleString('ru-RU')}`,
+            isPrivate: true,
+            maxParticipants: 2,
+            scheduledStartTime: scheduledTime,
+            recordingEnabled: false,
+            userId: session.user.id, // Добавляем userId для создания VideoRoom
+            settings: {
+              allowScreenShare: true,
+              allowChat: true,
+              autoRecord: false,
+            },
+          };
+
+          console.log('API: Данные для создания видеокомнаты', {
+            videoRoomData: JSON.stringify(videoRoomData, null, 2),
+            userId: session.user.id,
+            userEmail: session.user.email,
+            userName: session.user.name,
+          });
+
+          console.log('API: Отправка запроса на создание видеокомнаты', {
+            url: `${
+              process.env.NEXTAUTH_URL || 'http://localhost:3000'
+            }/api/video-conferences`,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Cookie: req.headers.cookie ? 'присутствует' : 'отсутствует',
+            },
+            bodyData: JSON.stringify(videoRoomData, null, 2),
+            userIdIncluded: !!videoRoomData.userId,
+          });
+
+          // Создаем видеокомнату
+          const videoRoomResponse = await fetch(
+            `${
+              process.env.NEXTAUTH_URL || 'http://localhost:3000'
+            }/api/video-conferences`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: req.headers.cookie || '',
+              },
+              body: JSON.stringify(videoRoomData),
+            }
           );
-          // Будем создавать реальную ссылку через Google Calendar API
-          needCreateCalendarEvent = true;
-        } else {
-          // Если это не заглушка, используем предоставленную ссылку
-          meetingLink = manualMeetingLink;
+
+          console.log('API: Получен ответ от video-conferences API', {
+            status: videoRoomResponse.status,
+            statusText: videoRoomResponse.statusText,
+            ok: videoRoomResponse.ok,
+            headers: Object.fromEntries(videoRoomResponse.headers.entries()),
+          });
+
+          if (!videoRoomResponse.ok) {
+            const errorData = await videoRoomResponse.json();
+            console.error('API: ДЕТАЛЬНАЯ ОШИБКА создания видеокомнаты:', {
+              status: videoRoomResponse.status,
+              statusText: videoRoomResponse.statusText,
+              errorData: JSON.stringify(errorData, null, 2),
+              requestData: JSON.stringify(videoRoomData, null, 2),
+              requestHeaders: {
+                'Content-Type': 'application/json',
+                Cookie: req.headers.cookie ? 'присутствует' : 'отсутствует',
+              },
+            });
+
+            // Возвращаем ошибку вместо fallback на Google Meet
+            return res.status(400).json({
+              message: `Не удалось создать встроенную видеокомнату: ${
+                errorData.error || 'Неизвестная ошибка'
+              }`,
+              error: errorData.error,
+              details: errorData.details,
+              videoType: 'built_in',
+              needRetry: true, // Флаг для фронтенда, что можно повторить попытку
+            });
+          }
+
+          const videoRoom = await videoRoomResponse.json();
+          videoRoomId = videoRoom.id;
+          meetingLink = `${
+            process.env.NEXTAUTH_URL || 'http://localhost:3000'
+          }/video-conferences/rooms/${videoRoom.code}`;
+
+          console.log('API: Видеокомната создана успешно:', {
+            roomId: videoRoomId,
+            roomCode: videoRoom.code,
+            meetingLink: meetingLink,
+          });
+        } catch (error) {
+          console.error(
+            'API: Критическая ошибка при создании встроенной видеокомнаты:',
+            error
+          );
+
+          // Возвращаем ошибку вместо автоматического fallback
+          return res.status(500).json({
+            message: 'Критическая ошибка при создании встроенной видеосистемы',
+            error: error.message,
+            videoType: 'built_in',
+            needRetry: true,
+          });
         }
       } else {
-        // Если ручная ссылка не предоставлена, создаем событие в Google Calendar
-        needCreateCalendarEvent = true;
+        // Логика для Google Meet (существующая)
+        // Если предоставлена ручная ссылка, проверяем, не является ли она заглушкой
+        if (manualMeetingLink) {
+          console.log(
+            'API: Использование ручной ссылки на Google Meet:',
+            manualMeetingLink
+          );
+
+          // Проверяем, не является ли ссылка заглушкой test-mock-link
+          if (manualMeetingLink.includes('test-mock-link')) {
+            console.log(
+              'API: Обнаружена заглушка test-mock-link, создаем реальную ссылку'
+            );
+            // Будем создавать реальную ссылку через Google Calendar API
+            needCreateCalendarEvent = true;
+          } else {
+            // Если это не заглушка, используем предоставленную ссылку
+            meetingLink = manualMeetingLink;
+          }
+        } else {
+          // Если ручная ссылка не предоставлена, создаем событие в Google Calendar
+          needCreateCalendarEvent = true;
+        }
       }
 
       // Если нужно создать событие в Google Calendar
@@ -358,6 +514,8 @@ export default async function handler(req, res) {
         scheduledTime: new Date(scheduledTime),
         meetingLink: meetingLink,
         status: 'pending',
+        videoType: videoType,
+        videoRoomId: videoRoomId,
         calendarEventId: calendarEventId,
         isManualLink: !!manualMeetingLink,
       });
@@ -365,25 +523,62 @@ export default async function handler(req, res) {
       // Проверяем схему модели MockInterview
       console.log('API: Проверка схемы модели MockInterview');
 
-      // Создаем новое собеседование с полученной ссылкой на Google Meet
+      // Подготавливаем данные для создания собеседования
+      const interviewCreateData = {
+        interviewer: {
+          connect: { id: session.user.id },
+        },
+        scheduledTime: new Date(scheduledTime),
+        meetingLink: meetingLink,
+        status: 'pending',
+        videoType: videoType,
+        // Сохраняем ID события в Google Calendar для возможности обновления в будущем
+        calendarEventId: calendarEventId,
+      };
+
+      // Добавляем videoRoomId только если он существует
+      if (videoRoomId) {
+        interviewCreateData.videoRoom = {
+          connect: { id: videoRoomId },
+        };
+      }
+
+      // Создаем новое собеседование
       const newInterview = await prisma.mockInterview.create({
-        data: {
-          interviewer: {
-            connect: { id: session.user.id },
+        data: interviewCreateData,
+        include: {
+          videoRoom: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              isActive: true,
+            },
           },
-          scheduledTime: new Date(scheduledTime),
-          meetingLink: meetingLink,
-          status: 'pending',
-          // Сохраняем ID события в Google Calendar для возможности обновления в будущем
-          calendarEventId: calendarEventId,
         },
       });
 
-      return res.status(201).json({
+      // Подготавливаем ответ
+      const responseData = {
         ...newInterview,
         meetingLink: meetingLink,
         isManualLink: !!manualMeetingLink,
+        videoType: videoType,
+      };
+
+      // Добавляем информацию о видеокомнате если она есть
+      if (newInterview.videoRoom) {
+        responseData.videoRoom = newInterview.videoRoom;
+      }
+
+      console.log('API: Собеседование создано успешно:', {
+        id: newInterview.id,
+        videoType: newInterview.videoType,
+        videoRoomId: newInterview.videoRoomId,
+        meetingLink: meetingLink,
       });
+
+      return res.status(201).json(responseData);
     } catch (error) {
       console.error('Ошибка при создании собеседования:', error);
       return res

@@ -40,8 +40,22 @@ export default function StatisticsOverview({ summary, onDateFilterChange }) {
     onDateFilterChange(resetFilters);
   };
 
+  // ДИАГНОСТИЧЕСКИЕ ЛОГИ
+  console.log('📈 ДИАГНОСТИКА StatisticsOverview: Получен summary:', summary);
+  console.log(
+    '📈 ДИАГНОСТИКА StatisticsOverview: Тип summary:',
+    typeof summary
+  );
+  console.log(
+    '📈 ДИАГНОСТИКА StatisticsOverview: summary структура:',
+    summary ? Object.keys(summary) : 'null'
+  );
+
   // Если статистика не загружена, показываем сообщение о загрузке
   if (!summary) {
+    console.log(
+      '📈 ДИАГНОСТИКА StatisticsOverview: Summary отсутствует - показываем загрузку'
+    );
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.loadingSpinner}></div>

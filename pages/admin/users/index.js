@@ -77,9 +77,29 @@ export default function UsersPage() {
 
       const data = await response.json();
 
-      // Обновляем состояние
-      setUsers(data.users);
-      setPagination(data.pagination);
+      // Проверяем структуру ответа API и обновляем состояние
+      if (data.success && data.data) {
+        setUsers(data.data.users || []);
+        setPagination(
+          data.data.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            totalPages: 0,
+          }
+        );
+      } else {
+        // Fallback для старого формата API
+        setUsers(data.users || []);
+        setPagination(
+          data.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            totalPages: 0,
+          }
+        );
+      }
     } catch (error) {
       console.error('Ошибка при загрузке пользователей:', error);
       showError('Не удалось загрузить список пользователей');

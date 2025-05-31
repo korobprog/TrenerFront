@@ -3,6 +3,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from '../styles/MobileMenu.module.css';
+import { isAdmin } from '../lib/utils/roleUtils';
 
 /**
  * Современный компонент мобильного меню с улучшенным UX
@@ -383,7 +384,7 @@ export default function MobileMenu({ isOpen, onClose }) {
               </div>
 
               {/* Админ-панель для суперадминов */}
-              {session.user.role === 'superadmin' && (
+              {isAdmin(session.user) && (
                 <div className={styles.section}>
                   <h3 className={styles.sectionTitle}>Администрирование</h3>
                   <nav className={styles.navigation}>

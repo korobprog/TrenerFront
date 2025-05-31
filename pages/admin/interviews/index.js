@@ -47,7 +47,7 @@ export default function InterviewsPage() {
   // Загрузка данных при изменении параметров
   useEffect(() => {
     fetchInterviews();
-  }, [pagination.page, pagination.limit, filters, sorting]);
+  }, [pagination?.page, pagination?.limit, filters, sorting]);
 
   // Функция для загрузки списка собеседований
   const fetchInterviews = async () => {
@@ -56,10 +56,10 @@ export default function InterviewsPage() {
 
       // Формируем параметры запроса
       const queryParams = new URLSearchParams({
-        page: pagination.page,
-        limit: pagination.limit,
-        sortBy: sorting.sortBy,
-        sortOrder: sorting.sortOrder,
+        page: pagination?.page || 1,
+        limit: pagination?.limit || 10,
+        sortBy: sorting?.sortBy || 'scheduledTime',
+        sortOrder: sorting?.sortOrder || 'desc',
       });
 
       // Добавляем фильтры, если они заданы
@@ -82,9 +82,16 @@ export default function InterviewsPage() {
 
       const data = await response.json();
 
-      // Обновляем состояние
-      setInterviews(data.interviews);
-      setPagination(data.pagination);
+      // Обновляем состояние с поддержкой нового формата API
+      if (data.success && data.data) {
+        // Новый формат API
+        setInterviews(data.data?.interviews || []);
+        setPagination(data.data?.pagination || {});
+      } else {
+        // Fallback для старого формата
+        setInterviews(data.interviews || []);
+        setPagination(data.pagination || {});
+      }
     } catch (error) {
       console.error('Ошибка при загрузке собеседований:', error);
       showError('Не удалось загрузить список собеседований');

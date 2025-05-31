@@ -72,13 +72,36 @@ export default function PointsEditModal({ isOpen, onClose, user, onSave }) {
     setIsSubmitting(true);
 
     try {
-      // Вызов функции сохранения с данными формы
-      await onSave({
+      // 🔍 ДИАГНОСТИКА: Логируем данные перед отправкой
+      console.log('🔍 ДИАГНОСТИКА PointsEditModal: Объект user:', user);
+      console.log('🔍 ДИАГНОСТИКА PointsEditModal: user.id:', user.id);
+      console.log(
+        '🔍 ДИАГНОСТИКА PointsEditModal: typeof user.id:',
+        typeof user.id
+      );
+      console.log(
+        '🔍 ДИАГНОСТИКА PointsEditModal: user === undefined:',
+        user === undefined
+      );
+      console.log(
+        '🔍 ДИАГНОСТИКА PointsEditModal: user === null:',
+        user === null
+      );
+
+      const pointsData = {
         userId: user.id,
         amount: Number(formData.amount),
         type: formData.type,
         description: formData.description,
-      });
+      };
+
+      console.log(
+        '🔍 ДИАГНОСТИКА PointsEditModal: Данные для отправки:',
+        pointsData
+      );
+
+      // Вызов функции сохранения с данными формы
+      await onSave(pointsData);
 
       // Сброс формы и закрытие модального окна
       setFormData({
